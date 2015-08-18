@@ -13,12 +13,22 @@ module Repositories
       deploys(apps, server, at)
     end
 
+    def deploys_for_versions(versions, environment:)
+      query = store.select('DISTINCT ON (version) *')
+      query = query.where(store.arel_table['version'].in(versions))
+      query = query.where(environment: environment)
+      query.order('version, id DESC').map { |deploy_record|
+        Deploy.new(deploy_record.attributes)
+      }
+    end
+
     def apply(event)
       return unless event.is_a?(Events::DeployEvent)
 
       store.create!(
         app_name: event.app_name,
         server: event.server,
+        environment: event.environment,
         version: event.version,
         deployed_by: event.deployed_by,
         event_created_at: event.created_at,

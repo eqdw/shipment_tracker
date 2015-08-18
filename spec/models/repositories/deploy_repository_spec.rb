@@ -13,6 +13,37 @@ RSpec.describe Repositories::DeployRepository do
     end
   end
 
+  describe '#deploys_for_versions' do
+    let(:versions) { %w(abc def xyz) }
+    let(:environment) { 'production' }
+    let(:defaults) {
+      { app_name: 'frontend', server: 'test.com', deployed_by: 'Bob', environment: environment }
+    }
+
+    context 'when deploy events exist' do
+      before do
+        repository.apply(build(:deploy_event, defaults.merge(version: 'xyz', environment: 'uat')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'abc')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'abc', deployed_by: 'Carl')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'def')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'ghi')))
+      end
+
+      it 'returns all deploys for given version and environment' do
+        expect(repository.deploys_for_versions(versions, environment: environment)).to match_array([
+          Deploy.new(defaults.merge(version: versions.first, deployed_by: 'Carl')),
+          Deploy.new(defaults.merge(version: versions.second)),
+        ])
+      end
+    end
+
+    context 'when no deploy exists' do
+      it 'returns empty' do
+        expect(repository.deploys_for_versions(versions, environment: environment)).to be_empty
+      end
+    end
+  end
+
   describe '#deploys_for' do
     let(:apps) { { 'frontend' => 'abc' } }
     let(:server) { 'uat.fundingcircle.com' }
