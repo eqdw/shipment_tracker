@@ -6,12 +6,13 @@ RSpec.describe Projections::ReleasesProjection do
   subject(:projection) {
     Projections::ReleasesProjection.new(
       per_page: 50,
-      git_repository: repository,
+      git_repository: git_repository,
       app_name: app_name,
     )
   }
 
-  let(:repository) { instance_double(GitRepository) }
+  let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
+  let(:git_repository) { instance_double(GitRepository) }
   let(:app_name) { 'foo' }
   let(:time) { Time.current }
   let(:formatted_time) { time.to_formatted_s(:long_ordinal) }
@@ -24,24 +25,26 @@ RSpec.describe Projections::ReleasesProjection do
     ]
   }
 
+  let(:versions) { commits.map(&:id) }
+
+  let(:deploys) { [Deploy.new(version: 'def', app_name: app_name, event_created_at: time)] }
+
   let(:events) {
     [
-      build(:deploy_event, environment: 'uat', app_name: app_name, version: 'def'),
-      build(:deploy_event, environment: 'uat', app_name: app_name, version: 'abc'),
-
       build(:jira_event, key: 'JIRA-1', comment_body: feature_review_comment(foo: 'abc')),
       build(:jira_event, key: 'JIRA-2', comment_body: feature_review_comment(foo: 'abc', bar: 'jkl')),
       build(:jira_event, key: 'JIRA-3', comment_body: feature_review_comment(foo: 'xyz')),
       build(:jira_event, :approved, key: 'JIRA-2'),
-
-      build(:deploy_event, version: 'def', environment: 'production', app_name: app_name, created_at: time),
-      build(:deploy_event, version: 'klm', environment: 'production', app_name: 'irrelevant_app'),
     ]
   }
 
   before do
-    allow(repository).to receive(:recent_commits).with(50).and_return(commits)
-    allow(repository).to receive(:get_dependent_commits).with('abc').and_return([GitCommit.new(id: 'def')])
+    allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
+    allow(git_repository).to receive(:recent_commits).with(50).and_return(commits)
+    allow(git_repository).to receive(:get_dependent_commits).with('abc')
+      .and_return([GitCommit.new(id: 'def')])
+    allow(deploy_repository).to receive(:deploys_for_versions).with(versions, environment: 'production')
+      .and_return(deploys)
   end
 
   describe '#pending_releases' do

@@ -14,10 +14,10 @@ module Projections
       @git_repository = git_repository
       @feature_reviews = {}
       @tickets_hash = {}
-      @production_deploys = {}
       @pending_releases = []
       @deployed_releases = []
       @app_name = app_name
+      @deploy_repository = Repositories::DeployRepository.new
     end
 
     def apply_all(events)
@@ -29,22 +29,32 @@ module Projections
 
     private
 
-    attr_reader :tickets_projection, :app_name, :production_deploys
+    attr_reader :tickets_projection, :app_name, :deploy_repository
 
     def apply(event)
       case event
-      when Events::DeployEvent
-        return unless event.environment == 'production'
-        return unless event.app_name == app_name
-        @production_deploys[event.version] = event.created_at
       when Events::JiraEvent
         associate_releases_with_feature_review(event)
         tickets_projection.apply(event)
       end
     end
 
+    def production_deploys
+      @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
+    end
+
+    def production_deploy_time(version)
+      production_deploys.detect { |d| d.version == version }
+        .try(:event_created_at)
+        .try(:to_formatted_s, :long_ordinal)
+    end
+
     def commits
       @commits ||= @git_repository.recent_commits(@per_page)
+    end
+
+    def versions
+      commits.map(&:id)
     end
 
     def categorize_releases
@@ -52,7 +62,7 @@ module Projections
 
       deployed = false
       commits.each { |commit|
-        deployed = true if production_deploys.key?(commit.id)
+        deployed = true if production_deploys.any? { |d| d.version == commit.id }
         if deployed
           @deployed_releases << create_release_from(commit)
         else
@@ -67,7 +77,7 @@ module Projections
 
       Release.new(
         version: commit.id,
-        time: production_deploys[commit.id].try(:to_formatted_s, :long_ordinal),
+        time: production_deploy_time(commit.id),
         subject: commit.subject_line,
         feature_review_status: ticket.status,
         feature_review_path: feature_review.fetch(:path),
