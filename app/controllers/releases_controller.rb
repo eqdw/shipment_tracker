@@ -4,7 +4,7 @@ class ReleasesController < ApplicationController
   end
 
   def show
-    projection = build_projection(Events::BaseEvent.in_order_of_creation)
+    projection = build_projection
     @pending_releases = projection.pending_releases
     @deployed_releases = projection.deployed_releases
     @app_name = app_name
@@ -14,14 +14,14 @@ class ReleasesController < ApplicationController
 
   private
 
-  def build_projection(events)
+  def build_projection
     Projections::ReleasesProjection.new(
       per_page: 50,
       git_repository: git_repository,
-      app_name: app_name,
-    ).tap do |projection|
-      projection.apply_all(events)
-    end
+      app_name: app_name)
+    # ).tap do |projection|
+    #   projection.apply_all(events)
+    # end
   end
 
   def app_name

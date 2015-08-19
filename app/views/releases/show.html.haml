@@ -13,7 +13,7 @@
     %tr.pending-release{class: ('danger' unless release.approved)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
+      %td.word-wrap= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
 
 %h2 Deployed
 
@@ -29,5 +29,5 @@
     %tr.deployed-release{class: ('danger' unless release.approved)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
+      %td.word-wrap= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
       %td= release.time

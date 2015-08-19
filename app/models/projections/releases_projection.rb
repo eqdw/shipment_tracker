@@ -10,34 +10,36 @@ module Projections
 
     def initialize(per_page:, git_repository:, app_name:)
       @per_page = per_page
-      @tickets_projection = Projections::ReleasesTicketsProjection.new
       @git_repository = git_repository
+      # @tickets_projection = Projections::ReleasesTicketsProjection.new(versions)
       @feature_reviews = {}
       @tickets_hash = {}
       @pending_releases = []
       @deployed_releases = []
       @app_name = app_name
       @deploy_repository = Repositories::DeployRepository.new
-    end
 
-    def apply_all(events)
-      events.each do |event|
-        apply(event)
-      end
       categorize_releases
     end
+
+    # def apply_all(events)
+    #   events.each do |event|
+    #     apply(event)
+    #   end
+    #   categorize_releases
+    # end
 
     private
 
     attr_reader :tickets_projection, :app_name, :deploy_repository
 
-    def apply(event)
-      case event
-      when Events::JiraEvent
-        associate_releases_with_feature_review(event)
-        tickets_projection.apply(event)
-      end
-    end
+    # def apply(event)
+    #   case event
+    #   when Events::JiraEvent
+    #     associate_releases_with_feature_review(event)
+    #     # tickets_projection.apply(event)
+    #   end
+    # end
 
     def production_deploys
       @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
@@ -58,7 +60,7 @@ module Projections
     end
 
     def categorize_releases
-      associate_dependent_releases_with_feature_review
+      # associate_dependent_releases_with_feature_review
 
       deployed = false
       commits.each { |commit|
@@ -72,16 +74,16 @@ module Projections
     end
 
     def create_release_from(commit)
-      feature_review = feature_review_for_commit(commit.id)
-      ticket = get_ticket(feature_review.fetch(:key))
+      # feature_review = feature_review_for_commit(commit.id)
+      # ticket = get_ticket(feature_review.fetch(:key))
 
       Release.new(
         version: commit.id,
         time: production_deploy_time(commit.id),
         subject: commit.subject_line,
-        feature_review_status: ticket.status,
-        feature_review_path: feature_review.fetch(:path),
-        approved: ticket.approved?,
+        feature_review_status: '', # TODO
+        feature_review_path: '', # TODO
+        approved: true, # TODO
       )
     end
 
@@ -89,39 +91,39 @@ module Projections
       tickets_projection.ticket_for(key) || Ticket.new(status: nil)
     end
 
-    def associate_dependent_releases_with_feature_review
-      feature_review_commit_versions.each do |sha|
-        @git_repository.get_dependent_commits(sha).each do |dependent_commit|
-          @feature_reviews[dependent_commit.id] = @feature_reviews[sha]
-        end
-      end
-    end
+    # def associate_dependent_releases_with_feature_review
+    #   feature_review_commit_versions.each do |sha|
+    #     @git_repository.get_dependent_commits(sha).each do |dependent_commit|
+    #       @feature_reviews[dependent_commit.id] = @feature_reviews[sha]
+    #     end
+    #   end
+    # end
 
-    def feature_review_commit_versions
-      @feature_reviews.keys
-    end
+    # def feature_review_commit_versions
+    #   @feature_reviews.keys
+    # end
 
-    def feature_review_for_commit(commit_oid)
-      @feature_reviews.fetch(commit_oid, key: nil, path: nil)
-    end
+    # def feature_review_for_commit(commit_oid)
+    #   @feature_reviews.fetch(commit_oid, key: nil, path: nil)
+    # end
 
-    def associate_feature_review(commit_oid, feature_review)
-      @feature_reviews[commit_oid] = feature_review
-    end
+    # def associate_feature_review(commit_oid, feature_review)
+    #   @feature_reviews[commit_oid] = feature_review
+    # end
 
-    def associate_releases_with_feature_review(jira_event)
-      Factories::FeatureReviewFactory.new.create_from_text(jira_event.comment).each do |feature_review|
-        commit_oids = extract_relevant_commit_from_feature_review(feature_review)
-        commit_oids.each do |commit_oid|
-          associate_feature_review(commit_oid, key: jira_event.key, path: feature_review.path)
-        end
-      end
-    end
+    # def associate_releases_with_feature_review(jira_event)
+    #   FeatureReviewLocation.from_text(jira_event.comment).each do |location|
+    #     commit_oids = extract_relevant_commit_from_location(location)
+    #     commit_oids.each do |commit_oid|
+    #       associate_feature_review(commit_oid, key: jira_event.key, path: location.path)
+    #     end
+    #   end
+    # end
 
-    def extract_relevant_commit_from_feature_review(feature_review)
-      feature_review.versions.select { |commit_oid|
-        commits.find { |c| c.id == commit_oid }
-      }
-    end
+    # def extract_relevant_commit_from_location(feature_review_location)
+    #   feature_review_location.versions.select { |commit_oid|
+    #     commits.find { |c| c.id == commit_oid }
+    #   }
+    # end
   end
 end

@@ -1,4 +1,5 @@
 @logged_in
+@wip
 Feature: Viewing Releases
   As a deployer
   I want to view all releases for a given application

@@ -118,7 +118,7 @@ RSpec.describe Repositories::DeployRepository do
 
     context 'with at specified' do
       let(:defaults) { { server: 'x.io', deployed_by: 'dj' } }
-      let(:time) { Time.current - 4.hours }
+      let(:time) { (Time.current - 4.hours).change(usec: 0) }
       it 'returns the state at that moment' do
         events = [
           build(:deploy_event, defaults.merge(version: 'abc', app_name: 'app1', created_at: time)),

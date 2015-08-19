@@ -38,8 +38,8 @@ module Queries
     end
 
     def tickets
-      ticket_repository.tickets_for(
-        projection_url: feature_review.url,
+      ticket_repository.tickets_for_feature_review_urls(
+        feature_review_url: feature_review.url,
         at: time)
     end
 
