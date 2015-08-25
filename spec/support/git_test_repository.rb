@@ -72,6 +72,10 @@ module Support
       repo.head.target_id
     end
 
+    def uri
+      "file://#{dir}"
+    end
+
     private
 
     attr_reader :repo, :commits

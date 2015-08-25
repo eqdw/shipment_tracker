@@ -32,9 +32,13 @@ root = Pathname.new('..').expand_path(File.dirname(__FILE__))
 end
 
 require 'support/feature_review_helpers'
+require 'support/github_api_helpers'
+
+require 'webmock/rspec'
 
 RSpec.configure do |config|
   config.include Support::FeatureReviewHelpers
+  config.include Support::GithubApiHelpers
 
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

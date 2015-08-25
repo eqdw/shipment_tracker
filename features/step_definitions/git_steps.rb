@@ -35,3 +35,7 @@ Given 'the branch "$branch" is merged with merge commit "$version" at "$time' do
     time: Time.zone.parse(time).utc,
   )
 end
+
+Given 'all pull requests for "$commit" should be updated to "$status" status' do |_commit, status|
+  expect(scenario_context.stubbed_requests[status]).to have_been_requested
+end

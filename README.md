@@ -96,6 +96,16 @@ bundle exec rake jobs:update_git
 
 *Warning:* This recurring task should run on **every** server that your application is running on.
 
+### Enable GitHub Webhooks
+
+[Configure GitHub webhooks][webhooks] at an organization-wide level or per repository for **push** and **pull request** notifications.
+
+Shipment Tracker uses push notifications to update repositories that it keeps track of. It uses pull request notifications to show a status check in pull requests.
+
+To configure the webhook for a repository, first go into the API Tokens tab of Shipment Tracker and find (or create) a Github Notifications token. Next, in Github, go into the repository settings and add a new webhook. The "Payload URL" should be set to the Github Notifications URL from Shipment Tracker, the "Content type" should be JSON, and Github should send *All* events for this repository. Add the webhook, and all new Github Pull Requests should now show the Shipment Tracker status.
+
+You'll also need a [GitHub Access Token][access tokens] for authentication with the GitHub API. It'll only need the `repo:status` scope enabled. Set the token as the `GITHUB_REPO_STATUS_ACCESS_TOKEN` environment variable when booting the application (use `.env.development` during development).
+
 ## License
 
 Copyright © 2015 Funding Circle Ltd.
@@ -103,3 +113,5 @@ Copyright © 2015 Funding Circle Ltd.
 Distributed under the BSD 3-Clause License.
 
 [Event sourcing]: http://www.infoq.com/presentations/Events-Are-Not-Just-for-Notifications
+[webhooks]: https://help.github.com/articles/about-webhooks/
+[access tokens]: https://help.github.com/articles/creating-an-access-token-for-command-line-use/

@@ -1,7 +1,9 @@
 require 'support/git_test_repository'
 require 'support/feature_review_helpers'
+require 'support/github_api_helpers'
 require 'git_repository_location'
 
+require 'webmock'
 require 'rack/test'
 require 'factory_girl'
 
@@ -9,6 +11,10 @@ module Support
   class ScenarioContext
     include Support::FeatureReviewHelpers
     include ActiveSupport::Testing::TimeHelpers
+    include Support::GithubApiHelpers
+    include WebMock::API
+
+    attr_reader :stubbed_requests
 
     def initialize(app, host)
       @app = app # used by rack-test
@@ -17,15 +23,18 @@ module Support
       @repos = {}
       @tickets = {}
       @reviews = {}
+      @review_urls = {}
+      @stubbed_requests = {}
     end
 
     def setup_application(name)
       dir = Dir.mktmpdir
+      test_repo = Support::GitTestRepository.new(dir)
 
       @application = name
-      @repos[name] = Support::GitTestRepository.new(dir)
+      @repos[name] = test_repo
 
-      GitRepositoryLocation.create(uri: "file://#{dir}", name: name)
+      GitRepositoryLocation.create(uri: test_repo.uri, name: name)
     end
 
     def repository_for(application)
@@ -70,12 +79,15 @@ module Support
       }
     end
 
-    def link_ticket_and_feature_review(jira_key:, feature_review_nickname:, time: nil)
+    def link_ticket_and_feature_review(jira_key:, feature_review_nickname:, time: Time.current.to_s)
       url = review_url(feature_review_nickname: feature_review_nickname)
       ticket_details = @tickets.fetch(jira_key).merge!(
         comment_body: "Here you go: #{url}",
         updated: time,
       )
+      @stubbed_requests['failure'] = stub_request(:post, %r{https://api.github.com/.*})
+                                     .with(body: /"state":"failure"/)
+                                     .and_return(status: 201)
       event = build(:jira_event, ticket_details)
       travel_to Time.zone.parse(time) do
         post_event 'jira', event.details
@@ -89,6 +101,9 @@ module Support
         approve ? :approved : :rejected,
         ticket_details.merge!(user_email: approver_email, updated: time),
       )
+      @stubbed_requests['success'] = stub_request(:post, %r{https://api.github.com/.*})
+                                     .with(body: /"state":"success"/)
+                                     .and_return(status: 201)
       travel_to Time.zone.parse(time) do
         post_event 'jira', event.details
       end
