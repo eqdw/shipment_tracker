@@ -282,6 +282,21 @@ RSpec.describe GitRepository do
         is_expected.to contain_exactly(commit('A'), commit('C'))
       end
     end
+
+    context 'when the commit is a merge commit' do
+      let(:git_diagram) do
+        <<-'EOS'
+             A-B
+            /   \
+          -o--o--C
+        EOS
+      end
+
+      let(:sha) { commit('C') }
+      it 'returns the feature branch ancestors of the merge commit but not the merge commit itself' do
+        is_expected.to contain_exactly(commit('A'), commit('B'))
+      end
+    end
   end
 
   describe '#path' do
