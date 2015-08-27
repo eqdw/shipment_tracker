@@ -131,9 +131,9 @@ RSpec.describe GitRepository do
     context "when given commit is part of a branch that's merged into master" do
       let(:git_diagram) do
         <<-'EOS'
-             o-A-B
-            /     \
-          -o---o---C---o
+        o-A-B---
+       /        \
+     -o-------o--C---o
         EOS
       end
 
@@ -191,9 +191,9 @@ RSpec.describe GitRepository do
   describe '#merge?' do
     let(:git_diagram) do
       <<-'EOS'
-           o-A-B
-          /     \
-        -o---o---C---o
+      o-A-B---
+     /        \
+   -o-------o--C---o
       EOS
     end
 
@@ -223,17 +223,32 @@ RSpec.describe GitRepository do
   describe '#branch_parent' do
     let(:git_diagram) do
       <<-'EOS'
-           o-A-B
-          /     \
-        -o---o---C---o
+      o-A-B---
+     /        \
+   -o-------o--C---o
       EOS
     end
 
     subject { repo.branch_parent(sha) }
 
     context 'when on a merge commit' do
-      let(:sha) { commit('C') }
-      it { is_expected.to eq(commit('B')) }
+      context 'branch_parent was committed BEFORE parent on master' do
+        let(:sha) { commit('C') }
+        it { is_expected.to eq(commit('B')) }
+      end
+
+      context 'branch_parent was committed AFTER parent on master' do
+        let(:git_diagram) do
+          <<-'EOS'
+          o-A----B
+         /        \
+        -o-----o----C---o
+          EOS
+        end
+
+        let(:sha) { commit('C') }
+        it { is_expected.to eq(commit('B')) }
+      end
     end
 
     context 'when on a non merge commit' do

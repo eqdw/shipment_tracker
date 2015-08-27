@@ -82,6 +82,9 @@ class GitRepository
     @repository.lookup(commit_oid).parents.count > 1
   end
 
+  # For a merge commit, (which has multiple parents) the first parent
+  # is the commit on the branch currently checked out.
+  # This method assumes that main branch is currently checked out.
   def branch_parent(commit_oid)
     validate_commit!(commit_oid)
     @repository.lookup(commit_oid).parents.last.oid
