@@ -4,8 +4,8 @@ class GitRepository
   class CommitNotFound < RuntimeError; end
   class CommitNotValid < RuntimeError; end
 
-  def initialize(repository)
-    @repository = repository
+  def initialize(rugged_repository)
+    @rugged_repository = rugged_repository
   end
 
   def exists?(full_sha)
@@ -17,7 +17,7 @@ class GitRepository
       validate_commit!(from) unless from.nil?
       validate_commit!(to)
 
-      walker = Rugged::Walker.new(repository)
+      walker = Rugged::Walker.new(rugged_repository)
       walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE) # optional
       walker.push(to)
       walker.hide(from) if from
@@ -27,7 +27,7 @@ class GitRepository
   end
 
   def recent_commits(count = 50)
-    walker = Rugged::Walker.new(repository)
+    walker = Rugged::Walker.new(rugged_repository)
     walker.sorting(Rugged::SORT_TOPO)
     walker.push(main_branch.target_id)
 
@@ -49,7 +49,7 @@ class GitRepository
     dependent_commits = []
     common_ancestor_oid = nil
     loop do
-      common_ancestor_oid = repository.merge_base(master.oid, commit_oid)
+      common_ancestor_oid = rugged_repository.merge_base(master.oid, commit_oid)
       break if common_ancestor_oid != commit_oid
       dependent_commits << build_commit(master) if merge_commit_for?(master, commit_oid)
       master = master.parents.first
@@ -70,7 +70,7 @@ class GitRepository
 
     walker = get_walker(main_branch.target_id, verified_commit_oid, false)
     walker.each do |commit|
-      commits << commit if repository.descendant_of?(commit.oid, verified_commit_oid)
+      commits << commit if rugged_repository.descendant_of?(commit.oid, verified_commit_oid)
       break if commit == merge_to_master_commit(verified_commit_oid)
     end
 
@@ -79,7 +79,7 @@ class GitRepository
 
   def merge?(commit_oid)
     validate_commit!(commit_oid)
-    @repository.lookup(commit_oid).parents.count > 1
+    @rugged_repository.lookup(commit_oid).parents.count > 1
   end
 
   # For a merge commit, (which has multiple parents) the first parent
@@ -87,19 +87,19 @@ class GitRepository
   # This method assumes that main branch is currently checked out.
   def branch_parent(commit_oid)
     validate_commit!(commit_oid)
-    @repository.lookup(commit_oid).parents.last.oid
+    @rugged_repository.lookup(commit_oid).parents.last.oid
   end
 
   def path
-    @repository.path
+    @rugged_repository.path
   end
 
   private
 
-  attr_reader :repository
+  attr_reader :rugged_repository
 
   def get_walker(push_commit_oid, hide_commit_oid, simplify = false)
-    walker = Rugged::Walker.new(repository)
+    walker = Rugged::Walker.new(rugged_repository)
     walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
     walker.simplify_first_parent if simplify
     walker.push(push_commit_oid)
@@ -109,11 +109,11 @@ class GitRepository
 
   def merge_to_master_commit(commit_oid)
     walker = get_walker(main_branch.target_id, commit_oid, true)
-    walker.find { |commit| repository.descendant_of?(commit.oid, commit_oid) }
+    walker.find { |commit| rugged_repository.descendant_of?(commit.oid, commit_oid) }
   end
 
   def commit_on_master?(commit_oid)
-    parent_commit = repository.lookup(commit_oid).parents.first
+    parent_commit = rugged_repository.lookup(commit_oid).parents.first
     return true unless parent_commit
 
     walker = get_walker(main_branch.target_id, parent_commit.oid, true)
@@ -137,7 +137,7 @@ class GitRepository
   end
 
   def validate_commit!(commit_oid)
-    fail CommitNotFound, commit_oid unless repository.exists?(commit_oid)
+    fail CommitNotFound, commit_oid unless rugged_repository.exists?(commit_oid)
   rescue Rugged::InvalidError
     raise CommitNotValid, commit_oid
   end
@@ -149,13 +149,13 @@ class GitRepository
   end
 
   def main_branch
-    repository.branches['origin/production'] ||
-      repository.branches['origin/master'] ||
-      repository.branches['master']
+    rugged_repository.branches['origin/production'] ||
+      rugged_repository.branches['origin/master'] ||
+      rugged_repository.branches['master']
   end
 
   def lookup(sha)
-    repository.lookup(sha)
+    rugged_repository.lookup(sha)
   rescue Rugged::InvalidError, Rugged::ObjectError, Rugged::OdbError
     nil
   end
