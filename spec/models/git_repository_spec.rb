@@ -312,6 +312,19 @@ RSpec.describe GitRepository do
         is_expected.to contain_exactly(commit('A'), commit('B'))
       end
     end
+
+    context 'when the sha is invalid' do
+      let(:git_diagram) do
+        <<-'EOS'
+             o-A-o
+            /
+          -o-----o
+        EOS
+      end
+      it 'is empty' do
+        expect(repo.get_dependent_commits('InvalidSha')).to be_empty
+      end
+    end
   end
 
   describe '#path' do

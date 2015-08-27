@@ -35,16 +35,15 @@ class GitRepository
   end
 
   # Returns "dependent commits" given a commit sha from a topic branch.
-  #
   # Dependent commits are the merge commit plus any commits between the given
   # commit and the "fork commit" on master (i.e. commit the branch is based
   # off of).
-  #
   # We can use Rugged::Repository#merge_base to find the fork commit, but we
   # need to loop until the master commit is not a descendant of the given
   # commit, otherwise the merge base will be the given commit and not the fork
   # commit.
   def get_dependent_commits(commit_oid)
+    validate_commit!(commit_oid)
     master = main_branch.target
 
     dependent_commits = []
@@ -57,6 +56,7 @@ class GitRepository
     end
 
     dependent_commits + commits_between(common_ancestor_oid, commit_oid)[0...-1]
+  rescue CommitNotValid; []
   end
 
   # Returns all commits that are children of the given commit
@@ -129,8 +129,7 @@ class GitRepository
       id: commit.oid,
       author_name: commit.author[:name],
       message: commit.message,
-      time: commit.time,
-    )
+      time: commit.time)
   end
 
   def build_commits(commits)
@@ -146,8 +145,7 @@ class GitRepository
   def instrument(name, &block)
     ActiveSupport::Notifications.instrument(
       "#{name}.git_repository",
-      &block
-    )
+      &block)
   end
 
   def main_branch
