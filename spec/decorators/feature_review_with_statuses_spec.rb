@@ -42,7 +42,7 @@ RSpec.describe FeatureReviewWithStatuses do
     expect(decorator.uatest).to eq(feature_review_query.uatest)
   end
 
-  it 'delegates #uat_url and #app_versions to the feature_review' do
+  it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
     expect(decorator.app_versions).to eq(feature_review.app_versions)
   end
