@@ -37,18 +37,20 @@ module Projections
     end
 
     def production_deploy_for_commit(commit)
-      @production_deploy_for_commit ||= production_deploys.detect { |deployment|
+      production_deploys.detect { |deployment|
         deployment.version == commit.id
       }
     end
 
     def build_and_categorize_releases
+      deployed = false
       commits.each { |commit|
+        deploy_for_commit = production_deploy_for_commit(commit)
         # if commit is deployed all subsequent (earlier) commits have been deployed too
-        deploy = production_deploy_for_commit(commit) if production_deploy_for_commit(commit)
-        if deploy
+        deployed = true if deploy_for_commit
+        if deployed
           @deployed_releases << create_release_from(
-            commit: commit, deploy: production_deploy_for_commit(commit)
+            commit: commit, deploy: deploy_for_commit
           )
         else
           @pending_releases << create_release_from(commit: commit)
