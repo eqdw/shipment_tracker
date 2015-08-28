@@ -72,7 +72,7 @@ RSpec.describe Queries::FeatureReviewQuery do
     let(:expected_tickets) { double('expected tickets') }
 
     before do
-      allow(ticket_repository).to receive(:tickets_for_feature_review_urls)
+      allow(ticket_repository).to receive(:tickets_for)
         .with(feature_review_url: feature_review.url, at: time)
         .and_return(expected_tickets)
     end

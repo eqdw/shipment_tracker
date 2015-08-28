@@ -12,7 +12,7 @@ module Repositories
 
     delegate :table_name, to: :store
 
-    def tickets_for_feature_review_urls(feature_review_url:, at: nil)
+    def tickets_for(feature_review_url:, at: nil)
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
       store
         .select('DISTINCT ON (key) *')
