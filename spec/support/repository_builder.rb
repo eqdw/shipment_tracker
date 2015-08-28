@@ -101,6 +101,32 @@ Support::RepositoryBuilder.add_example(
 )
 
 Support::RepositoryBuilder.add_example(
+  <<-'EOS'.strip_heredoc,
+             B--C----E
+            /         \
+      -o---A-------D---F---G-
+      EOS
+  proc do |repo|
+    branch_name = "branch-#{SecureRandom.hex(10)}"
+
+    repo.create_commit
+    repo.create_commit(pretend_version: 'A')
+    repo.create_branch(branch_name)
+    repo.checkout_branch(branch_name)
+    repo.create_commit(pretend_version: 'B')
+    repo.create_commit(pretend_version: 'C')
+    repo.checkout_branch('master')
+    repo.create_commit(pretend_version: 'D')
+    repo.checkout_branch(branch_name)
+    repo.create_commit(pretend_version: 'E')
+    repo.checkout_branch('master')
+    repo.merge_branch(branch_name: branch_name, pretend_version: 'F')
+    repo.create_commit(pretend_version: 'G')
+    repo.create_commit
+  end,
+)
+
+Support::RepositoryBuilder.add_example(
   '-A-o',
   proc do |repo|
     repo.create_commit(pretend_version: 'A')

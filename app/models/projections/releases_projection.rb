@@ -1,8 +1,8 @@
 require 'git_repository'
 require 'events/jira_event'
-require 'projections/releases_tickets_projection'
 require 'release'
 require 'ticket'
+require 'release_with_status'
 
 module Projections
   class ReleasesProjection
@@ -11,15 +11,13 @@ module Projections
     def initialize(per_page:, git_repository:, app_name:)
       @per_page = per_page
       @git_repository = git_repository
-      # @tickets_projection = Projections::ReleasesTicketsProjection.new(versions)
-      @feature_reviews = {}
-      @tickets_hash = {}
+      @app_name = app_name
+
+      @deploy_repository = Repositories::DeployRepository.new
       @pending_releases = []
       @deployed_releases = []
-      @app_name = app_name
-      @deploy_repository = Repositories::DeployRepository.new
 
-      categorize_releases
+      build_and_categorize_releases
     end
 
     # def apply_all(events)
@@ -31,8 +29,6 @@ module Projections
 
     private
 
-    attr_reader :tickets_projection, :app_name, :deploy_repository
-
     # def apply(event)
     #   case event
     #   when Events::JiraEvent
@@ -40,15 +36,10 @@ module Projections
     #     # tickets_projection.apply(event)
     #   end
     # end
+    attr_reader :app_name, :deploy_repository, :git_repository
 
     def production_deploys
       @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
-    end
-
-    def production_deploy_time(version)
-      production_deploys.detect { |d| d.version == version }
-        .try(:event_created_at)
-        .try(:to_formatted_s, :long_ordinal)
     end
 
     def commits
@@ -56,39 +47,40 @@ module Projections
     end
 
     def versions
-      commits.map(&:id)
+      @versions ||= commits.map(&:id)
     end
 
-    def categorize_releases
-      # associate_dependent_releases_with_feature_review
+    def production_deploy_for_commit(commit)
+      @production_deploy_for_commit ||= production_deploys.detect { |deployment|
+        deployment.version == commit.id
+      }
+    end
 
-      deployed = false
+    def build_and_categorize_releases
       commits.each { |commit|
-        deployed = true if production_deploys.any? { |d| d.version == commit.id }
-        if deployed
-          @deployed_releases << create_release_from(commit)
+        # if commit is deployed all subsequent (earlier) commits have been deployed too
+        deploy = production_deploy_for_commit(commit) if production_deploy_for_commit(commit)
+        if deploy
+          @deployed_releases << create_release_from(
+            commit: commit, deploy: production_deploy_for_commit(commit)
+          )
         else
-          @pending_releases << create_release_from(commit)
+          @pending_releases << create_release_from(commit: commit)
         end
       }
     end
 
-    def create_release_from(commit)
-      # feature_review = feature_review_for_commit(commit.id)
-      # ticket = get_ticket(feature_review.fetch(:key))
-
-      Release.new(
+    def create_release_from(commit:, deploy: nil)
+      release = Release.new(
         version: commit.id,
-        time: production_deploy_time(commit.id),
+        production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
-        feature_review_status: '', # TODO
-        feature_review_path: '', # TODO
-        approved: true, # TODO
       )
-    end
 
-    def get_ticket(key)
-      tickets_projection.ticket_for(key) || Ticket.new(status: nil)
+      ReleaseWithStatus.new(
+        release: release,
+        git_repository: git_repository,
+      )
     end
 
     # def associate_dependent_releases_with_feature_review

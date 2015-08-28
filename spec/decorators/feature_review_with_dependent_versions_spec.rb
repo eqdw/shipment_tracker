@@ -26,12 +26,15 @@ RSpec.describe FeatureReviewWithDependentVersions do
 
     before :each do
       allow(GitRepository).to receive(:new).and_return(git_repository)
+      expect(git_repository).to receive(:exists?)
+        .with('commitsha_from_other_repo')
+        .and_return(false)
+      expect(git_repository).to receive(:exists?)
+        .with('commitsha1')
+        .and_return(true)
       expect(git_repository).to receive(:get_dependent_commits)
         .with('commitsha1')
         .and_return([commit3, commit4])
-      expect(git_repository).to receive(:get_dependent_commits)
-        .with('commitsha_from_other_repo')
-        .and_return([])
     end
 
     it 'returns commits that depend on the feature review for approval' do

@@ -60,6 +60,10 @@ class FeatureReviewWithStatuses < SimpleDelegator
     tickets.all?(&:approved?)
   end
 
+  def approval_status
+    approved? ? :approved : :unapproved
+  end
+
   private
 
   attr_reader :feature_review, :query

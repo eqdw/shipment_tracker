@@ -144,6 +144,22 @@ RSpec.describe GitRepository do
       end
     end
 
+    context 'when given commit is a fork' do
+      let(:git_diagram) do
+        <<-'EOS'
+        B--C----E
+       /         \
+ -o---A-------D---F---G-
+        EOS
+      end
+
+      it 'returns empty array' do
+        descendant_commits = repo.get_descendant_commits_of_branch(commit('A')).map(&:id)
+
+        expect(descendant_commits).to be_empty
+      end
+    end
+
     context 'when given commit on master' do
       let(:git_diagram) { '-o-A-o' }
 

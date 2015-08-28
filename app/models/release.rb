@@ -5,10 +5,7 @@ class Release
 
   values do
     attribute :version, String
-    attribute :time, String
+    attribute :production_deploy_time, Time
     attribute :subject, String
-    attribute :feature_review_status, String
-    attribute :feature_review_path, String
-    attribute :approved, Boolean
   end
 end

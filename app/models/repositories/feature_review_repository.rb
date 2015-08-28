@@ -9,14 +9,15 @@ module Repositories
 
     delegate :table_name, to: :store
 
-    def feature_reviews_for(versions, at: nil)
+    def feature_reviews_for(versions:, at: nil)
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
 
       store
-        .where('versions && ARRAY[?]::varchar[]', versions)
         .where(query)
-        .group_by(&:url).map { |_, snapshots|
-          most_recent_snapshot = snapshots.max(&:event_created_at)
+        .where('versions && ARRAY[?]::varchar[]', versions)
+        .group_by(&:url)
+        .map { |_, snapshots|
+          most_recent_snapshot = snapshots.max { |s1, s2| s1.event_created_at <=> s2.event_created_at }
           Factories::FeatureReviewFactory.new.create(
             url: most_recent_snapshot.url,
             versions: most_recent_snapshot.versions,

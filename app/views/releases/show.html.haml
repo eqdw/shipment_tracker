@@ -6,14 +6,18 @@
   %thead
     %tr
       %th{width: '10%'} version
-      %th{width: '50%'} message
-      %th{width: '40%'} feature review
+      %th{width: '40%'} message
+      %th{width: '15%'} approval status
+      %th{width: '35%'} feature reviews
   %tbody
   - @pending_releases.each do |release|
-    %tr.pending-release{class: ('danger' unless release.approved)}
+    %tr.pending-release{class: ('danger' unless release.approved?)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td.word-wrap= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
+      %td= release.approval_status
+      %td
+        - release.feature_reviews.each do |feature_review|
+          %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
 
 %h2 Deployed
 
@@ -21,13 +25,17 @@
   %thead
     %tr
       %th{width: '10%'} version
-      %th{width: '50%'} message
-      %th{width: '20%'} feature review
-      %th{width: '20%'} last deployed at
+      %th{width: '40%'} message
+      %th{width: '15%'} approval status
+      %th{width: '20%'} feature reviews
+      %th{width: '15%'} last deployed at
   %tbody
   - @deployed_releases.each do |release|
-    %tr.deployed-release{class: ('danger' unless release.approved)}
+    %tr.deployed-release{class: ('danger' unless release.approved?)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td.word-wrap= link_to release.feature_review_status, release.feature_review_path if release.feature_review_path
-      %td= release.time
+      %td= release.approval_status
+      %td
+        - release.feature_reviews.each do |feature_review|
+          %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
+      %td= release.production_deploy_time.try(:to_formatted_s, :long_ordinal)
