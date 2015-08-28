@@ -22,14 +22,6 @@ module Repositories
         .map { |t| Ticket.new(t.attributes) }
     end
 
-    # def tickets_for_versions(versions)
-    #   store
-    #     .select('DISTINCT ON (key) *')
-    #     .where('versions && ARRAY[?]::varchar[]', versions)
-    #     .order('key, id DESC')
-    #     .map { |t| Ticket.new(t.attributes) }
-    # end
-
     def apply(event)
       return unless event.is_a?(Events::JiraEvent) && event.issue?
 
@@ -52,16 +44,6 @@ module Repositories
     private
 
     attr_reader :store
-
-    # def tickets(feature_review_url, at)
-    #   query = at ? store.arel_table['event_created_at'].lteq(at) : nil
-    #   store
-    #     .select('DISTINCT ON (key) *')
-    #     .where('urls @> ARRAY[?]', prepare_url(feature_review_url))
-    #     .where(query)
-    #     .order('key, id DESC')
-    #     .map { |t| Ticket.new(t.attributes) }
-    # end
 
     def merge_ticket_urls(ticket, feature_reviews)
       old_urls = ticket.fetch('urls', [])

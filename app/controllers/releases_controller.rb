@@ -19,9 +19,6 @@ class ReleasesController < ApplicationController
       per_page: 50,
       git_repository: git_repository,
       app_name: app_name)
-    # ).tap do |projection|
-    #   projection.apply_all(events)
-    # end
   end
 
   def app_name
