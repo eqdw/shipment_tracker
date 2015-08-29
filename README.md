@@ -38,6 +38,13 @@ Set up Git hooks, for running tests and linters before pushing to master.
 bundle exec rake git:setup_hooks
 ```
 
+Pull sample data from a remote server (on Heroku - relies on the heroku toolbelt and a suitable git remote):
+
+```
+bundle exec rake heroku:pull
+```
+
+
 ### Enabling access to repositories via SSH
 
 Ensure that `libssh2` is installed and the `rugged` gem is reinstalled. On OSX:
