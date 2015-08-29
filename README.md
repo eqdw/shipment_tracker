@@ -28,6 +28,7 @@ Setup database and environment.
 
 ```
 cp .env.development.example .env.development
+cp config/database.yml.example config/database.yml
 bundle exec rake db:setup
 ```
 
@@ -67,7 +68,7 @@ bin/boot_with_heroku_settings
 
 ### Running event snapshots
 
-In order to return results from recent events, Shipment Tracker needs to continuously record snapshots.  
+In order to return results from recent events, Shipment Tracker needs to continuously record snapshots.
 There is a rake task `jobs:update_events_loop` which continuously updates the event cache.
 We suggest that you have this running in the background (e.g. using Supervisor or a Heroku worker).
 
