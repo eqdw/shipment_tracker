@@ -15,7 +15,7 @@ module Support
       @application = nil
       @repos = {}
       @tickets = {}
-      @review_url = nil
+      @review_urls = {}
     end
 
     def setup_application(name)
@@ -55,18 +55,19 @@ module Support
       end
     end
 
-    def prepare_review(apps, uat_url, time = nil)
+    def prepare_review(apps, uat_url, feature_review_nickname, time = nil)
       apps_hash = {}
       apps.each do |app|
         apps_hash[app[:app_name]] = resolve_version(app[:version])
       end
 
-      @review_url = UrlBuilder.new(@host).build(apps_hash, uat_url, time)
+      @review_urls[feature_review_nickname] = UrlBuilder.new(@host).build(apps_hash, uat_url, time)
     end
 
-    def link_ticket(jira_key)
+    def link_ticket_and_feature_review(jira_key, feature_review_nickname)
+      url = review_url(feature_review_nickname)
       ticket_details = @tickets.fetch(jira_key)
-      event = build(:jira_event, ticket_details.merge(comment_body: "Here you go: #{review_url}"))
+      event = build(:jira_event, ticket_details.merge!(comment_body: "Here you go: #{url}"))
       post_event 'jira', event.details
     end
 
@@ -75,18 +76,26 @@ module Support
       event = build(
         :jira_event,
         :approved,
-        ticket_details.merge(user_email: approver_email, updated: time),
+        ticket_details.merge!(user_email: approver_email, updated: time),
       )
       post_event 'jira', event.details
     end
 
-    def review_url
-      fail 'Review url not set' unless @review_url
-      @review_url
+    def review_url(feature_review_nickname = nil)
+      @review_urls.fetch(feature_review_nickname, @review_urls.values.last)
     end
 
-    def review_path
-      URI.parse(review_url).request_uri
+    def review_path(feature_review_nickname = nil)
+      url_to_path(review_url(feature_review_nickname))
+    end
+
+    def review_urls
+      fail 'Review url not set' unless @review_urls
+      @review_urls.values
+    end
+
+    def review_paths
+      review_urls.map { |review_url| url_to_path(review_url) }
     end
 
     private
@@ -94,6 +103,10 @@ module Support
     attr_reader :app
 
     include Rack::Test::Methods
+
+    def url_to_path(url)
+      URI.parse(url).request_uri if url
+    end
 
     def commit_from_pretend(pretend_commit)
       value = @repos.values.map { |r| r.commit_for_pretend_version(pretend_commit) }.compact.first

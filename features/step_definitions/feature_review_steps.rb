@@ -19,16 +19,16 @@ Then 'I should see the feature review page with the applications:' do |table|
   expect(feature_review_page.app_info).to match_array(expected_app_info)
 end
 
-Given 'a developer prepares a review for UAT "$uat_url" with apps' do |uat_url, apps_table|
-  scenario_context.prepare_review(apps_table.hashes, uat_url)
+Given 'developer prepares review known as "$a" for UAT "$b" with apps' do |known_as, uat_url, apps_table|
+  scenario_context.prepare_review(apps_table.hashes, uat_url, known_as)
 end
 
-Given 'a developer prepares a review upto now for UAT "$uat_url" with apps' do |uat_url, apps_table|
-  scenario_context.prepare_review(apps_table.hashes, uat_url, 1.second.from_now)
+Given 'developer prepares review known as "$a" upto now for UAT "$b" with apps' do |known_as, uat_url, table|
+  scenario_context.prepare_review(table.hashes, uat_url, known_as, 1.second.from_now)
 end
 
-When 'I visit the feature review' do
-  visit scenario_context.review_url
+When 'I visit the feature review known as "$known_as"' do |known_as|
+  visit scenario_context.review_url(known_as)
 end
 
 Then 'I should see the builds with heading "$status" and content' do |status, builds_table|

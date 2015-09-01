@@ -7,14 +7,12 @@
     %tr
       %th{width: '10%'} version
       %th{width: '40%'} message
-      %th{width: '15%'} approval status
       %th{width: '35%'} feature reviews
   %tbody
   - @pending_releases.each do |release|
     %tr.pending-release{class: ('danger' unless release.approved?)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td= release.approval_status
       %td
         - release.feature_reviews.each do |feature_review|
           %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
@@ -26,7 +24,6 @@
     %tr
       %th{width: '10%'} version
       %th{width: '40%'} message
-      %th{width: '15%'} approval status
       %th{width: '20%'} feature reviews
       %th{width: '15%'} last deployed at
   %tbody
@@ -34,7 +31,6 @@
     %tr.deployed-release{class: ('danger' unless release.approved?)}
       %td.monospace= short_sha(release.version)
       %td= release.subject
-      %td= release.approval_status
       %td
         - release.feature_reviews.each do |feature_review|
           %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path

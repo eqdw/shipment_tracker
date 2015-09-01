@@ -7,15 +7,15 @@ Background:
   And a commit "#master1" with message "initial commit" is created at "13:01:17"
   And the branch "feature-one" is checked out
   And a commit "#commit1" with message "first commit" is created at "14:01:17"
-  And a developer prepares a review for UAT "http://uat.fundingcircle.com" with apps
+  And developer prepares review known as "FR_search1" for UAT "http://uat.fundingcircle.com" with apps
     | app_name | version  |
     | frontend | #commit1 |
-  And adds the link to a comment for ticket "JIRA-123"
+  And adds the link for review "FR_search1" to a comment for ticket "JIRA-123"
   And a commit "#commit2" with message "second commit" is created at "15:04:19"
-  And a developer prepares a review for UAT "http://uat.fundingcircle.com" with apps
+  And developer prepares review known as "FR_search2" for UAT "http://uat.fundingcircle.com" with apps
     | app_name | version  |
     | frontend | #commit2 |
-  And adds the link to a comment for ticket "JIRA-123"
+  And adds the link for review "FR_search2" to a comment for ticket "JIRA-123"
   And ticket "JIRA-123" is approved by "alice@fundingcircle.com" at "15:24:34"
   And the branch "master" is checked out
   And a commit "#commit3" with message "recent commit" is created at "13:31:17"
@@ -23,7 +23,7 @@ Background:
 
 Scenario: Searching for a Feature Review
   When I look up feature reviews for "#commit1" on "frontend"
-  Then I should see the feature review for
+  Then I should see the feature review known as "FR_search" for
     | app_name | version  | uat                          |
     | frontend | #commit1 | http://uat.fundingcircle.com |
     | frontend | #commit2 | http://uat.fundingcircle.com |
