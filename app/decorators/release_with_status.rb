@@ -9,7 +9,7 @@ class ReleaseWithStatus < SimpleDelegator
     @query = query_class.new(release: release, git_repository: git_repository, at: time)
   end
 
-  delegate :feature_reviews, to: :query
+  delegate :feature_reviews, to: :@query
 
   def approved?
     feature_reviews.any?(&:approved?)
@@ -19,8 +19,4 @@ class ReleaseWithStatus < SimpleDelegator
     return nil if feature_reviews.empty?
     approved? ? :approved : :unapproved
   end
-
-  private
-
-  attr_reader :query
 end
