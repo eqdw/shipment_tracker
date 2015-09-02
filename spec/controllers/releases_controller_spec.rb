@@ -48,8 +48,6 @@ RSpec.describe ReleasesController do
     end
 
     it 'shows the list of commits for an app' do
-      # expect(projection).to receive(:apply_all).with(events)
-
       get :show, id: app_name
 
       expect(response).to have_http_status(:success)

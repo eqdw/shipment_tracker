@@ -45,7 +45,6 @@ RSpec.describe FeatureReviewWithStatuses do
 
   it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
-    expect(decorator.app_versions).to eq(feature_review.app_versions)
   end
 
   describe '#time' do
