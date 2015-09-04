@@ -172,7 +172,7 @@ RSpec.describe Queries::ReleaseQuery do
 
         expect(query.feature_reviews.all? {|fr|
           fr.respond_to?(:approved?)
-        }).to eq(true)
+        }).to be true
       end
     end
   end

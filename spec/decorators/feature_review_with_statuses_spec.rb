@@ -232,7 +232,7 @@ RSpec.describe FeatureReviewWithStatuses do
       }
 
       it 'is true' do
-        expect(decorator.approved?).to eq(true)
+        expect(decorator.approved?).to be true
       end
     end
 

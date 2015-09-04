@@ -94,11 +94,11 @@ RSpec.describe Projections::ReleasesProjection do
 
       expect(projection.deployed_releases.any? { |release|
         release.version == 'def' && release.subject == 'commit on topic branch'
-      }).to eq(true)
+      }).to be true
 
       expect(projection.deployed_releases.any? { |release|
         release.version == 'ghi' && release.subject == 'commit on master branch'
-      }).to eq(true)
+      }).to be true
     end
 
     describe 'returned releases' do

@@ -91,7 +91,7 @@ RSpec.describe ReleaseWithStatus do
         instance_double(FeatureReviewWithStatuses, approved?: true),
         instance_double(FeatureReviewWithStatuses, approved?: false),
       ])
-      expect(decorator.approved?).to eq(true)
+      expect(decorator.approved?).to be true
     end
 
     it 'returns false if none of its feature reviews are approved' do
