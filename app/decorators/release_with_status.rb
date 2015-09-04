@@ -1,3 +1,4 @@
+require 'queries/release_query'
 
 class ReleaseWithStatus < SimpleDelegator
   attr_reader :time

@@ -1,3 +1,4 @@
+require 'queries/feature_review_query'
 
 class FeatureReviewWithStatuses < SimpleDelegator
   attr_reader :time

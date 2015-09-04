@@ -1,8 +1,7 @@
 require 'git_repository'
-require 'events/jira_event'
-require 'release'
-require 'ticket'
 require 'release_with_status'
+require 'release'
+require 'repositories/deploy_repository'
 
 module Projections
   class ReleasesProjection
