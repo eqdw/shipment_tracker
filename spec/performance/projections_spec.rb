@@ -11,62 +11,6 @@ RSpec.describe 'Projection performance', type: :request do
     login_with_omniauth
   end
 
-  def create_events(count)
-    number = (count / 6).to_i
-
-    build_events(type: :jira_event, number: number, key: 'JIRA-$ID')
-    build_events(type: :circle_ci_event, number: number)
-    build_events(type: :jenkins_event, number: number)
-    build_events(type: :deploy_event, number: number)
-    build_events(type: :manual_test_event, number: number)
-    build_events(type: :uat_event, number: number)
-  end
-
-  def drop_events
-    Events::BaseEvent.delete_all
-  end
-
-  def updater
-    Repositories::Updater.from_rails_config
-  end
-
-  def create_snapshots
-    updater.run
-  end
-
-  def drop_snapshots
-    updater.reset
-  end
-
-  def benchmark(count, &block)
-    create_events(count)
-    create_snapshots
-
-    time_to_run = Benchmark.realtime(&block)
-    results = [Events::BaseEvent.count, time_to_run]
-    puts "#{results[0]} events -> #{results[1].round(3)} seconds"
-
-    drop_snapshots
-    drop_events
-
-    results
-  end
-
-  def csv(name:, headers:, &block)
-    filename = Rails.root.join('performance', "#{name}.csv")
-    FileUtils.mkdir_p File.dirname(filename)
-    CSV.open(filename, 'wb') do |csv_contents|
-      csv_contents << headers
-      block.call(csv_contents)
-    end
-  end
-
-  def progression(start: 10_000, points: 10, factor: 2, &block)
-    (points - 1).times.reduce([start]) { |a, _e| a << a.last * factor }.each do |count|
-      block.call(count)
-    end
-  end
-
   describe 'Feature Review' do
     let(:apps) { { 'frontend' => 'abc', 'backend' => 'def' } }
     let(:server) { 'uat.fc.com' }
@@ -74,7 +18,7 @@ RSpec.describe 'Projection performance', type: :request do
     let(:path) { URI.parse(url).request_uri }
 
     it 'measures the request time' do
-      csv(name: 'feature_review', headers: ['Count', 'Time to Run']) do |file|
+      csv(name: 'feature_review', headers: ['Event Count', 'Time to Run']) do |file|
         progression do |event_count|
           create :jira_event, comment_body: "Here you go: #{url}"
           create :circle_ci_event, version: apps['frontend']
@@ -111,7 +55,7 @@ RSpec.describe 'Projection performance', type: :request do
       let(:version) { test_git_repo.commit_for_pretend_version('A') }
 
       it 'measures the request time' do
-        csv(name: 'feature_review_search', headers: ['Count', 'Time to Run']) do |file|
+        csv(name: 'feature_review_search', headers: ['Event Count', 'Time to Run']) do |file|
           progression do |event_count|
             create :jira_event, comment_body: "Here you go: #{url}"
 
@@ -125,52 +69,168 @@ RSpec.describe 'Projection performance', type: :request do
   end
 
   describe 'Releases' do
-    let(:repo_name) { 'repo' }
+    let(:apps) { { 'frontend' => version, 'backend' => 'def' } }
+    let(:server) { 'uat.fc.com' }
+    let(:url) { feature_review_url(apps, server) }
+
+    let(:repo_name) { 'frontend' }
     let(:test_git_repo) { Support::GitTestRepository.new }
     let(:repository_builder) { Support::RepositoryBuilder.new(test_git_repo) }
 
+    let(:version) { test_git_repo.commit_for_pretend_version('B') }
     let(:git_diagram) do
       <<-'EOS'
-           o-A-B
-          /     \
-        -o---o---C---o
+          o-o-o-o-o-A-B
+         /             \
+       -o-------o-------C
       EOS
     end
 
     before do
       GitRepositoryLocation.create(name: repo_name, uri: "file://#{test_git_repo.dir}")
-      puts test_git_repo.dir
     end
 
+    # Note that the git diagram contains 10 commits. So each time it's built you get (10 * count) commits.
     def add_branches(count)
       count.times do
         repository_builder.build(git_diagram)
-        version = test_git_repo.commit_for_pretend_version('B')
-        url = feature_review_url(frontend: version)
-        create :jira_event, comment_body: "Here you go: #{url}"
       end
     end
 
-    it 'measures the request time' do
-      points = 90
-      increment = 50
-      csv(name: 'releases', headers: ['Commit Count', 'Event Count', 'Time to Run']) do |file|
-        points.times do
-          add_branches(increment)
+    context 'when commits grow linearly and events stay constant' do
+      it 'measures the request time' do
+        csv(name: 'releases_commits', headers: ['Commit Count', 'Event Count', 'Time to Run']) do |file|
+          progression(start: 1_000) do |event_count|
+            add_branches(300)
 
-          time = Benchmark.realtime do
-            get(release_path(repo_name))
+            create_events(1000)
+
+            create :jira_event, comment_body: "Here you go: #{url}"
+
+            apps.each do |name, sha|
+              create :deploy_event, server: server, app_name: name, version: sha, environment: 'production'
+            end
+
+            file << benchmark(event_count, with_commit_count: true, with_events: false) do
+              get release_path(repo_name)
+            end
+
+            expect(response).to be_ok
           end
+        end
+      end
+    end
 
-          results = [test_git_repo.total_commits, Events::BaseEvent.count, time]
-          file << results
-          puts results.inspect
+    context 'when commits stay constant and events grow linearly' do
+      it 'measures the request time' do
+        add_branches(500)
+        csv(name: 'releases_events', headers: ['Commit Count', 'Event Count', 'Time to Run']) do |file|
+          progression(start: 1_000) do |event_count|
+            create :jira_event, comment_body: "Here you go: #{url}"
+
+            apps.each do |name, sha|
+              create :deploy_event, server: server, app_name: name, version: sha, environment: 'production'
+            end
+
+            file << benchmark(event_count, with_commit_count: true, with_events: true) do
+              get release_path(repo_name)
+            end
+
+            expect(response).to be_ok
+          end
+        end
+      end
+    end
+
+    context 'when commits and events grow linearly' do
+      it 'measures the request time' do
+        branch_count = 100
+
+        csv(name: 'releases', headers: ['Commit Count', 'Event Count', 'Time to Run']) do |file|
+          progression(start: 1_000, points: 5) do |event_count|
+            add_branches(branch_count)
+            branch_count *= 2
+
+            create :jira_event, comment_body: "Here you go: #{url}"
+
+            apps.each do |name, sha|
+              create :deploy_event, server: server, app_name: name, version: sha, environment: 'production'
+            end
+
+            file << benchmark(event_count, with_commit_count: true, with_events: true) do
+              get release_path(repo_name)
+            end
+
+            expect(response).to be_ok
+          end
         end
       end
     end
   end
 
   private
+
+  def create_events(count)
+    number = (count / 6).to_i
+
+    build_events(type: :jira_event, number: number, key: 'JIRA-$ID')
+    build_events(type: :circle_ci_event, number: number)
+    build_events(type: :jenkins_event, number: number)
+    build_events(type: :deploy_event, number: number)
+    build_events(type: :manual_test_event, number: number)
+    build_events(type: :uat_event, number: number)
+  end
+
+  def drop_events
+    Events::BaseEvent.delete_all
+  end
+
+  def updater
+    Repositories::Updater.from_rails_config
+  end
+
+  def create_snapshots
+    updater.run
+  end
+
+  def drop_snapshots
+    updater.reset
+  end
+
+  def benchmark(count, with_commit_count: false, with_events: true, &block)
+    create_events(count) if with_events
+    create_snapshots
+
+    time_to_run = Benchmark.realtime(&block)
+
+    if with_commit_count
+      results = [test_git_repo.total_commits, Events::BaseEvent.count, time_to_run]
+      puts "#{results[0]} commits, #{results[1]} events -> #{results[2].round(1)} seconds"
+    else
+      results = [Events::BaseEvent.count, time_to_run]
+      puts "#{results[0]} events -> #{results[1].round(1)} seconds"
+    end
+
+    drop_snapshots
+    drop_events
+
+    results
+  end
+
+  def csv(name:, headers:, &block)
+    filename = Rails.root.join('performance', "#{name}.csv")
+    FileUtils.mkdir_p File.dirname(filename)
+    CSV.open(filename, 'wb') do |csv_contents|
+      csv_contents << headers
+      block.call(csv_contents)
+    end
+  end
+
+  def progression(start: 10_000, points: 10, factor: 2, &block)
+    (points - 1).times.reduce([start]) { |a, _e| a << a.last * factor }.each do |count|
+      block.call(count)
+    end
+  end
 
   def build_events(type:, number:, **args)
     blueprint = build(type, args)
