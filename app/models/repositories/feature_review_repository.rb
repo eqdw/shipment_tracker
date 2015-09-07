@@ -17,7 +17,7 @@ module Repositories
         .where('versions && ARRAY[?]::varchar[]', versions)
         .group_by(&:url)
         .map { |_, snapshots|
-          most_recent_snapshot = snapshots.max { |s1, s2| s1.event_created_at <=> s2.event_created_at }
+          most_recent_snapshot = snapshots.max_by(&:event_created_at)
           Factories::FeatureReviewFactory.new.create(
             url: most_recent_snapshot.url,
             versions: most_recent_snapshot.versions,
