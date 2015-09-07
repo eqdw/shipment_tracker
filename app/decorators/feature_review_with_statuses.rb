@@ -5,7 +5,6 @@ class FeatureReviewWithStatuses < SimpleDelegator
 
   def initialize(feature_review, at: Time.now, query_class: Queries::FeatureReviewQuery)
     super(feature_review)
-    @feature_review = feature_review
     @time = at
     @query = query_class.new(feature_review, at: @time)
   end
@@ -64,5 +63,5 @@ class FeatureReviewWithStatuses < SimpleDelegator
 
   private
 
-  attr_reader :feature_review, :query
+  attr_reader :query
 end

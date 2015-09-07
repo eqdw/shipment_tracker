@@ -5,7 +5,6 @@ class ReleaseWithStatus < SimpleDelegator
 
   def initialize(release:, git_repository:, at: Time.now, query_class: Queries::ReleaseQuery)
     super(release)
-    @release = release
     @time = at
     @query = query_class.new(release: release, git_repository: git_repository, at: time)
   end

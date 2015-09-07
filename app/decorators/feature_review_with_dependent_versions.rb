@@ -1,7 +1,6 @@
 class FeatureReviewWithDependentVersions < SimpleDelegator
   def initialize(feature_review)
     super(feature_review)
-    @feature_review = feature_review
   end
 
   def dependent_versions(git_repository)
