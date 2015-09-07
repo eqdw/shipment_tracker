@@ -341,6 +341,19 @@ RSpec.describe GitRepository do
         expect(repo.get_dependent_commits('InvalidSha')).to be_empty
       end
     end
+
+    context 'when commmit is on master' do
+      let(:git_diagram) { '-A-B-C-o' }
+      let(:sha) { commit('B') }
+
+      it { is_expected.to be_empty }
+
+      context 'when commit is first commit' do
+        let(:sha) { commit('A') }
+
+        it { is_expected.to be_empty }
+      end
+    end
   end
 
   describe '#path' do

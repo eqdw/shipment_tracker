@@ -47,8 +47,7 @@ class GitRepository
     master = main_branch.target
 
     dependent_commits = []
-    common_ancestor_oid = nil
-    loop do
+    while master
       common_ancestor_oid = rugged_repository.merge_base(master.oid, commit_oid)
       break if common_ancestor_oid != commit_oid
       dependent_commits << build_commit(master) if merge_commit_for?(master, commit_oid)
