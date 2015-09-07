@@ -7,12 +7,12 @@ module Projections
   class ReleasesProjection
     attr_reader :pending_releases, :deployed_releases
 
-    def initialize(per_page:, git_repository:, app_name:)
+    def initialize(per_page:, git_repo:, app_name:, deploy_repo:)
       @per_page = per_page
-      @git_repository = git_repository
+      @git_repository = git_repo
       @app_name = app_name
 
-      @deploy_repository = Repositories::DeployRepository.new
+      @deploy_repository = deploy_repo
       @pending_releases = []
       @deployed_releases = []
 

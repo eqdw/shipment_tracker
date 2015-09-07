@@ -17,12 +17,17 @@ class ReleasesController < ApplicationController
   def build_projection
     Projections::ReleasesProjection.new(
       per_page: 50,
-      git_repository: git_repository,
+      git_repo: git_repository,
+      deploy_repo: deploy_repository,
       app_name: app_name)
   end
 
   def app_name
     params[:id]
+  end
+
+  def deploy_repository
+    Repositories::DeployRepository.new
   end
 
   def git_repository
