@@ -1,4 +1,14 @@
 class GitRepositoryLocation < ActiveRecord::Base
+  validate :must_have_valid_uri
+
+  def must_have_valid_uri
+    URI.parse(uri)
+  rescue URI::InvalidURIError
+    errors.add(:uri, "must be valid in accordance with rfc3986.
+      If using the github SSH clone url then amend to match the following format:
+      ssh://git@github.com/ORGANIZATION/REPO.git")
+  end
+
   def self.app_names
     all.order(name: :asc).pluck(:name)
   end
