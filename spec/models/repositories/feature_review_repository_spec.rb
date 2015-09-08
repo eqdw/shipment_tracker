@@ -69,24 +69,57 @@ RSpec.describe Repositories::FeatureReviewRepository do
   end
 
   describe '#feature_reviews_for' do
-    it 'returns the latest snapshots for the versions specified' do
-      attrs_a = { url: feature_review_url(frontend: 'abc', backend: 'NON1'), versions: %w(NON1 abc) }
-      attrs_b = { url: feature_review_url(frontend: 'NON2', backend: 'def'), versions: %w(def NON2) }
-      attrs_c = { url: feature_review_url(frontend: 'NON2', backend: 'NON3'), versions: %w(NON3 NON2) }
-      attrs_d = { url: feature_review_url(frontend: 'ghi', backend: 'NON3'), versions: %w(NON3 ghi) }
-      attrs_e = { url: feature_review_url(frontend: 'NON4', backend: 'NON5'), versions: %w(NON5 NON4) }
+    let(:attrs_a) {
+      { url: feature_review_url(frontend: 'abc', backend: 'NON1'),
+        versions: %w(NON1 abc),
+        event_created_at: 1.day.ago }
+    }
+    let(:attrs_b) {
+      { url: feature_review_url(frontend: 'NON2', backend: 'def'),
+        versions: %w(def NON2),
+        event_created_at: 3.days.ago }
+    }
+    let(:attrs_c) {
+      { url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
+        versions: %w(NON3 NON2),
+        event_created_at: 5.days.ago }
+    }
+    let(:attrs_d) {
+      { url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
+        versions: %w(NON3 ghi),
+        event_created_at: 7.days.ago }
+    }
+    let(:attrs_e) {
+      { url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
+        versions: %w(NON5 NON4),
+        event_created_at: 9.days.ago }
+    }
 
+    before :each do
       Snapshots::FeatureReview.create!(attrs_a)
       Snapshots::FeatureReview.create!(attrs_b)
       Snapshots::FeatureReview.create!(attrs_c)
       Snapshots::FeatureReview.create!(attrs_d)
       Snapshots::FeatureReview.create!(attrs_e)
+    end
 
-      expect(repository.feature_reviews_for(%w(abc def ghi))).to match_array([
-        FeatureReview.new(attrs_a),
-        FeatureReview.new(attrs_b),
-        FeatureReview.new(attrs_d),
-      ])
+    context 'with unspecified time' do
+      it 'returns the latest snapshots for the versions specified' do
+        expect(repository.feature_reviews_for(versions: %w(abc def ghi))).to match_array([
+          FeatureReview.new(attrs_a),
+          FeatureReview.new(attrs_b),
+          FeatureReview.new(attrs_d),
+        ])
+      end
+    end
+
+    context 'with a specified time' do
+      it 'returns snapshots for the versions specified created at or before the time specified' do
+        expect(repository.feature_reviews_for(versions: %w(abc def ghi), at: 2.days.ago)).to match_array([
+          FeatureReview.new(attrs_b),
+          FeatureReview.new(attrs_d),
+        ])
+      end
     end
   end
 end

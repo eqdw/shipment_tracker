@@ -18,11 +18,11 @@ RSpec.describe Repositories::TicketRepository do
 
     it 'projects latest associated tickets' do
       repository.apply(build(:jira_event, :created, key: 'JIRA-1', comment_body: url))
-      results = repository.tickets_for(projection_url: url)
+      results = repository.tickets_for(feature_review_url: url)
       expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '')])
 
       repository.apply(build(:jira_event, :started, key: 'JIRA-1'))
-      results = repository.tickets_for(projection_url: url)
+      results = repository.tickets_for(feature_review_url: url)
       expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '')])
     end
 
@@ -47,7 +47,7 @@ RSpec.describe Repositories::TicketRepository do
         repository.apply(event)
       end
 
-      expect(repository.tickets_for(projection_url: url)).to match_array([
+      expect(repository.tickets_for(feature_review_url: url)).to match_array([
         Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done'),
         Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review'),
       ])
@@ -73,8 +73,13 @@ RSpec.describe Repositories::TicketRepository do
           repository2.apply(event)
         end
 
-        expect(repository1.tickets_for(projection_url: url1)).to eq([Ticket.new(key: 'JIRA-1')])
-        expect(repository2.tickets_for(projection_url: url2)).to eq([Ticket.new(key: 'JIRA-1')])
+        expect(
+          repository1.tickets_for(feature_review_url: url1),
+        ).to eq([Ticket.new(key: 'JIRA-1')])
+
+        expect(
+          repository2.tickets_for(feature_review_url: url2),
+        ).to eq([Ticket.new(key: 'JIRA-1')])
       end
     end
 
@@ -91,7 +96,7 @@ RSpec.describe Repositories::TicketRepository do
           repository.apply(event)
         end
 
-        expect(repository.tickets_for(projection_url: url, at: t[2])).to match_array([
+        expect(repository.tickets_for(feature_review_url: url, at: t[2])).to match_array([
           Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment'),
         ])
       end

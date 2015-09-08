@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150823124738) do
+ActiveRecord::Schema.define(version: 20150823124742) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -31,9 +31,11 @@ ActiveRecord::Schema.define(version: 20150823124738) do
     t.string   "version"
     t.string   "deployed_by"
     t.datetime "event_created_at"
+    t.string   "environment"
   end
 
   add_index "deploys", ["server", "app_name"], name: "index_deploys_on_server_and_app_name", using: :btree
+  add_index "deploys", ["version"], name: "index_deploys_on_version", using: :btree
 
   create_table "event_counts", force: :cascade do |t|
     t.string  "snapshot_name"
@@ -81,9 +83,11 @@ ActiveRecord::Schema.define(version: 20150823124738) do
     t.string   "status"
     t.text     "urls",             array: true
     t.datetime "event_created_at"
+    t.string   "versions",         array: true
   end
 
   add_index "tickets", ["urls"], name: "index_tickets_on_urls", using: :gin
+  add_index "tickets", ["versions"], name: "index_tickets_on_versions", using: :gin
 
   create_table "tokens", force: :cascade do |t|
     t.string   "source"

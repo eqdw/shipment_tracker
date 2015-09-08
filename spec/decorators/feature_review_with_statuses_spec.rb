@@ -30,6 +30,7 @@ RSpec.describe FeatureReviewWithStatuses do
 
   let(:query_time) { 1.day.ago }
   let(:time_now) { Time.now }
+
   let(:query_class) { class_double(Queries::FeatureReviewQuery, new: feature_review_query) }
 
   subject(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
@@ -42,9 +43,8 @@ RSpec.describe FeatureReviewWithStatuses do
     expect(decorator.uatest).to eq(feature_review_query.uatest)
   end
 
-  it 'delegates #uat_url and #app_versions to the feature_review' do
+  it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
-    expect(decorator.app_versions).to eq(feature_review.app_versions)
   end
 
   describe '#time' do
@@ -232,7 +232,7 @@ RSpec.describe FeatureReviewWithStatuses do
       }
 
       it 'is true' do
-        expect(decorator.approved?).to eq(true)
+        expect(decorator.approved?).to be true
       end
     end
 
@@ -263,6 +263,22 @@ RSpec.describe FeatureReviewWithStatuses do
 
       it 'is false' do
         expect(decorator.approved?).to eq(false)
+      end
+    end
+  end
+
+  describe '#approval_status' do
+    context 'when feature review is approved' do
+      it 'is :approved' do
+        allow(decorator).to receive(:approved?).and_return(true)
+        expect(decorator.approval_status).to eq(:approved)
+      end
+    end
+
+    context 'when no feature review is NOT approved' do
+      it 'is :unapproved' do
+        allow(decorator).to receive(:approved?).and_return(false)
+        expect(decorator.approval_status).to eq(:unapproved)
       end
     end
   end

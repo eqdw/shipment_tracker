@@ -1,17 +1,20 @@
 require 'rails_helper'
-require 'projections/releases_projection'
-require 'git_commit'
 
 RSpec.describe Projections::ReleasesProjection do
   subject(:projection) {
     Projections::ReleasesProjection.new(
       per_page: 50,
-      git_repository: repository,
+      git_repo: git_repository,
+      deploy_repo: deploy_repository,
       app_name: app_name,
     )
   }
 
-  let(:repository) { instance_double(GitRepository) }
+  let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
+  let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
+  let(:feature_review_repository) { instance_double(Repositories::FeatureReviewRepository) }
+  let(:git_repository) { instance_double(GitRepository) }
+
   let(:app_name) { 'foo' }
   let(:time) { Time.current }
   let(:formatted_time) { time.to_formatted_s(:long_ordinal) }
@@ -24,68 +27,93 @@ RSpec.describe Projections::ReleasesProjection do
     ]
   }
 
-  let(:events) {
+  let(:versions) { commits.map(&:id) }
+  let(:deploy_time) { time - 1.hour }
+  let(:deploys) { [Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time)] }
+  let(:feature_reviews) {
     [
-      build(:deploy_event, environment: 'uat', app_name: app_name, version: 'def'),
-      build(:deploy_event, environment: 'uat', app_name: app_name, version: 'abc'),
-
-      build(:jira_event, key: 'JIRA-1', comment_body: feature_review_comment(foo: 'abc')),
-      build(:jira_event, key: 'JIRA-2', comment_body: feature_review_comment(foo: 'abc', bar: 'jkl')),
-      build(:jira_event, key: 'JIRA-3', comment_body: feature_review_comment(foo: 'xyz')),
-      build(:jira_event, :approved, key: 'JIRA-2'),
-
-      build(:deploy_event, version: 'def', environment: 'production', app_name: app_name, created_at: time),
-      build(:deploy_event, version: 'klm', environment: 'production', app_name: 'irrelevant_app'),
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'abc', backend: 'NON1'),
+        versions: %w(NON1 abc),
+        event_created_at: 1.day.ago,
+      ),
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'NON2', backend: 'def'),
+        versions: %w(def NON2),
+        event_created_at: 3.days.ago,
+      ),
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
+        versions: %w(NON3 NON2),
+        event_created_at: 5.days.ago,
+      ),
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
+        versions: %w(NON3 ghi),
+        event_created_at: 7.days.ago,
+      ),
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
+        versions: %w(NON5 NON4),
+        event_created_at: 9.days.ago,
+      ),
     ]
   }
 
   before do
-    allow(repository).to receive(:recent_commits).with(50).and_return(commits)
-    allow(repository).to receive(:get_dependent_commits).with('abc').and_return([GitCommit.new(id: 'def')])
+    allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
+    allow(git_repository).to receive(:recent_commits).with(50).and_return(commits)
+    allow(deploy_repository).to receive(:deploys_for_versions).with(versions, environment: 'production')
+      .and_return(deploys)
   end
 
   describe '#pending_releases' do
-    it 'returns the list of releases not yet deployed to production' do
-      projection.apply_all(events)
+    it 'returns list of releases not yet deployed to production' do
+      expect(projection.pending_releases.length).to eq(1)
 
-      expect(projection.pending_releases).to eq(
-        [
-          Release.new(
-            version: 'abc',
-            subject: 'commit on topic branch',
-            time: nil,
-            feature_review_status: 'Ready for Deployment',
-            feature_review_path: feature_review_path(foo: 'abc', bar: 'jkl'), # Only shows last associated FR
-            approved: true, # A release has max one FR, so approved even when FR for JIRA-1 is not approved
-          ),
-        ],
-      )
+      release = projection.pending_releases.first
+      expect(release.version).to eq('abc')
+      expect(release.subject).to eq('commit on topic branch')
+    end
+
+    describe 'returned releases' do
+      it 'have feature_reviews' do
+        expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
+      end
+
+      it 'have an approval_status and know whether they are approved' do
+        expect(projection.pending_releases).to all(respond_to(:approved?))
+        expect(projection.pending_releases).to all(respond_to(:approval_status))
+      end
     end
   end
 
   describe '#deployed_releases' do
-    it 'returns the list of releases deployed to production' do
-      projection.apply_all(events)
+    it 'returns list of releases deployed to production' do
+      expect(projection.deployed_releases.length).to eq(2)
 
-      expect(projection.deployed_releases).to eq(
-        [
-          Release.new(
-            version: 'def',
-            subject: 'commit on topic branch',
-            time: formatted_time,
-            feature_review_status: 'Ready for Deployment',
-            feature_review_path: feature_review_path(foo: 'abc', bar: 'jkl'),
-            approved: true,
-          ),
-          Release.new(
-            version: 'ghi',
-            subject: 'commit on master branch',
-            time: nil,
-            feature_review_path: nil,
-            approved: false,
-          ),
-        ],
-      )
+      expect(projection.deployed_releases.any? { |release|
+        release.version == 'def' && release.subject == 'commit on topic branch'
+      }).to be true
+
+      expect(projection.deployed_releases.any? { |release|
+        release.version == 'ghi' && release.subject == 'commit on master branch'
+      }).to be true
+    end
+
+    describe 'returned releases' do
+      it 'know production_deploy_time' do
+        expect(projection.deployed_releases).to all(respond_to(:production_deploy_time))
+      end
+
+      it 'have feature_reviews' do
+        expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
+      end
+
+      it 'have an approval_status and know whether they are approved' do
+        expect(projection.deployed_releases).to all(respond_to(:approved?))
+        expect(projection.deployed_releases).to all(respond_to(:approval_status))
+      end
     end
   end
 

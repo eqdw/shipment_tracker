@@ -28,14 +28,14 @@ Scenario: Viewing User Acceptance Tests results on a Feature review
   And a commit "#def" by "Bob" is created for app "backend"
   And commit "#abc" of "frontend" is deployed by "Alice" to server "uat.fundingcircle.com"
   And commit "#def" of "backend" is deployed by "Bob" to server "uat.fundingcircle.com"
-  And a developer prepares a review for UAT "uat.fundingcircle.com" with apps
+  And developer prepares review known as "FR_visit" for UAT "uat.fundingcircle.com" with apps
     | app_name | version |
     | frontend | #abc    |
     | backend  | #def    |
   And User Acceptance Tests at version "abc123" which "passed" on server "uat.fundingcircle.com"
   And User Acceptance Tests at version "abc123" which "failed" on server "other-uat.fundingcircle.com"
 
-  When I visit the feature review
+  When I visit the feature review known as "FR_visit"
 
   Then I should see a summary that includes
     | status  | title                 |
@@ -59,14 +59,14 @@ Scenario: Viewing a feature review
   And commit "#old" of "backend" is deployed by "Bob" to server "uat.fundingcircle.com"
   And commit "#def" of "backend" is deployed by "Bob" to server "other-uat.fundingcircle.com"
   And commit "#xyz" of "irrelevant" is deployed by "Wendy" to server "uat.fundingcircle.com"
-  And a developer prepares a review upto now for UAT "uat.fundingcircle.com" with apps
+  And developer prepares review known as "FR_view" upto now for UAT "uat.fundingcircle.com" with apps
     | app_name | version |
     | frontend | #abc    |
     | backend  | #def    |
     | mobile   | #ghi    |
-  And adds the link to a comment for ticket "JIRA-123"
+  And adds the link for review "FR_view" to a comment for ticket "JIRA-123"
 
-  When I visit the feature review
+  When I visit the feature review known as "FR_view"
 
   Then I should see a summary with heading "danger" and content
     | status  | title                 |
@@ -94,11 +94,11 @@ Scenario: Viewing a feature review
 
 Scenario: QA rejects feature
   Given I am logged in as "foo@bar.com"
-  And a developer prepares a review for UAT "uat.fundingcircle.com" with apps
+  And developer prepares review known as "FR_qa_rejects" for UAT "uat.fundingcircle.com" with apps
     | app_name | version |
     | frontend | abc     |
     | backend  | def     |
-  When I visit the feature review
+  When I visit the feature review known as "FR_qa_rejects"
   Then I should see the QA acceptance with heading "warning"
 
   When I "reject" the feature with comment "Not good enough"

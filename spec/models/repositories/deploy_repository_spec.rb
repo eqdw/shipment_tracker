@@ -13,6 +13,37 @@ RSpec.describe Repositories::DeployRepository do
     end
   end
 
+  describe '#deploys_for_versions' do
+    let(:versions) { %w(abc def xyz) }
+    let(:environment) { 'production' }
+    let(:defaults) {
+      { app_name: 'frontend', server: 'test.com', deployed_by: 'Bob', environment: environment }
+    }
+
+    context 'when deploy events exist' do
+      before do
+        repository.apply(build(:deploy_event, defaults.merge(version: 'xyz', environment: 'uat')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'abc')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'abc', deployed_by: 'Carl')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'def')))
+        repository.apply(build(:deploy_event, defaults.merge(version: 'ghi')))
+      end
+
+      it 'returns all deploys for given version and environment' do
+        expect(repository.deploys_for_versions(versions, environment: environment)).to match_array([
+          Deploy.new(defaults.merge(version: versions.first, deployed_by: 'Carl')),
+          Deploy.new(defaults.merge(version: versions.second)),
+        ])
+      end
+    end
+
+    context 'when no deploy exists' do
+      it 'returns empty' do
+        expect(repository.deploys_for_versions(versions, environment: environment)).to be_empty
+      end
+    end
+  end
+
   describe '#deploys_for' do
     let(:apps) { { 'frontend' => 'abc' } }
     let(:server) { 'uat.fundingcircle.com' }
@@ -87,13 +118,13 @@ RSpec.describe Repositories::DeployRepository do
 
     context 'with at specified' do
       let(:defaults) { { server: 'x.io', deployed_by: 'dj' } }
-
+      let(:time) { (Time.current - 4.hours).change(usec: 0) }
       it 'returns the state at that moment' do
         events = [
-          build(:deploy_event, defaults.merge(version: 'abc', app_name: 'app1', created_at: 3.hours.ago)),
-          build(:deploy_event, defaults.merge(server: 'y.io', app_name: 'app1', created_at: 2.hours.ago)),
-          build(:deploy_event, defaults.merge(version: 'def', app_name: 'app2', created_at: 1.hours.ago)),
-          build(:deploy_event, defaults.merge(version: 'ghi', app_name: 'app1', created_at: Time.current)),
+          build(:deploy_event, defaults.merge(version: 'abc', app_name: 'app1', created_at: time)),
+          build(:deploy_event, defaults.merge(server: 'y.io', app_name: 'app1', created_at: time + 1.hour)),
+          build(:deploy_event, defaults.merge(version: 'def', app_name: 'app2', created_at: time + 2.hours)),
+          build(:deploy_event, defaults.merge(version: 'ghi', app_name: 'app1', created_at: time + 3.hours)),
         ]
 
         events.each do |event|
@@ -106,11 +137,17 @@ RSpec.describe Repositories::DeployRepository do
             'app2' => 'def',
           },
           server: 'x.io',
-          at: 2.hours.ago,
+          at: time + 1.second,
         )
 
         expect(results).to match_array([
-          Deploy.new(app_name: 'app1', server: 'x.io', version: 'abc', deployed_by: 'dj', correct: true),
+          Deploy.new(app_name: 'app1',
+                     server: 'x.io',
+                     version: 'abc',
+                     deployed_by: 'dj',
+                     correct: true,
+                     event_created_at: time,
+                    ),
         ])
       end
     end

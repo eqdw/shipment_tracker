@@ -29,7 +29,8 @@ RSpec.describe Queries::FeatureReviewQuery do
     let(:expected_builds) { double('expected builds') }
 
     before do
-      allow(build_repository).to receive(:builds_for).with(apps: expected_apps, at: time)
+      allow(build_repository).to receive(:builds_for)
+        .with(apps: expected_apps, at: time)
         .and_return(expected_builds)
     end
 
@@ -43,7 +44,8 @@ RSpec.describe Queries::FeatureReviewQuery do
 
     before do
       allow(deploy_repository).to receive(:deploys_for)
-        .with(apps: expected_apps, server: expected_uat_host, at: time).and_return(expected_deploys)
+        .with(apps: expected_apps, server: expected_uat_host, at: time)
+        .and_return(expected_deploys)
     end
 
     it 'delegates to the deploy repository' do
@@ -70,7 +72,8 @@ RSpec.describe Queries::FeatureReviewQuery do
     let(:expected_tickets) { double('expected tickets') }
 
     before do
-      allow(ticket_repository).to receive(:tickets_for).with(projection_url: feature_review.url, at: time)
+      allow(ticket_repository).to receive(:tickets_for)
+        .with(feature_review_url: feature_review.url, at: time)
         .and_return(expected_tickets)
     end
 
@@ -91,7 +94,8 @@ RSpec.describe Queries::FeatureReviewQuery do
 
     before do
       allow(uatest_repository).to receive(:uatest_for)
-        .with(versions: expected_versions, server: expected_uat_host, at: time).and_return(expected_uatest)
+        .with(versions: expected_versions, server: expected_uat_host, at: time)
+        .and_return(expected_uatest)
     end
 
     it 'delegates to the uatest repository' do

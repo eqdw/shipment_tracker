@@ -15,11 +15,11 @@ module Pages
       page.all('.pending-release').map { |release_line|
         values = release_line.all('td').to_a
         {
+          'approved' => !release_line['class'].split.include?('danger'),
           'version' => values.fetch(0).text,
           'subject' => values.fetch(1).text,
-          'approved' => !release_line['class'].split.include?('danger'),
-          'feature_review_status' => values.fetch(2).text,
-          'feature_review_path' => extract_href_if_exists(values.fetch(2)),
+          'feature_reviews' => values.fetch(2).text,
+          'feature_review_paths' => extract_href_if_exists(values.fetch(2)),
         }
       }
     end
@@ -29,16 +29,16 @@ module Pages
       page.all('.deployed-release').map { |release_line|
         values = release_line.all('td').to_a
         release = {
+          'approved' => !release_line['class'].split.include?('danger'),
           'version' => values.fetch(0).text,
           'subject' => values.fetch(1).text,
-          'approved' => !release_line['class'].split.include?('danger'),
-          'feature_review_status' => values.fetch(2).text,
-          'feature_review_path' => extract_href_if_exists(values.fetch(2)),
+          'feature_reviews' => values.fetch(2).text,
+          'feature_review_paths' => extract_href_if_exists(values.fetch(2)),
           'time' => nil,
         }
 
-        time = values.fetch(3).text
-        release['time'] = Time.parse(time) unless time.empty?
+        deploy_time = values.fetch(3).text
+        release['time'] = Time.parse(deploy_time) unless deploy_time.empty?
         release
       }
     end
@@ -46,7 +46,7 @@ module Pages
     private
 
     def extract_href_if_exists(element)
-      element.find('a')['href'] if element.has_css?('a')
+      element.all('a').map { |link| link['href'] }
     end
 
     def verify!

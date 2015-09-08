@@ -131,9 +131,9 @@ RSpec.describe GitRepository do
     context "when given commit is part of a branch that's merged into master" do
       let(:git_diagram) do
         <<-'EOS'
-             o-A-B
-            /     \
-          -o---o---C---o
+        o-A-B---
+       /        \
+     -o-------o--C---o
         EOS
       end
 
@@ -141,6 +141,22 @@ RSpec.describe GitRepository do
         descendant_commits = repo.get_descendant_commits_of_branch(commit('A')).map(&:id)
 
         expect(descendant_commits).to contain_exactly(commit('B'), commit('C'))
+      end
+    end
+
+    context 'when given commit is a fork' do
+      let(:git_diagram) do
+        <<-'EOS'
+        B--C----E
+       /         \
+ -o---A-------D---F---G-
+        EOS
+      end
+
+      it 'returns empty array' do
+        descendant_commits = repo.get_descendant_commits_of_branch(commit('A')).map(&:id)
+
+        expect(descendant_commits).to be_empty
       end
     end
 
@@ -191,9 +207,9 @@ RSpec.describe GitRepository do
   describe '#merge?' do
     let(:git_diagram) do
       <<-'EOS'
-           o-A-B
-          /     \
-        -o---o---C---o
+      o-A-B---
+     /        \
+   -o-------o--C---o
       EOS
     end
 
@@ -223,17 +239,32 @@ RSpec.describe GitRepository do
   describe '#branch_parent' do
     let(:git_diagram) do
       <<-'EOS'
-           o-A-B
-          /     \
-        -o---o---C---o
+      o-A-B---
+     /        \
+   -o-------o--C---o
       EOS
     end
 
     subject { repo.branch_parent(sha) }
 
     context 'when on a merge commit' do
-      let(:sha) { commit('C') }
-      it { is_expected.to eq(commit('B')) }
+      context 'branch_parent was committed BEFORE parent on master' do
+        let(:sha) { commit('C') }
+        it { is_expected.to eq(commit('B')) }
+      end
+
+      context 'branch_parent was committed AFTER parent on master' do
+        let(:git_diagram) do
+          <<-'EOS'
+          o-A----B
+         /        \
+        -o-----o----C---o
+          EOS
+        end
+
+        let(:sha) { commit('C') }
+        it { is_expected.to eq(commit('B')) }
+      end
     end
 
     context 'when on a non merge commit' do
@@ -280,6 +311,47 @@ RSpec.describe GitRepository do
       let(:sha) { commit('B') }
       it 'includes the merge commit in the result' do
         is_expected.to contain_exactly(commit('A'), commit('C'))
+      end
+    end
+
+    context 'when the commit is a merge commit' do
+      let(:git_diagram) do
+        <<-'EOS'
+             A-B
+            /   \
+          -o--o--C
+        EOS
+      end
+
+      let(:sha) { commit('C') }
+      it 'returns the feature branch ancestors of the merge commit but not the merge commit itself' do
+        is_expected.to contain_exactly(commit('A'), commit('B'))
+      end
+    end
+
+    context 'when the sha is invalid' do
+      let(:git_diagram) do
+        <<-'EOS'
+             o-A-o
+            /
+          -o-----o
+        EOS
+      end
+      it 'is empty' do
+        expect(repo.get_dependent_commits('InvalidSha')).to be_empty
+      end
+    end
+
+    context 'when commmit is on master' do
+      let(:git_diagram) { '-A-B-C-o' }
+      let(:sha) { commit('B') }
+
+      it { is_expected.to be_empty }
+
+      context 'when commit is first commit' do
+        let(:sha) { commit('A') }
+
+        it { is_expected.to be_empty }
       end
     end
   end

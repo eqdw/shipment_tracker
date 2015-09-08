@@ -28,6 +28,7 @@ RSpec.describe ReleasesController do
     let(:app_name) { 'frontend' }
     let(:pending_releases) { double(:pending_releases) }
     let(:deployed_releases) { double(:deployed_releases) }
+    let(:deploy_repo) { Repositories::DeployRepository.new }
     let(:projection) {
       instance_double(
         Projections::ReleasesProjection,
@@ -39,17 +40,18 @@ RSpec.describe ReleasesController do
     before do
       allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
       allow(repository_loader).to receive(:load).with('frontend').and_return(repository)
+      allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
+      allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repo)
       allow(Projections::ReleasesProjection).to receive(:new).with(
         per_page: 50,
-        git_repository: repository,
+        git_repo: repository,
+        deploy_repo: deploy_repo,
         app_name: app_name,
       ).and_return(projection)
       allow(Events::BaseEvent).to receive(:in_order_of_creation).and_return(events)
     end
 
     it 'shows the list of commits for an app' do
-      expect(projection).to receive(:apply_all).with(events)
-
       get :show, id: app_name
 
       expect(response).to have_http_status(:success)

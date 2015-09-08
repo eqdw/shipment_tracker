@@ -1,20 +1,15 @@
-require 'forwardable'
+require 'queries/feature_review_query'
 
 class FeatureReviewWithStatuses < SimpleDelegator
-  extend Forwardable
-
-  def_delegators :@query, :tickets, :builds, :deploys, :qa_submission, :uatest
-
-  def_delegators :@feature_review,
-    :uat_url, :app_versions
-
   attr_reader :time
 
   def initialize(feature_review, at: Time.now, query_class: Queries::FeatureReviewQuery)
-    @feature_review = feature_review
+    super(feature_review)
     @time = at
     @query = query_class.new(feature_review, at: @time)
   end
+
+  delegate :tickets, :builds, :deploys, :qa_submission, :uatest, to: :query
 
   def build_status
     builds = query.builds.values
@@ -62,7 +57,11 @@ class FeatureReviewWithStatuses < SimpleDelegator
     tickets.all?(&:approved?)
   end
 
+  def approval_status
+    approved? ? :approved : :unapproved
+  end
+
   private
 
-  attr_reader :feature_review, :query
+  attr_reader :query
 end
