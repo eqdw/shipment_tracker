@@ -364,17 +364,28 @@ RSpec.describe GitRepository do
 
   describe '#commit_to_master_for' do
     context 'when the given commit is on the master branch' do
-      let(:git_diagram) do
-        <<-'EOS'
-             A-B
-            /   \
-          -o--o--C
-        EOS
+      context 'when commit is a merge commit' do
+        let(:git_diagram) do
+          <<-'EOS'
+               A-B
+              /   \
+            -o--o--C
+          EOS
+        end
+
+        let(:sha) { commit('C') }
+        it 'returns the commit itself' do
+          expect(repo.commit_to_master_for(sha).oid).to eq(commit('C'))
+        end
       end
 
-      let(:sha) { commit('C') }
-      it 'returns the merge commit on master' do
-        expect(repo.commit_to_master_for(sha).oid).to eq(commit('C'))
+      context 'when commit is a commit directly to master' do
+        let(:git_diagram) { '-o-A-B-C' }
+
+        let(:sha) { commit('B') }
+        it 'returns the commit itself' do
+          expect(repo.commit_to_master_for(sha).oid).to eq(commit('B'))
+        end
       end
     end
 

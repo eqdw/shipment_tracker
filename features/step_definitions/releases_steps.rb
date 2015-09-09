@@ -9,10 +9,15 @@ Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_ta
       'version' => scenario_context.resolve_version(release_line.fetch('version')).slice(0..6),
       'subject' => release_line.fetch('subject'),
       'feature_reviews' => release_line.fetch('review statuses'),
+      'feature_review_paths' => nil,
+      'committed_to_master_at' => nil,
     }
 
     nicknames = release_line.fetch('feature reviews').split(',')
     release['feature_review_paths'] = nicknames.map { |nickname| scenario_context.review_path(nickname) }
+
+    master_commit_time = release_line.fetch('committed to master at')
+    release['committed_to_master_at'] = Time.parse(master_commit_time) if master_commit_time
 
     if deploy_status == 'deployed'
       time = release_line.fetch('last deployed at')

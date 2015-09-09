@@ -6,8 +6,9 @@
   %thead
     %tr
       %th{width: '10%'} version
-      %th{width: '40%'} message
-      %th{width: '35%'} feature reviews
+      %th{width: '35%'} message
+      %th{width: '15%'} feature reviews
+      %th{width: '40%'} committed to master
   %tbody
   - @pending_releases.each do |release|
     %tr.pending-release{class: ('danger' unless release.approved?)}
@@ -16,6 +17,7 @@
       %td
         - release.feature_reviews.each do |feature_review|
           %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
+      %td= release.committed_to_master_at.try(:to_formatted_s, :long_ordinal)
 
 %h2 Deployed
 
@@ -23,9 +25,10 @@
   %thead
     %tr
       %th{width: '10%'} version
-      %th{width: '40%'} message
-      %th{width: '20%'} feature reviews
-      %th{width: '15%'} last deployed at
+      %th{width: '35%'} message
+      %th{width: '15%'} feature reviews
+      %th{width: '20%'} committed to master
+      %th{width: '20%'} last deployed at
   %tbody
   - @deployed_releases.each do |release|
     %tr.deployed-release{class: ('danger' unless release.approved?)}
@@ -34,4 +37,5 @@
       %td
         - release.feature_reviews.each do |feature_review|
           %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
+      %td= release.committed_to_master_at.try(:to_formatted_s, :long_ordinal)
       %td= release.production_deploy_time.try(:to_formatted_s, :long_ordinal)

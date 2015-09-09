@@ -10,12 +10,12 @@ Background:
   And developer prepares review known as "FR_search1" for UAT "http://uat.fundingcircle.com" with apps
     | app_name | version  |
     | frontend | #commit1 |
-  And adds the link for review "FR_search1" to a comment for ticket "JIRA-123"
+  And at time "14:20:13" adds link for review "FR_search1" to comment for ticket "JIRA-123"
   And a commit "#commit2" with message "second commit" is created at "15:04:19"
   And developer prepares review known as "FR_search2" for UAT "http://uat.fundingcircle.com" with apps
     | app_name | version  |
     | frontend | #commit2 |
-  And adds the link for review "FR_search2" to a comment for ticket "JIRA-123"
+  And at time "15:21:34" adds link for review "FR_search2" to comment for ticket "JIRA-123"
   And ticket "JIRA-123" is approved by "alice@fundingcircle.com" at "15:24:34"
   And the branch "master" is checked out
   And a commit "#commit3" with message "recent commit" is created at "13:31:17"

@@ -64,7 +64,7 @@ Scenario: Viewing a feature review
     | frontend | #abc    |
     | backend  | #def    |
     | mobile   | #ghi    |
-  And adds the link for review "FR_view" to a comment for ticket "JIRA-123"
+  And at time "00:00:01" adds link for review "FR_view" to comment for ticket "JIRA-123"
 
   When I visit the feature review known as "FR_view"
 

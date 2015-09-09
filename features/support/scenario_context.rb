@@ -65,11 +65,16 @@ module Support
       @review_urls[feature_review_nickname] = UrlBuilder.new(@host).build(apps_hash, uat_url, time)
     end
 
-    def link_ticket_and_feature_review(jira_key, feature_review_nickname)
+    def link_ticket_and_feature_review(jira_key, feature_review_nickname, time)
       url = review_url(feature_review_nickname)
-      ticket_details = @tickets.fetch(jira_key)
-      event = build(:jira_event, ticket_details.merge!(comment_body: "Here you go: #{url}"))
-      post_event 'jira', event.details
+      ticket_details = @tickets.fetch(jira_key).merge!(
+        comment_body: "Here you go: #{url}",
+        updated: time,
+      )
+      event = build(:jira_event, ticket_details)
+      travel_to(time) do
+        post_event 'jira', event.details
+      end
     end
 
     def approve_ticket(jira_key, approver_email:, time:)
@@ -79,7 +84,9 @@ module Support
         :approved,
         ticket_details.merge!(user_email: approver_email, updated: time),
       )
-      post_event 'jira', event.details
+      travel_to(time) do
+        post_event 'jira', event.details
+      end
     end
 
     def review_url(feature_review_nickname = nil)

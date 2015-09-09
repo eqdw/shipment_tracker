@@ -5,8 +5,8 @@ Given 'a ticket "$key" with summary "$summary" is started' do |key, summary|
   )
 end
 
-Given 'adds the link for review "$nickname" to a comment for ticket "$jira_key"' do |nickname, jira_key|
-  scenario_context.link_ticket_and_feature_review(jira_key, nickname)
+Given 'at time "$a" adds link for review "$b" to comment for ticket "$c"' do |time, nickname, jira_key|
+  scenario_context.link_ticket_and_feature_review(jira_key, nickname, time)
 end
 
 Given 'ticket "$key" is approved by "$approver_email" at "$time"' do |jira_key, approver_email, time|

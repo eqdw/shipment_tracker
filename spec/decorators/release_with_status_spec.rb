@@ -41,9 +41,14 @@ RSpec.describe ReleaseWithStatus do
     ReleaseWithStatus.new(
       release: release,
       git_repository: git_repository,
-      at: query_time,
       query_class: query_class)
   }
+
+  before :each do
+    allow(git_repository).to receive(:commit_to_master_for)
+      .with('commitsha1')
+      .and_return(nil)
+  end
 
   it 'delegates unknown messages to the release' do
     expect(decorator.version).to eq(release.version)
@@ -59,27 +64,38 @@ RSpec.describe ReleaseWithStatus do
     expect(decorator.feature_reviews).to eq(release_query.feature_reviews)
   end
 
-  describe '#time' do
-    context 'when initialized with a time' do
-      it 'returns the time it was initialized with' do
-        Timecop.freeze(time_now) do
-          decorator_with_specified_time = described_class.new(
-            release: release,
-            git_repository: git_repository,
-            at: query_time)
-          expect(decorator_with_specified_time.time).to eq(query_time)
-        end
-        expect(decorator.time).to eql(query_time)
+  describe '#committed_to_master_at' do
+    let(:merge_time) { 1.day.ago }
+    let(:commit) { instance_double(GitCommit, time: release.time) }
+
+    before do
+      allow(git_repository).to receive(:commit_to_master_for)
+        .with('commitsha1')
+        .and_return(commit)
+    end
+
+    context 'when the commit is on master' do
+      let(:commit) { instance_double(GitCommit, time: time_now) }
+
+      it 'returns the commit time' do
+        expect(decorator.committed_to_master_at).to eq(time_now)
       end
     end
 
-    context 'when NOT initialized with a time' do
-      it 'returns the time when it was initialized' do
-        Timecop.freeze(time_now) do
-          decorator_without_specified_time = described_class.new(
-            release: release,
-            git_repository: git_repository)
-          expect(decorator_without_specified_time.time).to eq(time_now)
+    context 'when the commit is a feature branch commit' do
+      context 'when feature branch has been merged to master' do
+        let(:commit) { instance_double(GitCommit, time: merge_time) }
+
+        it 'returns the commit time of the subsequent merge commit' do
+          expect(decorator.committed_to_master_at).to eq(merge_time)
+        end
+      end
+
+      context 'when feature branch has NOT been merged to master' do
+        let(:commit) { nil }
+
+        it 'returns nil' do
+          expect(decorator.committed_to_master_at).to eq(nil)
         end
       end
     end

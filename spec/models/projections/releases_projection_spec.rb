@@ -63,6 +63,7 @@ RSpec.describe Projections::ReleasesProjection do
   before do
     allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
     allow(git_repository).to receive(:recent_commits).with(50).and_return(commits)
+    allow(git_repository).to receive(:commit_to_master_for)
     allow(deploy_repository).to receive(:deploys_for_versions).with(versions, environment: 'production')
       .and_return(deploys)
   end
