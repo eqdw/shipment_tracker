@@ -5,8 +5,12 @@ Given 'an application called "$name"' do |name|
   scenario_context.setup_application(name)
 end
 
-Given 'a commit "$version" by "$name" is created for app "$app"' do |version, name, app|
-  scenario_context.repository_for(app).create_commit(author_name: name, pretend_version: version)
+Given 'a commit "$version" by "$name" is created at "$time" for app "$app"' do |version, name, time, app|
+  scenario_context.repository_for(app).create_commit(
+    author_name: name,
+    time: Time.parse(time),
+    pretend_version: version,
+  )
 end
 
 Given 'a commit "$version" with message "$message" is created at "$time"' do |version, message, time|

@@ -23,12 +23,12 @@ Given 'developer prepares review known as "$a" for UAT "$b" with apps' do |known
   scenario_context.prepare_review(apps_table.hashes, uat_url, known_as)
 end
 
-Given 'developer prepares review known as "$a" upto now for UAT "$b" with apps' do |known_as, uat_url, table|
-  scenario_context.prepare_review(table.hashes, uat_url, known_as, 1.second.from_now)
+When 'I visit the feature review known as "$known_as"' do |known_as|
+  visit scenario_context.review_url(feature_review_nickname: known_as)
 end
 
-When 'I visit the feature review known as "$known_as"' do |known_as|
-  visit scenario_context.review_url(known_as)
+When 'I visit feature review "$known_as" as at "$time"' do |known_as, time|
+  visit scenario_context.review_url(feature_review_nickname: known_as, time: time)
 end
 
 Then 'I should see the builds with heading "$status" and content' do |status, builds_table|

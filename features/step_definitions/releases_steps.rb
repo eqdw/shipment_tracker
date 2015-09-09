@@ -13,8 +13,10 @@ Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_ta
       'committed_to_master_at' => nil,
     }
 
-    nicknames = release_line.fetch('feature reviews').split(',')
-    release['feature_review_paths'] = nicknames.map { |nickname| scenario_context.review_path(nickname) }
+    nicknames = release_line.fetch('feature reviews').split(',').map(&:strip)
+    release['feature_review_paths'] = nicknames.map { |nickname|
+      scenario_context.review_path(feature_review_nickname: nickname)
+    }
 
     master_commit_time = release_line.fetch('committed to master at')
     release['committed_to_master_at'] = Time.parse(master_commit_time) if master_commit_time
