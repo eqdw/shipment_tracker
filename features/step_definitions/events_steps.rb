@@ -20,7 +20,7 @@ Given 'CircleCi "$outcome" for commit "$version"' do |outcome, version|
     version: scenario_context.resolve_version(version),
   ).details
 
-  post_event 'circleci-manual', payload
+  scenario_context.post_event 'circleci-manual', payload
 end
 
 Given 'commit "$version" of "$app" is deployed by "$name" to server "$server"' do |version, app, name, server|
@@ -32,7 +32,7 @@ Given 'commit "$version" of "$app" is deployed by "$name" to server "$server"' d
     deployed_by: name,
   ).details
 
-  post_event 'deploy', payload
+  scenario_context.post_event 'deploy', payload
 end
 
 Given 'commit "$ver" of "$app" is deployed by "$name" to production at "$time"' do |ver, app, name, time|
@@ -46,7 +46,7 @@ Given 'commit "$ver" of "$app" is deployed by "$name" to production at "$time"' 
   ).details
 
   travel_to Time.zone.parse(time) do
-    post_event 'deploy', payload
+    scenario_context.post_event 'deploy', payload
   end
 end
 
@@ -58,17 +58,5 @@ Given 'User Acceptance Tests at version "$sha" which "$outcome" on server "$serv
     server: server,
   ).details
 
-  post_event 'uat', payload
-end
-
-def post_event(type, payload)
-  OmniAuth.config.test_mode = true
-  OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(
-    provider: 'event_token',
-    uid:      type,
-  )
-  url = "/events/#{type}"
-  post url, payload.to_json, 'CONTENT_TYPE' => 'application/json'
-
-  Repositories::Updater.from_rails_config.run
+  scenario_context.post_event 'uat', payload
 end

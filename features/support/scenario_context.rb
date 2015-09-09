@@ -8,6 +8,7 @@ require 'factory_girl'
 module Support
   class ScenarioContext
     include Support::FeatureReviewHelpers
+    include ActiveSupport::Testing::TimeHelpers
 
     def initialize(app, host)
       @app = app # used by rack-test
@@ -96,6 +97,19 @@ module Support
 
     def review_paths
       review_urls.map { |review_url| url_to_path(review_url) }
+    end
+
+    def post_event(type, payload)
+      OmniAuth.config.test_mode = true
+      OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(
+        provider: 'event_token',
+        uid:      type,
+      )
+      url = "/events/#{type}"
+
+      post url, payload.to_json, 'CONTENT_TYPE' => 'application/json'
+
+      Repositories::Updater.from_rails_config.run
     end
 
     private
