@@ -9,6 +9,7 @@ class FeatureReview
   values do
     attribute :url, String
     attribute :versions, Array
+    attribute :approved_at, DateTime
   end
 
   def app_versions

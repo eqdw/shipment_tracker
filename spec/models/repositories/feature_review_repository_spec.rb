@@ -72,27 +72,32 @@ RSpec.describe Repositories::FeatureReviewRepository do
     let(:attrs_a) {
       { url: feature_review_url(frontend: 'abc', backend: 'NON1'),
         versions: %w(NON1 abc),
-        event_created_at: 1.day.ago }
+        event_created_at: 1.day.ago,
+        approved_at: nil }
     }
     let(:attrs_b) {
       { url: feature_review_url(frontend: 'NON2', backend: 'def'),
         versions: %w(def NON2),
-        event_created_at: 3.days.ago }
+        event_created_at: 3.days.ago,
+        approved_at: nil  }
     }
     let(:attrs_c) {
       { url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
         versions: %w(NON3 NON2),
-        event_created_at: 5.days.ago }
+        event_created_at: 5.days.ago,
+        approved_at: nil  }
     }
     let(:attrs_d) {
       { url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
         versions: %w(NON3 ghi),
-        event_created_at: 7.days.ago }
+        event_created_at: 7.days.ago,
+        approved_at: nil  }
     }
     let(:attrs_e) {
       { url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
         versions: %w(NON5 NON4),
-        event_created_at: 9.days.ago }
+        event_created_at: 9.days.ago,
+        approved_at: nil  }
     }
 
     before :each do

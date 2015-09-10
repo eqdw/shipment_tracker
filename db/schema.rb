@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150823124742) do
+ActiveRecord::Schema.define(version: 20150910135208) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -53,6 +53,7 @@ ActiveRecord::Schema.define(version: 20150823124742) do
     t.string   "url"
     t.string   "versions",         array: true
     t.datetime "event_created_at"
+    t.datetime "approved_at"
   end
 
   add_index "feature_reviews", ["versions"], name: "index_feature_reviews_on_versions", using: :gin

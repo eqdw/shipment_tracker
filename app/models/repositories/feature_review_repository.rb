@@ -21,6 +21,7 @@ module Repositories
           Factories::FeatureReviewFactory.new.create(
             url: most_recent_snapshot.url,
             versions: most_recent_snapshot.versions,
+            approved_at: most_recent_snapshot.approved_at,
           )
         }
     end
