@@ -29,11 +29,14 @@ module Repositories
     def apply(event)
       return unless event.is_a?(Events::JiraEvent) && event.issue?
 
-      Factories::FeatureReviewFactory.new.create_from_text(event.comment).each do |feature_review|
+      feature_reviews = Factories::FeatureReviewFactory.new.create_from_text(event.comment)
+
+      feature_reviews.each do |feature_review|
         store.create!(
           url: feature_review.url,
           versions: feature_review.versions,
           event_created_at: event.created_at,
+          approved_at: approved_at_for(feature_review, event.created_at),
         )
       end
     end
@@ -41,5 +44,15 @@ module Repositories
     private
 
     attr_reader :store
+
+    def approved_at_for(feature_review, event_time)
+      new_review = FeatureReviewWithStatuses.new(feature_review)
+      new_review.approved? ? (last_review_approved_at(feature_review.url) || event_time) : nil
+    end
+
+    def last_review_approved_at(url)
+      last_review = store.where(url: url).order('event_created_at, id ASC').last
+      FeatureReviewWithStatuses.new(last_review).try(:approved_at)
+    end
   end
 end

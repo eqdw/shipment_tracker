@@ -16,36 +16,54 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
   describe '#apply' do
     let(:active_record_class) { class_double(Snapshots::FeatureReview) }
+    let(:timestamp) { Time.new(2014, 8, 21) }
+
+    before :each do
+      allow(active_record_class).to receive(:where).and_return(active_record_class)
+      allow(active_record_class).to receive(:order).and_return([last_snapshot])
+    end
+
+    let(:last_snapshot) {
+      Snapshots::FeatureReview.create!(
+        url: feature_review_url(frontend: 'abc'),
+        versions: %w(abc),
+        event_created_at: timestamp - 2.days,
+        approved_at: Time.new(2014, 9, 19),
+      )
+    }
 
     subject(:repository) { Repositories::FeatureReviewRepository.new(active_record_class) }
 
     it 'creates a snapshot for each feature review url in the event comment' do
-      timestamp = DateTime.new(2015, 8, 21)
-
       expect(active_record_class).to receive(:create!).with(
         url: feature_review_url(frontend: 'abc', backend: 'NON1'),
         versions: %w(NON1 abc),
         event_created_at: timestamp,
+        approved_at: nil,
       )
       expect(active_record_class).to receive(:create!).with(
         url: feature_review_url(frontend: 'NON2', backend: 'def'),
         versions: %w(def NON2),
         event_created_at: timestamp,
+        approved_at: nil,
       )
       expect(active_record_class).to receive(:create!).with(
         url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
         versions: %w(NON3 NON2),
         event_created_at: timestamp,
+        approved_at: nil,
       )
       expect(active_record_class).to receive(:create!).with(
         url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
         versions: %w(NON3 ghi),
         event_created_at: timestamp,
+        approved_at: nil,
       )
       expect(active_record_class).to receive(:create!).with(
         url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
         versions: %w(NON5 NON4),
         event_created_at: timestamp,
+        approved_at: nil,
       )
 
       [
@@ -64,6 +82,65 @@ RSpec.describe Repositories::FeatureReviewRepository do
           created_at: timestamp),
       ].each do |event|
         repository.apply(event)
+      end
+    end
+
+    context 'when the feature is approved,' do
+      before :each do
+        allow_any_instance_of(FeatureReviewWithStatuses).to receive(:approved?).and_return(true)
+      end
+
+      context 'when the approved_at time is set on the last snapshot,' do
+        it 'reuses the approved_at time from the last snapshot' do
+          expect(active_record_class).to receive(:create!).with(
+            url: feature_review_url(frontend: 'abc'),
+            versions: %w(abc),
+            event_created_at: timestamp,
+            approved_at: last_snapshot.approved_at,
+          )
+
+          repository.apply(build(:jira_event, :approved,
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
+            created_at: timestamp))
+        end
+      end
+
+      context 'when the approved_at time is NOT set on the last snapshot,' do
+        before :each do
+          last_snapshot.update_attributes!(approved_at: nil)
+        end
+
+        it 'sets the approved_at time to the event_created_at time' do
+          expect(active_record_class).to receive(:create!).with(
+            url: feature_review_url(frontend: 'abc'),
+            versions: %w(abc),
+            event_created_at: timestamp,
+            approved_at: timestamp,
+          )
+
+          repository.apply(build(:jira_event, :approved,
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
+            created_at: timestamp))
+        end
+      end
+    end
+
+    context 'when the feature is NOT approved,' do
+      before :each do
+        allow_any_instance_of(FeatureReviewWithStatuses).to receive(:approved?).and_return(false)
+      end
+
+      it 'nullifies the approved_at' do
+        expect(active_record_class).to receive(:create!).with(
+          url: feature_review_url(frontend: 'abc'),
+          versions: %w(abc),
+          event_created_at: timestamp,
+          approved_at: nil,
+        )
+
+        repository.apply(build(:jira_event, :rejected,
+          comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
+          created_at: timestamp))
       end
     end
   end
