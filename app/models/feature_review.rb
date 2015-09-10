@@ -28,11 +28,15 @@ class FeatureReview
     uat_uri.try(:host)
   end
 
-  private
-
   def query_hash
     Rack::Utils.parse_nested_query(URI(url).query)
   end
+
+  def base_url
+    Addressable::URI.parse(url).omit(:query).to_s
+  end
+
+  private
 
   def uat_uri
     uat_url_param = query_hash.fetch('uat_url', nil)

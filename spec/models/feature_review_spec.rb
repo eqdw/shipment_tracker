@@ -55,4 +55,25 @@ RSpec.describe FeatureReview do
 
     it { is_expected.to eq('app1' => 'xxx', 'app2' => 'yyy') }
   end
+
+  describe '#base_url' do
+    let(:url) { 'www.something.com/something?uat_url=http://uat.com&apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy' }
+
+    subject { FeatureReview.new(url: url, versions: %w(xxx yyy)).base_url }
+
+    it { is_expected.to eq('www.something.com/something') }
+  end
+
+  describe '#query_hash' do
+    let(:url) { 'www.something.com/something?uat_url=uat.com&apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy' }
+
+    subject { FeatureReview.new(url: url, versions: %w(xxx yyy)).query_hash }
+
+    it {
+      is_expected.to eq(
+        'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' },
+        'uat_url' => 'uat.com',
+      )
+    }
+  end
 end
