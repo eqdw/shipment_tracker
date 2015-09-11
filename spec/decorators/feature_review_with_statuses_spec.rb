@@ -28,12 +28,12 @@ RSpec.describe FeatureReviewWithStatuses do
     )
   }
 
-  let(:query_time) { 1.day.ago }
+  let(:query_time) { Time.new(2014, 8, 10, 14, 40, 48) }
   let(:time_now) { Time.now }
 
   let(:query_class) { class_double(Queries::FeatureReviewQuery, new: feature_review_query) }
 
-  subject(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
+  let(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
 
   it 'delegates #apps, #tickets, #builds, #deploys and #qa_submission to the feature_review_query' do
     expect(decorator.tickets).to eq(feature_review_query.tickets)
@@ -281,5 +281,31 @@ RSpec.describe FeatureReviewWithStatuses do
         expect(decorator.approval_status).to eq(:unapproved)
       end
     end
+  end
+
+  describe '#url' do
+    let(:base_url) { 'http://localhost/feature_reviews' }
+    let(:feature_review) {
+      instance_double(FeatureReview,
+        base_url: base_url,
+        query_hash: {
+          'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' },
+          'uat_url' => 'uat.com',
+        })
+    }
+
+    it 'returns the url for the feature review at the query time' do
+      query = '?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com'
+      expect(decorator.url).to eq("#{base_url}#{query}")
+    end
+  end
+
+  describe '#path' do
+    before :each do
+      allow(decorator).to receive(:url).and_return('http://something.com/feature_reviews?uat_url=uat.com')
+    end
+
+    subject { decorator.path }
+    it { is_expected.to eq('/feature_reviews?uat_url=uat.com') }
   end
 end

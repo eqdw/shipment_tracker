@@ -61,6 +61,14 @@ class FeatureReviewWithStatuses < SimpleDelegator
     approved? ? :approved : :unapproved
   end
 
+  def url
+    "#{base_url}?#{query_hash.merge(time: time).to_query}"
+  end
+
+  def path
+    URI(url).request_uri
+  end
+
   private
 
   attr_reader :query
