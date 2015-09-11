@@ -308,4 +308,78 @@ RSpec.describe FeatureReviewWithStatuses do
     subject { decorator.path }
     it { is_expected.to eq('/feature_reviews?uat_url=uat.com') }
   end
+
+  describe '#approved_url' do
+    let(:base_url) { 'http://localhost/feature_reviews' }
+    let(:query_hash) {
+      { 'apps' => { 'app1' => 'xxx' }, 'uat_url' => 'uat.com' }
+    }
+
+    context 'when the feature review is approved' do
+      let(:feature_review) {
+        instance_double(FeatureReview,
+          uat_url: 'uat.com',
+          versions: 'xxx',
+          approved_at: Time.new(2014, 4, 23, 11, 36, 32),
+          base_url: base_url,
+          query_hash: query_hash)
+      }
+
+      before :each do
+        allow(decorator).to receive(:approved?).and_return(true)
+      end
+
+      it 'returns the url for the feature review at the approved_at time' do
+        query = '?apps%5Bapp1%5D=xxx&time=2014-04-23+11%3A36%3A32+%2B0100&uat_url=uat.com'
+        expect(decorator.approved_url).to eq("#{base_url}#{query}")
+      end
+
+      context 'when the feature review does not have an approval time' do
+        let(:feature_review) { instance_double(FeatureReview, approved_at: nil) }
+
+        it 'returns nil' do
+          expect(decorator.approved_url).to be_nil
+        end
+      end
+    end
+
+    context 'when the feature review is NOT approved' do
+      let(:feature_review) {
+        instance_double(FeatureReview,
+          uat_url: 'uat.com',
+          versions: 'xxx',
+          approved_at: Time.new(2014, 4, 23, 11, 36, 32),
+          base_url: base_url,
+          query_hash: query_hash)
+      }
+
+      before :each do
+        allow(decorator).to receive(:approved?).and_return(false)
+      end
+
+      it 'returns nil' do
+        expect(decorator.approved_url).to be_nil
+      end
+    end
+  end
+
+  describe '#approved_path' do
+    context 'when approved_url is NOT nil' do
+      before :each do
+        allow(decorator).to receive(:approved_url).and_return('http://something.com/feature_reviews?uat_url=uat.com')
+      end
+
+      subject { decorator.approved_path }
+      it { is_expected.to eq('/feature_reviews?uat_url=uat.com') }
+    end
+
+    context 'when approved_url is nil' do
+      before :each do
+        allow(decorator).to receive(:approved_url).and_return(nil)
+      end
+
+      subject { decorator.approved_path }
+      it { is_expected.to be_nil }
+    end
+  end
 end

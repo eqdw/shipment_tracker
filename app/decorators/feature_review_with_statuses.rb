@@ -61,6 +61,15 @@ class FeatureReviewWithStatuses < SimpleDelegator
     approved? ? :approved : :unapproved
   end
 
+  def approved_url
+    return nil unless approved? && approved_at.present?
+    "#{base_url}?#{query_hash.merge(time: approved_at).to_query}"
+  end
+
+  def approved_path
+    URI(approved_url).request_uri if approved_url
+  end
+
   def url
     "#{base_url}?#{query_hash.merge(time: time).to_query}"
   end
