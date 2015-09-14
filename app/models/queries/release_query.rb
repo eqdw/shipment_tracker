@@ -2,7 +2,7 @@ require 'repositories/feature_review_repository'
 
 module Queries
   class ReleaseQuery
-    def initialize(release:, git_repository:, at: Time.now)
+    def initialize(release:, git_repository:, at: Time.current)
       @release = release
       @time = at
 

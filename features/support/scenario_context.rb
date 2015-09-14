@@ -77,7 +77,7 @@ module Support
         updated: time,
       )
       event = build(:jira_event, ticket_details)
-      travel_to(time) do
+      travel_to Time.zone.parse(time) do
         post_event 'jira', event.details
       end
     end
@@ -89,7 +89,7 @@ module Support
         :approved,
         ticket_details.merge!(user_email: approver_email, updated: time),
       )
-      travel_to(time) do
+      travel_to Time.zone.parse(time) do
         post_event 'jira', event.details
       end
     end

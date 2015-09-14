@@ -8,7 +8,7 @@ end
 Given 'a commit "$version" by "$name" is created at "$time" for app "$app"' do |version, name, time, app|
   scenario_context.repository_for(app).create_commit(
     author_name: name,
-    time: Time.parse(time),
+    time: Time.zone.parse(time).utc,
     pretend_version: version,
   )
 end
@@ -17,7 +17,7 @@ Given 'a commit "$version" with message "$message" is created at "$time"' do |ve
   scenario_context.last_repository.create_commit(
     author_name: 'Alice',
     message: message,
-    time: Time.parse(time),
+    time: Time.zone.parse(time).utc,
     pretend_version: version,
   )
 end
@@ -32,6 +32,6 @@ Given 'the branch "$branch" is merged with merge commit "$version" at "$time' do
     branch_name: branch,
     pretend_version: version,
     author_name: 'Alice',
-    time: Time.parse(time),
+    time: Time.zone.parse(time).utc,
   )
 end

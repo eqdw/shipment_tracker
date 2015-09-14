@@ -19,14 +19,14 @@ Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_ta
     }
 
     master_commit_time = release_line.fetch('committed to master at')
-    release['committed_to_master_at'] = Time.parse(master_commit_time) if master_commit_time
+    release['committed_to_master_at'] = Time.zone.parse(master_commit_time) if master_commit_time
 
     if deploy_status == 'deployed'
       time = release_line.fetch('last deployed at')
       if time.empty?
         release['time'] = nil
       else
-        release['time'] = Time.parse(time)
+        release['time'] = Time.zone.parse(time)
       end
     end
 

@@ -20,10 +20,14 @@ class ReleaseWithStatus < SimpleDelegator
   end
 
   def committed_to_master_at
-    @committed_to_master_at ||= git_repository.commit_to_master_for(version).try(:time)
+    @committed_to_master_at ||= commit_to_master.try(:time).try(:utc)
   end
 
   private
 
   attr_reader :git_repository
+
+  def commit_to_master
+    git_repository.commit_to_master_for(version)
+  end
 end

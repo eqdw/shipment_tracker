@@ -44,7 +44,7 @@ module Pages
     private
 
     def extract_time(element)
-      Time.parse(element.text) unless element.text.empty?
+      Time.zone.parse(element.text) unless element.text.empty?
     end
 
     def extract_href(element)

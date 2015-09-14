@@ -4,7 +4,7 @@ require 'support/git_test_repository'
 require 'support/repository_builder'
 
 RSpec.describe Queries::ReleaseQuery do
-  let(:query_time) { Time.new(2014, 8, 10, 14, 40, 48) }
+  let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
   let(:time_now) { Time.now }
 
   let(:git_diagram) {
@@ -128,8 +128,8 @@ RSpec.describe Queries::ReleaseQuery do
           .and_return([feature_review_for_E, feature_review_for_F, feature_review_for_G])
 
         expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          base_url_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FE
-          base_url_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FF
+          base_url_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
+          base_url_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
         ))
       end
     end
@@ -146,7 +146,7 @@ RSpec.describe Queries::ReleaseQuery do
           .and_return([feature_review_for_A])
 
         expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          base_url_for_A?apps%5Bapp1%5D=A&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FA
+          base_url_for_A?apps%5Bapp1%5D=A&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FA
         ))
       end
     end
@@ -163,7 +163,7 @@ RSpec.describe Queries::ReleaseQuery do
           .and_return([feature_review_for_D])
 
         expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          base_url_for_D?apps%5Bapp1%5D=D&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FD
+          base_url_for_D?apps%5Bapp1%5D=D&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FD
         ))
       end
     end
@@ -180,9 +180,9 @@ RSpec.describe Queries::ReleaseQuery do
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
 
         expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          base_url_for_C?apps%5Bapp1%5D=C&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FC
-          base_url_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FE
-          base_url_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+%2B0100&uat_url=uat.com%2FF
+          base_url_for_C?apps%5Bapp1%5D=C&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FC
+          base_url_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
+          base_url_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
         ))
       end
     end
