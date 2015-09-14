@@ -27,9 +27,6 @@ RSpec.describe Queries::ReleaseQuery do
   let(:sha_for_F) { version_for('F') }
   let(:sha_for_G) { version_for('G') }
   let(:base_url) { 'base_url_for_A' }
-  let(:query_hash) {
-    { 'apps' => { 'app1' => 'A' }, 'uat_url' => 'uat.com/A' }
-  }
 
   let(:feature_review_for_A) {
     instance_double(
@@ -38,16 +35,6 @@ RSpec.describe Queries::ReleaseQuery do
       versions: [sha_for_A],
       base_url: 'base_url_for_A',
       query_hash: { 'apps' => { 'app1' => 'A' }, 'uat_url' => 'uat.com/A' },
-    )
-  }
-
-  let(:feature_review_for_B) {
-    instance_double(
-      FeatureReview,
-      url: 'url_of_feature_review_for_B',
-      versions: [sha_for_B],
-      base_url: 'base_url_for_B',
-      query_hash: { 'apps' => { 'app1' => 'B' }, 'uat_url' => 'uat.com/B' },
     )
   }
 

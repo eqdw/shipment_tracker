@@ -30,35 +30,6 @@ RSpec.describe Projections::ReleasesProjection do
   let(:versions) { commits.map(&:id) }
   let(:deploy_time) { time - 1.hour }
   let(:deploys) { [Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time)] }
-  let(:feature_reviews) {
-    [
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'abc', backend: 'NON1'),
-        versions: %w(NON1 abc),
-        event_created_at: 1.day.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON2', backend: 'def'),
-        versions: %w(def NON2),
-        event_created_at: 3.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
-        versions: %w(NON3 NON2),
-        event_created_at: 5.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
-        versions: %w(NON3 ghi),
-        event_created_at: 7.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
-        versions: %w(NON5 NON4),
-        event_created_at: 9.days.ago,
-      ),
-    ]
-  }
 
   before do
     allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
@@ -116,15 +87,5 @@ RSpec.describe Projections::ReleasesProjection do
         expect(projection.deployed_releases).to all(respond_to(:approval_status))
       end
     end
-  end
-
-  private
-
-  def feature_review_comment(apps)
-    "please review\n#{feature_review_url(apps)}"
-  end
-
-  def feature_review_path(apps)
-    URI.parse(feature_review_url(apps)).request_uri
   end
 end

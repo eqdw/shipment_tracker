@@ -68,10 +68,6 @@ module Support
       commits[pretend_version]
     end
 
-    def commit?(version)
-      repo.exists?(version)
-    end
-
     def head_oid
       repo.head.target_id
     end

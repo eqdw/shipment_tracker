@@ -104,14 +104,6 @@ module Support
       url_to_path(r_url)
     end
 
-    def review_urls
-      @reviews.values.map { |review| build_url_for(review) }
-    end
-
-    def review_paths
-      review_urls.map { |r_url| url_to_path(r_url) }
-    end
-
     def post_event(type, payload)
       OmniAuth.config.test_mode = true
       OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(
