@@ -70,12 +70,12 @@ class FeatureReviewWithStatuses < SimpleDelegator
     URI(approved_url).request_uri if approved_url
   end
 
-  def url
+  def url_with_query_time
     "#{base_url}?#{query_hash.merge(time: time.utc).to_query}"
   end
 
-  def path
-    URI(url).request_uri
+  def path_with_query_time
+    URI(url_with_query_time).request_uri
   end
 
   private

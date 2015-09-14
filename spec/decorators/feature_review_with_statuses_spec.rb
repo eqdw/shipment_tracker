@@ -283,7 +283,7 @@ RSpec.describe FeatureReviewWithStatuses do
     end
   end
 
-  describe '#url' do
+  describe '#url_with_query_time' do
     let(:base_url) { 'http://localhost/feature_reviews' }
     let(:feature_review) {
       instance_double(FeatureReview,
@@ -296,16 +296,16 @@ RSpec.describe FeatureReviewWithStatuses do
 
     it 'returns the url for the feature review at the query time' do
       query = '?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com'
-      expect(decorator.url).to eq("#{base_url}#{query}")
+      expect(decorator.url_with_query_time).to eq("#{base_url}#{query}")
     end
   end
 
-  describe '#path' do
+  describe '#path_with_query_time' do
     before :each do
-      allow(decorator).to receive(:url).and_return('http://something.com/feature_reviews?uat_url=uat.com')
+      allow(decorator).to receive(:url_with_query_time).and_return('http://something.com/feature_reviews?uat_url=uat.com')
     end
 
-    subject { decorator.path }
+    subject { decorator.path_with_query_time }
     it { is_expected.to eq('/feature_reviews?uat_url=uat.com') }
   end
 
