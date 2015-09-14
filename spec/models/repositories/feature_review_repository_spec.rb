@@ -16,7 +16,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
   describe '#apply' do
     let(:active_record_class) { class_double(Snapshots::FeatureReview) }
-    let(:timestamp) { Time.new(2014, 8, 21) }
+    let(:timestamp) { Time.parse('2014-08-21 00:00:00 UTC') }
 
     before :each do
       allow(active_record_class).to receive(:where).and_return(active_record_class)
@@ -28,7 +28,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         url: feature_review_url(frontend: 'abc'),
         versions: %w(abc),
         event_created_at: timestamp - 2.days,
-        approved_at: Time.new(2014, 9, 19),
+        approved_at: Time.parse('2014-09-19 00:00:00 UTC'),
       )
     }
 
@@ -108,6 +108,26 @@ RSpec.describe Repositories::FeatureReviewRepository do
       context 'when the approved_at time is NOT set on the last snapshot,' do
         before :each do
           last_snapshot.update_attributes!(approved_at: nil)
+        end
+
+        it 'sets the approved_at time to the event_created_at time' do
+          expect(active_record_class).to receive(:create!).with(
+            url: feature_review_url(frontend: 'abc'),
+            versions: %w(abc),
+            event_created_at: timestamp,
+            approved_at: timestamp,
+          )
+
+          repository.apply(build(:jira_event, :approved,
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
+            created_at: timestamp))
+        end
+      end
+
+      context 'when there is no previous snapshot,' do
+        before :each do
+          allow(active_record_class).to receive(:where).and_return(active_record_class)
+          allow(active_record_class).to receive(:order).and_return([])
         end
 
         it 'sets the approved_at time to the event_created_at time' do
