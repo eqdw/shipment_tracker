@@ -79,7 +79,7 @@ RSpec.describe Projections::ReleasesProjection do
 
     describe 'returned releases' do
       it 'have feature_reviews' do
-        expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
+        expect(projection.pending_releases).to all(respond_to(:feature_reviews))
       end
 
       it 'have an approval_status and know whether they are approved' do
