@@ -1,4 +1,4 @@
-class RenameRepositoriesToGitRepositoryLocations < ActiveRecord::Migration
+class RenameRepositoriesToRepositoryLocations < ActiveRecord::Migration
   def change
     rename_table :repositories, :repository_locations
   end
