@@ -16,7 +16,7 @@
       %td= release.subject
       %td
         - release.feature_reviews.each do |feature_review|
-          %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
+          %div= feature_review_link(feature_review)
       %td= release.committed_to_master_at.try(:to_formatted_s, :long_ordinal)
 
 %h2 Deployed
@@ -36,6 +36,6 @@
       %td= release.subject
       %td
         - release.feature_reviews.each do |feature_review|
-          %div= link_to(feature_review.approval_status, feature_review.path) if feature_review.path
+          %div= feature_review_link(feature_review)
       %td= release.committed_to_master_at.try(:to_formatted_s, :long_ordinal)
       %td= release.production_deploy_time.try(:to_formatted_s, :long_ordinal)

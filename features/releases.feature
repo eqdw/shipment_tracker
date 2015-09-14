@@ -55,13 +55,13 @@ Scenario: Viewing releases for an app
   When I view the releases for "frontend"
 
   Then I should see the "pending" releases
-    | version  | subject                        | feature reviews | review statuses     | approved | committed to master at |
-    | #merge   | Merged `feature` into `master` | FR_456          | approved            | yes      | 2014-10-06 17:04       |
-    | #branch2 | second commit                  | FR_456          | approved            | yes      | 2014-10-06 17:04       |
-    | #branch1 | first commit                   | FR_123, FR_456  | unapproved approved | yes      | 2014-10-06 17:04       |
+    | version  | subject                        | feature reviews | review statuses     | review times                             | approved | committed to master at |
+    | #merge   | Merged `feature` into `master` | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
+    | #branch2 | second commit                  | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
+    | #branch1 | first commit                   | FR_123, FR_456  | unapproved approved | 2014-10-06 17:04:19, 2014-10-04 15:24:34 | yes      | 2014-10-06 17:04       |
 
   And I should see the "deployed" releases
-    | version      | subject                    | feature reviews | review statuses     | approved | committed to master at | last deployed at |
-    | #master3     | sneaky commit              |                 |                     | no       | 2014-10-05 11:01       | 2014-10-05 11:54 |
-    | #master2     | historic commit            |                 |                     | no       | 2014-10-01 12:01       |                  |
-    | #master1     | initial commit             |                 |                     | no       | 2014-09-29 09:18       | 2014-09-29 11:37 |
+    | version      | subject                    | feature reviews | review statuses     | review times     | approved | committed to master at | last deployed at |
+    | #master3     | sneaky commit              |                 |                     | 2014-10-05 11:01 | no       | 2014-10-05 11:01       | 2014-10-05 11:54 |
+    | #master2     | historic commit            |                 |                     | 2014-10-01 12:01 | no       | 2014-10-01 12:01       |                  |
+    | #master1     | initial commit             |                 |                     | 2014-09-29 09:18 | no       | 2014-09-29 09:18       | 2014-09-29 11:37 |

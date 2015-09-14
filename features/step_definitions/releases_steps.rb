@@ -14,8 +14,12 @@ Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_ta
     }
 
     nicknames = release_line.fetch('feature reviews').split(',').map(&:strip)
-    release['feature_review_paths'] = nicknames.map { |nickname|
-      scenario_context.review_path(feature_review_nickname: nickname)
+    times = release_line.fetch('review times').split(',').map(&:strip)
+    release['feature_review_paths'] = nicknames.zip(times).map { |nickname, time|
+      scenario_context.review_path(
+        feature_review_nickname: nickname,
+        time: Time.zone.parse(time),
+      )
     }
 
     master_commit_time = release_line.fetch('committed to master at')
