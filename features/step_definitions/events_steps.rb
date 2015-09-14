@@ -18,6 +18,16 @@ Given 'ticket "$key" is approved by "$approver_email" at "$time"' do |jira_key, 
   scenario_context.approve_ticket(
     jira_key: jira_key,
     approver_email: approver_email,
+    approve: true,
+    time: time,
+  )
+end
+
+Given 'ticket "$key" is moved from approved to unapproved by "$email" at "$time"' do |jira_key, email, time|
+  scenario_context.approve_ticket(
+    jira_key: jira_key,
+    approver_email: email,
+    approve: false,
     time: time,
   )
 end

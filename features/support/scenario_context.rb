@@ -82,11 +82,11 @@ module Support
       end
     end
 
-    def approve_ticket(jira_key:, approver_email:, time: nil)
+    def approve_ticket(jira_key:, approver_email:, approve:, time: nil)
       ticket_details = @tickets.fetch(jira_key).except(:status)
       event = build(
         :jira_event,
-        :approved,
+        approve ? :approved : :rejected,
         ticket_details.merge!(user_email: approver_email, updated: time),
       )
       travel_to Time.zone.parse(time) do
@@ -106,12 +106,8 @@ module Support
 
     def post_event(type, payload)
       OmniAuth.config.test_mode = true
-      OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(
-        provider: 'event_token',
-        uid:      type,
-      )
+      OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(provider: 'event_token', uid: type)
       url = "/events/#{type}"
-
       post url, payload.to_json, 'CONTENT_TYPE' => 'application/json'
 
       Repositories::Updater.from_rails_config.run

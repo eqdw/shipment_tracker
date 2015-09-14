@@ -5,34 +5,48 @@ Feature: Viewing Releases
   So I know which versions are safe to deploy and which versions have already been deployed
 
 Scenario: Viewing releases for an app
-  # 2014-09-29
+  # 2014-09-28 - application creation
   Given an application called "frontend"
-  And a commit "#master1" with message "initial commit" is created at "2014-09-29 09:18:57"
-  And commit "#master1" of "frontend" is deployed by "Fred" to production at "2014-09-29 11:37:13"
+  And a commit "#master1" with message "initial commit" is created at "2014-09-28 09:18:57"
+  And commit "#master1" of "frontend" is deployed by "Fred" to production at "2014-09-28 11:37:13"
+
+  # 2014-09-29 - ticket creation
+  And a ticket "JIRA-ONE" with summary "Ticket ONE" is started at "2014-09-29 09:13:00"
+  And a ticket "JIRA-789" with summary "Old ticket" is started at "2014-09-29 13:01:17"
+  And a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-09-29 14:31:46"
+  And a ticket "JIRA-456" with summary "Not so urgent ticket" is started at "2014-09-29 15:02:00"
 
   # 2014-09-30
-  And a ticket "JIRA-789" with summary "Old ticket" is started at "2014-09-30 13:01:17"
-  And a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-09-30 14:31:46"
-  And a ticket "JIRA-456" with summary "Not so urgent ticket" is started at "2014-09-30 15:02:00"
+  And a commit "#master2" with message "historic commit" is created at "2014-09-30 12:01:17"
 
-  # 2014-10-01
-  And a commit "#master2" with message "historic commit" is created at "2014-10-01 12:01:17"
+  # 2014-10-01 - reverting approval for release that has been merged and deployed
+  And the branch "feature1" is checked out
+  And a commit "#feat1_a" with message "feat1 first commit" is created at "2014-10-01 13:12:37"
+  And developer prepares review known as "FR_ONE" for UAT "uat.fundingcircle.com" with apps
+    | app_name | version  |
+    | frontend | #feat1_a |
+  And at time "2014-10-01 14:52:45" adds link for review "FR_ONE" to comment for ticket "JIRA-ONE"
+  And ticket "JIRA-ONE" is approved by "bob@fundingcircle.com" at "2014-10-01 15:20:34"
+  And the branch "master" is checked out
+  And the branch "feature1" is merged with merge commit "#merge1" at "2014-10-01 16:14:39"
+  And commit "#merge1" of "frontend" is deployed by "Jeff" to production at "2014-10-01 17:34:20"
+  And ticket "JIRA-ONE" is moved from approved to unapproved by "bob@fundingcircle.com" at "2014-10-01 18:15:28"
 
   # 2014-10-02
-  And the branch "feature" is checked out
-  And a commit "#branch1" with message "first commit" is created at "2014-10-02 14:01:17"
+  And the branch "feature2" is checked out
+  And a commit "#feat2_a" with message "feat2 first commit" is created at "2014-10-02 14:01:17"
   And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
     | app_name | version  |
-    | frontend | #branch1 |
+    | frontend | #feat2_a |
   And at time "2014-10-02 15:12:45" adds link for review "FR_123" to comment for ticket "JIRA-123"
 
   # 2014-10-03
-  And the branch "feature" is checked out
-  And a commit "#branch2" with message "second commit" is created at "2014-10-03 14:04:19"
-  And commit "#branch2" of "frontend" is deployed by "Alice" to server "uat.fundingcircle.com" at "2014-10-03 14:25:00"
+  And the branch "feature2" is checked out
+  And a commit "#feat2_b" with message "feat2 second commit" is created at "2014-10-03 14:04:19"
+  And commit "#feat2_b" of "frontend" is deployed by "Alice" to server "uat.fundingcircle.com" at "2014-10-03 14:25:00"
   And developer prepares review known as "FR_456" for UAT "uat.example.com" with apps
     | app_name | version  |
-    | frontend | #branch2 |
+    | frontend | #feat2_b |
   And at time "2014-10-03 15:19:53" adds link for review "FR_456" to comment for ticket "JIRA-456"
 
   # 2014-10-04
@@ -50,18 +64,20 @@ Scenario: Viewing releases for an app
 
   # 2014-10-06
   And the branch "master" is checked out
-  And the branch "feature" is merged with merge commit "#merge" at "2014-10-06 17:04:19"
+  And the branch "feature2" is merged with merge commit "#merge2" at "2014-10-06 17:04:19"
 
   When I view the releases for "frontend"
 
   Then I should see the "pending" releases
-    | version  | subject                        | feature reviews | review statuses     | review times                             | approved | committed to master at |
-    | #merge   | Merged `feature` into `master` | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
-    | #branch2 | second commit                  | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
-    | #branch1 | first commit                   | FR_123, FR_456  | unapproved approved | 2014-10-06 17:04:19, 2014-10-04 15:24:34 | yes      | 2014-10-06 17:04       |
+    | version  | subject                         | feature reviews | review statuses     | review times                             | approved | committed to master at |
+    | #merge2  | Merged `feature2` into `master` | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
+    | #feat2_b | feat2 second commit             | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
+    | #feat2_a | feat2 first commit              | FR_123, FR_456  | unapproved approved | 2014-10-06 17:04:19, 2014-10-04 15:24:34 | yes      | 2014-10-06 17:04       |
 
   And I should see the "deployed" releases
-    | version      | subject                    | feature reviews | review statuses     | review times     | approved | committed to master at | last deployed at |
-    | #master3     | sneaky commit              |                 |                     | 2014-10-05 11:01 | no       | 2014-10-05 11:01       | 2014-10-05 11:54 |
-    | #master2     | historic commit            |                 |                     | 2014-10-01 12:01 | no       | 2014-10-01 12:01       |                  |
-    | #master1     | initial commit             |                 |                     | 2014-09-29 09:18 | no       | 2014-09-29 09:18       | 2014-09-29 11:37 |
+    | version  | subject                         | feature reviews | review statuses     | review times                             | approved | committed to master at | last deployed at |
+    | #master3 | sneaky commit                   |                 |                     |                                          | no       | 2014-10-05 11:01       | 2014-10-05 11:54 |
+    | #merge1  | Merged `feature1` into `master` | FR_ONE          | approved            | 2014-10-01 15:20:34                      | yes      | 2014-10-01 16:14       | 2014-10-01 17:34 |
+    | #feat1_a | feat1 first commit              | FR_ONE          | approved            | 2014-10-01 15:20:34                      | yes      | 2014-10-01 16:14       |                  |
+    | #master2 | historic commit                 |                 |                     |                                          | no       | 2014-09-30 12:01       |                  |
+    | #master1 | initial commit                  |                 |                     |                                          | no       | 2014-09-28 09:18       | 2014-09-28 11:37 |
