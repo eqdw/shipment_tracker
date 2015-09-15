@@ -36,7 +36,7 @@ module Repositories
           url: feature_review.url,
           versions: feature_review.versions,
           event_created_at: event.created_at,
-          approved_at: approved_at_for(feature_review, event.created_at),
+          approved_at: approved_at_for(feature_review, event),
         )
       end
     end
@@ -45,9 +45,10 @@ module Repositories
 
     attr_reader :store
 
-    def approved_at_for(feature_review, event_time)
+    def approved_at_for(feature_review, event)
       new_review = FeatureReviewWithStatuses.new(feature_review)
-      new_review.approved? ? (last_review_approved_at(feature_review.url) || event_time) : nil
+      return unless new_review.approved?
+      last_review_approved_at(feature_review.url) || event.created_at
     end
 
     def last_review_approved_at(url)
