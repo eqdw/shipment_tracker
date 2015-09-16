@@ -52,15 +52,16 @@ Scenario: Viewing releases for an app
   # 2014-10-04
   And ticket "JIRA-456" is approved by "bob@fundingcircle.com" at "2014-10-04 15:24:34"
 
-  # 2014-10-05
+  # 2014-10-05 - approved after commit to master and deploy
+  # allow developers to gain approval retrospectively
   And the branch "master" is checked out
   And a commit "#master3" with message "sneaky commit" is created at "2014-10-05 11:01:02"
   And developer prepares review known as "FR_789" for UAT "uat.example.com" with apps
     | app_name | version  |
     | frontend | #master3 |
   And at time "2014-10-05 11:02:00" adds link for review "FR_789" to comment for ticket "JIRA-789"
-  And ticket "JIRA-789" is approved by "jeff@fundingcircle.com" at "2014-10-05 11:03:45"
   And commit "#master3" of "frontend" is deployed by "Jeff" to production at "2014-10-05 11:54:20"
+  And ticket "JIRA-789" is approved by "jeff@fundingcircle.com" at "2014-10-05 11:03:45"
 
   # 2014-10-06
   And the branch "master" is checked out
@@ -69,15 +70,15 @@ Scenario: Viewing releases for an app
   When I view the releases for "frontend"
 
   Then I should see the "pending" releases
-    | version  | subject                         | feature reviews | review statuses     | review times                             | approved | committed to master at |
-    | #merge2  | Merged `feature2` into `master` | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
-    | #feat2_b | feat2 second commit             | FR_456          | approved            | 2014-10-04 15:24:34                      | yes      | 2014-10-06 17:04       |
-    | #feat2_a | feat2 first commit              | FR_123, FR_456  | unapproved approved | 2014-10-06 17:04:19, 2014-10-04 15:24:34 | yes      | 2014-10-06 17:04       |
+    | version  | subject                         | feature reviews | review statuses     | review times          | approved |
+    | #merge2  | Merged `feature2` into `master` | FR_456          | approved            | 2014-10-04 15:24:34   | yes      |
+    | #feat2_b | feat2 second commit             | FR_456          | approved            | 2014-10-04 15:24:34   | yes      |
+    | #feat2_a | feat2 first commit              | FR_123, FR_456  | unapproved approved | , 2014-10-04 15:24:34 | yes      |
 
   And I should see the "deployed" releases
-    | version  | subject                         | feature reviews | review statuses     | review times                             | approved | committed to master at | last deployed at |
-    | #master3 | sneaky commit                   |                 |                     |                                          | no       | 2014-10-05 11:01       | 2014-10-05 11:54 |
-    | #merge1  | Merged `feature1` into `master` | FR_ONE          | approved            | 2014-10-01 15:20:34                      | yes      | 2014-10-01 16:14       | 2014-10-01 17:34 |
-    | #feat1_a | feat1 first commit              | FR_ONE          | approved            | 2014-10-01 15:20:34                      | yes      | 2014-10-01 16:14       |                  |
-    | #master2 | historic commit                 |                 |                     |                                          | no       | 2014-09-30 12:01       |                  |
-    | #master1 | initial commit                  |                 |                     |                                          | no       | 2014-09-28 09:18       | 2014-09-28 11:37 |
+    | version  | subject                         | feature reviews | review statuses     | review times          | approved | last deployed at |
+    | #master3 | sneaky commit                   | FR_789          | approved            | 2014-10-05 11:03:45   | yes      | 2014-10-05 11:54 |
+    | #merge1  | Merged `feature1` into `master` | FR_ONE          | unapproved          |                       | no       | 2014-10-01 17:34 |
+    | #feat1_a | feat1 first commit              | FR_ONE          | unapproved          |                       | no       |                  |
+    | #master2 | historic commit                 |                 |                     |                       | no       |                  |
+    | #master1 | initial commit                  |                 |                     |                       | no       | 2014-09-28 11:37 |

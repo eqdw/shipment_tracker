@@ -20,7 +20,6 @@ module Pages
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
           'feature_review_paths' => extract_href(values.fetch(2)),
-          'committed_to_master_at' => extract_time(values.fetch(3)),
         }
       }
     end
@@ -35,8 +34,7 @@ module Pages
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
           'feature_review_paths' => extract_href(values.fetch(2)),
-          'committed_to_master_at' => extract_time(values.fetch(3)),
-          'time' => extract_time(values.fetch(4)),
+          'time' => extract_time(values.fetch(3)),
         }
       }
     end

@@ -64,43 +64,6 @@ RSpec.describe ReleaseWithStatus do
     expect(decorator.feature_reviews).to eq(release_query.feature_reviews)
   end
 
-  describe '#committed_to_master_at' do
-    let(:merge_time) { 1.day.ago }
-    let(:commit) { instance_double(GitCommit, time: release.time) }
-
-    before do
-      allow(git_repository).to receive(:commit_to_master_for)
-        .with('commitsha1')
-        .and_return(commit)
-    end
-
-    context 'when the commit is on master' do
-      let(:commit) { instance_double(GitCommit, time: time_now) }
-
-      it 'returns the commit time' do
-        expect(decorator.committed_to_master_at).to eq(time_now)
-      end
-    end
-
-    context 'when the commit is a feature branch commit' do
-      context 'when feature branch has been merged to master' do
-        let(:commit) { instance_double(GitCommit, time: merge_time) }
-
-        it 'returns the commit time of the subsequent merge commit' do
-          expect(decorator.committed_to_master_at).to eq(merge_time)
-        end
-      end
-
-      context 'when feature branch has NOT been merged to master' do
-        let(:commit) { nil }
-
-        it 'returns nil' do
-          expect(decorator.committed_to_master_at).to eq(nil)
-        end
-      end
-    end
-  end
-
   describe '#approved?' do
     it 'returns true if any of its feature reviews are approved' do
       allow(release_query).to receive(:feature_reviews).and_return([

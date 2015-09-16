@@ -5,7 +5,7 @@ class ReleaseWithStatus < SimpleDelegator
     super(release)
     @release = release
     @git_repository = git_repository
-    @query = query_class.new(release: release, git_repository: git_repository, at: committed_to_master_at)
+    @query = query_class.new(release: release, git_repository: git_repository)
   end
 
   delegate :feature_reviews, to: :@query
@@ -17,10 +17,6 @@ class ReleaseWithStatus < SimpleDelegator
   def approval_status
     return nil if feature_reviews.empty?
     approved? ? :approved : :unapproved
-  end
-
-  def committed_to_master_at
-    @committed_to_master_at ||= commit_to_master.try(:time).try(:utc)
   end
 
   private
