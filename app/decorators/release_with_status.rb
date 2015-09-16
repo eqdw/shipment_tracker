@@ -18,12 +18,4 @@ class ReleaseWithStatus < SimpleDelegator
     return nil if feature_reviews.empty?
     approved? ? :approved : :unapproved
   end
-
-  private
-
-  attr_reader :git_repository
-
-  def commit_to_master
-    git_repository.commit_to_master_for(version)
-  end
 end

@@ -93,11 +93,6 @@ class GitRepository
     @rugged_repository.path
   end
 
-  def commit_to_master_for(commit_oid)
-    return lookup(commit_oid) if commit_on_master?(commit_oid)
-    merge_to_master_commit(commit_oid)
-  end
-
   private
 
   attr_reader :rugged_repository

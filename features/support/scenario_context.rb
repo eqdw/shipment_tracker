@@ -119,10 +119,6 @@ module Support
 
     include Rack::Test::Methods
 
-    def url_to_path(url)
-      URI.parse(url).request_uri
-    end
-
     def commit_from_pretend(pretend_commit)
       value = @repos.values.map { |r| r.commit_for_pretend_version(pretend_commit) }.compact.first
       fail "Could not find '#{pretend_commit}'" unless value

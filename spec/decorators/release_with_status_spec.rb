@@ -44,12 +44,6 @@ RSpec.describe ReleaseWithStatus do
       query_class: query_class)
   }
 
-  before :each do
-    allow(git_repository).to receive(:commit_to_master_for)
-      .with('commitsha1')
-      .and_return(nil)
-  end
-
   it 'delegates unknown messages to the release' do
     expect(decorator.version).to eq(release.version)
     expect(decorator.production_deploy_time).to eq(release.production_deploy_time)
