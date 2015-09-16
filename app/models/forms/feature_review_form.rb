@@ -33,7 +33,7 @@ module Forms
       errors.empty?
     end
 
-    def url
+    def path
       hash = {}
       hash[:apps] = apps
       hash[:uat_url] = uat_url if uat_url.present?

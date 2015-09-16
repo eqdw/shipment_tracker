@@ -19,7 +19,7 @@ module Pages
           'version' => values.fetch(0).text,
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
-          'feature_review_paths' => extract_href_if_exists(values.fetch(2)),
+          'feature_review_paths' => extract_href(values.fetch(2)),
         }
       }
     end
@@ -28,24 +28,24 @@ module Pages
       verify!
       page.all('.deployed-release').map { |release_line|
         values = release_line.all('td').to_a
-        release = {
+        {
           'approved' => !release_line['class'].split.include?('danger'),
           'version' => values.fetch(0).text,
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
-          'feature_review_paths' => extract_href_if_exists(values.fetch(2)),
-          'time' => nil,
+          'feature_review_paths' => extract_href(values.fetch(2)),
+          'time' => extract_time(values.fetch(3)),
         }
-
-        deploy_time = values.fetch(3).text
-        release['time'] = Time.parse(deploy_time) unless deploy_time.empty?
-        release
       }
     end
 
     private
 
-    def extract_href_if_exists(element)
+    def extract_time(element)
+      Time.zone.parse(element.text) unless element.text.empty?
+    end
+
+    def extract_href(element)
       element.all('a').map { |link| link['href'] }
     end
 

@@ -22,14 +22,6 @@ module Events
       details.fetch('issue').fetch('fields').fetch('status').fetch('name')
     end
 
-    def user_email
-      details.fetch('user').fetch('emailAddress')
-    end
-
-    def updated
-      details.fetch('issue').fetch('fields').fetch('updated')
-    end
-
     def comment
       details.fetch('comment', {}).fetch('body', '')
     end

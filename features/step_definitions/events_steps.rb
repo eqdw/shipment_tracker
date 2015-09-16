@@ -1,29 +1,51 @@
-Given 'a ticket "$key" with summary "$summary" is started' do |key, summary|
+Given 'a ticket "$key" with summary "$summary" is started at "$time"' do |key, summary, time|
   scenario_context.create_and_start_ticket(
     key: key,
     summary: summary,
+    time: time,
   )
 end
 
-Given 'adds the link for review "$nickname" to a comment for ticket "$jira_key"' do |nickname, jira_key|
-  scenario_context.link_ticket_and_feature_review(jira_key, nickname)
+Given 'at time "$a" adds link for review "$b" to comment for ticket "$c"' do |time, nickname, jira_key|
+  scenario_context.link_ticket_and_feature_review(
+    jira_key: jira_key,
+    feature_review_nickname: nickname,
+    time: time,
+  )
 end
 
 Given 'ticket "$key" is approved by "$approver_email" at "$time"' do |jira_key, approver_email, time|
-  scenario_context.approve_ticket(jira_key, approver_email: approver_email, time: time)
+  scenario_context.approve_ticket(
+    jira_key: jira_key,
+    approver_email: approver_email,
+    approve: true,
+    time: time,
+  )
 end
 
-Given 'CircleCi "$outcome" for commit "$version"' do |outcome, version|
+Given 'ticket "$key" is moved from approved to unapproved by "$email" at "$time"' do |jira_key, email, time|
+  scenario_context.approve_ticket(
+    jira_key: jira_key,
+    approver_email: email,
+    approve: false,
+    time: time,
+  )
+end
+
+Given 'At "$time" CircleCi "$outcome" for commit "$version"' do |time, outcome, version|
   payload = build(
     :circle_ci_manual_webhook_event,
     success?: outcome == 'passes',
     version: scenario_context.resolve_version(version),
   ).details
 
-  post_event 'circleci-manual', payload
+  travel_to Time.zone.parse(time) do
+    scenario_context.post_event 'circleci-manual', payload
+  end
 end
 
-Given 'commit "$version" of "$app" is deployed by "$name" to server "$server"' do |version, app, name, server|
+# rubocop:disable LineLength
+Given 'commit "$version" of "$app" is deployed by "$name" to server "$server" at "$time"' do |version, app, name, server, time|
   payload = build(
     :deploy_event,
     server: server,
@@ -32,8 +54,11 @@ Given 'commit "$version" of "$app" is deployed by "$name" to server "$server"' d
     deployed_by: name,
   ).details
 
-  post_event 'deploy', payload
+  travel_to Time.zone.parse(time) do
+    scenario_context.post_event 'deploy', payload
+  end
 end
+# rubocop:enable LineLength
 
 Given 'commit "$ver" of "$app" is deployed by "$name" to production at "$time"' do |ver, app, name, time|
   payload = build(
@@ -46,11 +71,12 @@ Given 'commit "$ver" of "$app" is deployed by "$name" to production at "$time"' 
   ).details
 
   travel_to Time.zone.parse(time) do
-    post_event 'deploy', payload
+    scenario_context.post_event 'deploy', payload
   end
 end
 
-Given 'User Acceptance Tests at version "$sha" which "$outcome" on server "$server"' do |sha, outcome, server|
+# rubocop:disable LineLength
+Given 'User Acceptance Tests at version "$sha" which "$outcome" on server "$server" at "$time"' do |sha, outcome, server, time|
   payload = build(
     :uat_event,
     success: outcome == 'passed',
@@ -58,17 +84,8 @@ Given 'User Acceptance Tests at version "$sha" which "$outcome" on server "$serv
     server: server,
   ).details
 
-  post_event 'uat', payload
+  travel_to Time.zone.parse(time) do
+    scenario_context.post_event 'uat', payload
+  end
 end
-
-def post_event(type, payload)
-  OmniAuth.config.test_mode = true
-  OmniAuth.config.mock_auth[:event_token] = OmniAuth::AuthHash.new(
-    provider: 'event_token',
-    uid:      type,
-  )
-  url = "/events/#{type}"
-  post url, payload.to_json, 'CONTENT_TYPE' => 'application/json'
-
-  Repositories::Updater.from_rails_config.run
-end
+# rubocop:enable LineLength

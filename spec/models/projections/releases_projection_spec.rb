@@ -30,35 +30,6 @@ RSpec.describe Projections::ReleasesProjection do
   let(:versions) { commits.map(&:id) }
   let(:deploy_time) { time - 1.hour }
   let(:deploys) { [Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time)] }
-  let(:feature_reviews) {
-    [
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'abc', backend: 'NON1'),
-        versions: %w(NON1 abc),
-        event_created_at: 1.day.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON2', backend: 'def'),
-        versions: %w(def NON2),
-        event_created_at: 3.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON2', backend: 'NON3'),
-        versions: %w(NON3 NON2),
-        event_created_at: 5.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'ghi', backend: 'NON3'),
-        versions: %w(NON3 ghi),
-        event_created_at: 7.days.ago,
-      ),
-      Snapshots::FeatureReview.create!(
-        url: feature_review_url(frontend: 'NON4', backend: 'NON5'),
-        versions: %w(NON5 NON4),
-        event_created_at: 9.days.ago,
-      ),
-    ]
-  }
 
   before do
     allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
@@ -69,61 +40,27 @@ RSpec.describe Projections::ReleasesProjection do
 
   describe '#pending_releases' do
     it 'returns list of releases not yet deployed to production' do
-      expect(projection.pending_releases.length).to eq(1)
-
-      release = projection.pending_releases.first
-      expect(release.version).to eq('abc')
-      expect(release.subject).to eq('commit on topic branch')
+      versions = projection.pending_releases.map(&:version)
+      expect(versions).to eq(['abc'])
     end
 
-    describe 'returned releases' do
-      it 'have feature_reviews' do
-        expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
-      end
-
-      it 'have an approval_status and know whether they are approved' do
-        expect(projection.pending_releases).to all(respond_to(:approved?))
-        expect(projection.pending_releases).to all(respond_to(:approval_status))
-      end
+    it 'have appropriate methods' do
+      expect(projection.pending_releases).to all(respond_to(:feature_reviews))
+      expect(projection.pending_releases).to all(respond_to(:approved?))
+      expect(projection.pending_releases).to all(respond_to(:approval_status))
     end
   end
 
   describe '#deployed_releases' do
     it 'returns list of releases deployed to production' do
-      expect(projection.deployed_releases.length).to eq(2)
-
-      expect(projection.deployed_releases.any? { |release|
-        release.version == 'def' && release.subject == 'commit on topic branch'
-      }).to be true
-
-      expect(projection.deployed_releases.any? { |release|
-        release.version == 'ghi' && release.subject == 'commit on master branch'
-      }).to be true
+      versions = projection.deployed_releases.map(&:version)
+      expect(versions).to eq(%w(def ghi))
     end
 
-    describe 'returned releases' do
-      it 'know production_deploy_time' do
-        expect(projection.deployed_releases).to all(respond_to(:production_deploy_time))
-      end
-
-      it 'have feature_reviews' do
-        expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
-      end
-
-      it 'have an approval_status and know whether they are approved' do
-        expect(projection.deployed_releases).to all(respond_to(:approved?))
-        expect(projection.deployed_releases).to all(respond_to(:approval_status))
-      end
+    it 'have appropriate methods' do
+      expect(projection.deployed_releases).to all(respond_to(:feature_reviews))
+      expect(projection.deployed_releases).to all(respond_to(:approved?))
+      expect(projection.deployed_releases).to all(respond_to(:approval_status))
     end
-  end
-
-  private
-
-  def feature_review_comment(apps)
-    "please review\n#{feature_review_url(apps)}"
-  end
-
-  def feature_review_path(apps)
-    URI.parse(feature_review_url(apps)).request_uri
   end
 end

@@ -28,12 +28,12 @@ RSpec.describe FeatureReviewWithStatuses do
     )
   }
 
-  let(:query_time) { 1.day.ago }
+  let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
   let(:time_now) { Time.now }
 
   let(:query_class) { class_double(Queries::FeatureReviewQuery, new: feature_review_query) }
 
-  subject(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
+  let(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
 
   it 'delegates #apps, #tickets, #builds, #deploys and #qa_submission to the feature_review_query' do
     expect(decorator.tickets).to eq(feature_review_query.tickets)
@@ -279,6 +279,77 @@ RSpec.describe FeatureReviewWithStatuses do
       it 'is :unapproved' do
         allow(decorator).to receive(:approved?).and_return(false)
         expect(decorator.approval_status).to eq(:unapproved)
+      end
+    end
+  end
+
+  describe '#path_with_query_time' do
+    let(:base_path) { '/feature_reviews' }
+    let(:feature_review) {
+      instance_double(FeatureReview,
+        base_path: base_path,
+        query_hash: {
+          'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' },
+          'uat_url' => 'uat.com',
+        })
+    }
+
+    it 'returns the path for the feature review at the query time' do
+      query = '?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com'
+      expect(decorator.path_with_query_time).to eq("#{base_path}#{query}")
+    end
+  end
+
+  describe '#approved_path' do
+    let(:base_path) { '/feature_reviews' }
+    let(:query_hash) {
+      { 'apps' => { 'app1' => 'xxx' }, 'uat_url' => 'uat.com' }
+    }
+
+    context 'when the feature review is approved' do
+      let(:feature_review) {
+        instance_double(FeatureReview,
+          uat_url: 'uat.com',
+          versions: 'xxx',
+          approved_at: Time.parse('2014-04-23 11:36:32 UTC'),
+          base_path: base_path,
+          query_hash: query_hash)
+      }
+
+      before :each do
+        allow(decorator).to receive(:approved?).and_return(true)
+      end
+
+      it 'returns the path for the feature review at the approved_at time' do
+        query = '?apps%5Bapp1%5D=xxx&time=2014-04-23+11%3A36%3A32+UTC&uat_url=uat.com'
+        expect(decorator.approved_path).to eq("#{base_path}#{query}")
+      end
+
+      context 'when the feature review does not have an approval time' do
+        let(:feature_review) { instance_double(FeatureReview, approved_at: nil) }
+
+        it 'returns nil' do
+          expect(decorator.approved_path).to be_nil
+        end
+      end
+    end
+
+    context 'when the feature review is NOT approved' do
+      let(:feature_review) {
+        instance_double(FeatureReview,
+          uat_url: 'uat.com',
+          versions: 'xxx',
+          approved_at: Time.parse('2014-04-23 11:36:32 UTC'),
+          base_path: base_path,
+          query_hash: query_hash)
+      }
+
+      before :each do
+        allow(decorator).to receive(:approved?).and_return(false)
+      end
+
+      it 'returns nil' do
+        expect(decorator.approved_path).to be_nil
       end
     end
   end

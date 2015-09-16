@@ -47,9 +47,7 @@ module Projections
         deploy_for_commit = production_deploy_for_commit(commit)
         deployed = true if deploy_for_commit # A deploy means all subsequent (earlier) commits are deployed.
         if deployed
-          @deployed_releases << create_release_from(
-            commit: commit, deploy: deploy_for_commit
-          )
+          @deployed_releases << create_release_from(commit: commit, deploy: deploy_for_commit)
         else
           @pending_releases << create_release_from(commit: commit)
         end

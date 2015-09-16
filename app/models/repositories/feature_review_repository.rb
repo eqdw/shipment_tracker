@@ -15,12 +15,13 @@ module Repositories
       store
         .where(query)
         .where('versions && ARRAY[?]::varchar[]', versions)
-        .group_by(&:url)
+        .group_by(&:path)
         .map { |_, snapshots|
           most_recent_snapshot = snapshots.max_by(&:event_created_at)
           Factories::FeatureReviewFactory.new.create(
-            url: most_recent_snapshot.url,
+            path: most_recent_snapshot.path,
             versions: most_recent_snapshot.versions,
+            approved_at: most_recent_snapshot.approved_at,
           )
         }
     end
@@ -28,11 +29,14 @@ module Repositories
     def apply(event)
       return unless event.is_a?(Events::JiraEvent) && event.issue?
 
-      Factories::FeatureReviewFactory.new.create_from_text(event.comment).each do |feature_review|
+      feature_reviews = Factories::FeatureReviewFactory.new.create_from_text(event.comment)
+
+      feature_reviews.each do |feature_review|
         store.create!(
-          url: feature_review.url,
+          path: feature_review.path,
           versions: feature_review.versions,
           event_created_at: event.created_at,
+          approved_at: approved_at_for(feature_review, event),
         )
       end
     end
@@ -40,5 +44,16 @@ module Repositories
     private
 
     attr_reader :store
+
+    def approved_at_for(feature_review, event)
+      new_review = FeatureReviewWithStatuses.new(feature_review)
+      return unless new_review.approved?
+      last_review_approved_at(feature_review.path) || event.created_at
+    end
+
+    def last_review_approved_at(path)
+      last_review = store.where(path: path).order('event_created_at, id ASC').last
+      FeatureReviewWithStatuses.new(last_review).try(:approved_at)
+    end
   end
 end

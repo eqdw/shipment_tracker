@@ -205,6 +205,7 @@ Support::RepositoryBuilder.add_example(
   end,
 )
 
+# :nocov:
 Support::RepositoryBuilder.add_example(
   <<-'EOS'.strip_heredoc,
            o-o-o-o-o-A-B
@@ -225,6 +226,7 @@ Support::RepositoryBuilder.add_example(
     repo.merge_branch(branch_name: branch_name, pretend_version: 'C')
   end,
 )
+# :nocov:
 
 Support::RepositoryBuilder.add_example(
   '-o-A-B-C',

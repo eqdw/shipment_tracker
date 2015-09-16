@@ -75,7 +75,7 @@ RSpec.describe FeatureReviewsController do
     context 'when the feature review form is valid' do
       before do
         allow(feature_review_form).to receive(:valid?).and_return(true)
-        allow(feature_review_form).to receive(:url).and_return('/the/url')
+        allow(feature_review_form).to receive(:path).and_return('/the/url')
       end
 
       it 'redirects to #show' do
@@ -125,7 +125,7 @@ RSpec.describe FeatureReviewsController do
     let(:repo) { instance_double(GitRepository) }
     let(:related_versions) { %w(abc def ghi) }
     let(:expected_links) { ['/somelink'] }
-    let(:expected_feature_reviews) { [instance_double(FeatureReview, url: '/somelink')] }
+    let(:expected_feature_reviews) { [instance_double(FeatureReview, path: '/somelink')] }
     let(:version) { 'abc123' }
 
     before do

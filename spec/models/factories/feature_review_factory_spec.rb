@@ -19,8 +19,14 @@ RSpec.describe Factories::FeatureReviewFactory do
 
     it 'returns an array of FeatureReviews for each URL in the given text' do
       expect(feature_reviews).to match_array([
-        FeatureReview.new(url: url1, versions: %w(a b)),
-        FeatureReview.new(url: url2, versions: %w(a)),
+        FeatureReview.new(
+          path: '/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b&other=true',
+          versions: %w(a b),
+        ),
+        FeatureReview.new(
+          path: '/feature_reviews?apps%5Bapp1%5D=a',
+          versions: %w(a),
+        ),
       ])
     end
 
@@ -51,23 +57,31 @@ RSpec.describe Factories::FeatureReviewFactory do
 
   context '#create_from_url_string' do
     it 'returns a FeatureReview with the attributes from the url' do
-      actual_url = full_url 'apps[a]' => '123',
-                            'apps[b]' => '456',
-                            'uat_url' => 'http://foo.com'
+      actual_url = full_url(
+        'apps[a]' => '123',
+        'apps[b]' => '456',
+        'uat_url' => 'http://foo.com',
+      )
+      expected_path = '/feature_reviews?apps%5Ba%5D=123&apps%5Bb%5D=456&uat_url=http%3A%2F%2Ffoo.com'
 
       feature_review = factory.create_from_url_string(actual_url)
       expect(feature_review.versions).to eq(%w(123 456))
       expect(feature_review.uat_url).to eq('http://foo.com')
+      expect(feature_review.path).to eq(expected_path)
     end
 
     it 'only captures non-blank versions in the url' do
-      actual_url = full_url 'apps[a]' => '123',
-                            'apps[b]' => '',
-                            'uat_url' => 'http://foo.com'
+      actual_url = full_url(
+        'apps[a]' => '123',
+        'apps[b]' => '',
+        'uat_url' => 'http://foo.com',
+      )
+      expected_path = '/feature_reviews?apps%5Ba%5D=123&apps%5Bb%5D=&uat_url=http%3A%2F%2Ffoo.com'
 
       feature_review = factory.create_from_url_string(actual_url)
       expect(feature_review.versions).to eq(['123'])
       expect(feature_review.uat_url).to eq('http://foo.com')
+      expect(feature_review.path).to eq(expected_path)
     end
   end
 

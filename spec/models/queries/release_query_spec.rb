@@ -4,7 +4,7 @@ require 'support/git_test_repository'
 require 'support/repository_builder'
 
 RSpec.describe Queries::ReleaseQuery do
-  let(:query_time) { 2.days.ago }
+  let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
   let(:time_now) { Time.now }
 
   let(:git_diagram) {
@@ -30,50 +30,60 @@ RSpec.describe Queries::ReleaseQuery do
   let(:feature_review_for_A) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_A',
-      versions: [sha_for_A])
-  }
-
-  let(:feature_review_for_B) {
-    instance_double(
-      FeatureReview,
-      url: 'url_of_feature_review_for_B',
-      versions: [sha_for_B])
+      path: 'url_of_feature_review_for_A',
+      versions: [sha_for_A],
+      base_path: '/base_path_for_A',
+      query_hash: { 'apps' => { 'app1' => 'A' }, 'uat_url' => 'uat.com/A' },
+    )
   }
 
   let(:feature_review_for_C) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_C',
-      versions: [sha_for_C])
+      path: 'url_of_feature_review_for_C',
+      versions: [sha_for_C],
+      base_path: '/base_path_for_C',
+      query_hash: { 'apps' => { 'app1' => 'C' }, 'uat_url' => 'uat.com/C' },
+    )
   }
 
   let(:feature_review_for_D) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_D',
-      versions: [sha_for_D])
+      path: 'url_of_feature_review_for_D',
+      versions: [sha_for_D],
+      base_path: '/base_path_for_D',
+      query_hash: { 'apps' => { 'app1' => 'D' }, 'uat_url' => 'uat.com/D' },
+    )
   }
 
   let(:feature_review_for_E) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_E',
-      versions: [sha_for_E])
+      path: 'url_of_feature_review_for_E',
+      versions: [sha_for_E],
+      base_path: '/base_path_for_E',
+      query_hash: { 'apps' => { 'app1' => 'E' }, 'uat_url' => 'uat.com/E' },
+    )
   }
 
   let(:feature_review_for_F) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_F',
-      versions: [sha_for_F])
+      path: 'url_of_feature_review_for_F',
+      versions: [sha_for_F],
+      base_path: '/base_path_for_F',
+      query_hash: { 'apps' => { 'app1' => 'F' }, 'uat_url' => 'uat.com/F' },
+    )
   }
 
   let(:feature_review_for_G) {
     instance_double(
       FeatureReview,
-      url: 'url_of_feature_review_for_G',
-      versions: [sha_for_G])
+      path: 'url_of_feature_review_for_G',
+      versions: [sha_for_G],
+      base_path: '/base_path_for_G',
+    )
   }
 
   subject(:query) {
@@ -103,9 +113,9 @@ RSpec.describe Queries::ReleaseQuery do
           )
           .and_return([feature_review_for_E, feature_review_for_F, feature_review_for_G])
 
-        expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          url_of_feature_review_for_E
-          url_of_feature_review_for_F
+        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
+          /base_path_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
+          /base_path_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
         ))
       end
     end
@@ -121,8 +131,8 @@ RSpec.describe Queries::ReleaseQuery do
           )
           .and_return([feature_review_for_A])
 
-        expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          url_of_feature_review_for_A
+        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
+          /base_path_for_A?apps%5Bapp1%5D=A&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FA
         ))
       end
     end
@@ -138,8 +148,8 @@ RSpec.describe Queries::ReleaseQuery do
           )
           .and_return([feature_review_for_D])
 
-        expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          url_of_feature_review_for_D
+        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
+          /base_path_for_D?apps%5Bapp1%5D=D&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FD
         ))
       end
     end
@@ -155,10 +165,10 @@ RSpec.describe Queries::ReleaseQuery do
           )
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
 
-        expect(query.feature_reviews.map(&:url)).to match_array(%w(
-          url_of_feature_review_for_C
-          url_of_feature_review_for_E
-          url_of_feature_review_for_F
+        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
+          /base_path_for_C?apps%5Bapp1%5D=C&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FC
+          /base_path_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
+          /base_path_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
         ))
       end
     end

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150823124742) do
+ActiveRecord::Schema.define(version: 20150915151859) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -50,9 +50,10 @@ ActiveRecord::Schema.define(version: 20150823124742) do
   end
 
   create_table "feature_reviews", force: :cascade do |t|
-    t.string   "url"
+    t.string   "path"
     t.string   "versions",         array: true
     t.datetime "event_created_at"
+    t.datetime "approved_at"
   end
 
   add_index "feature_reviews", ["versions"], name: "index_feature_reviews_on_versions", using: :gin
@@ -81,12 +82,12 @@ ActiveRecord::Schema.define(version: 20150823124742) do
     t.string   "key"
     t.string   "summary"
     t.string   "status"
-    t.text     "urls",             array: true
+    t.text     "paths",            array: true
     t.datetime "event_created_at"
     t.string   "versions",         array: true
   end
 
-  add_index "tickets", ["urls"], name: "index_tickets_on_urls", using: :gin
+  add_index "tickets", ["paths"], name: "index_tickets_on_paths", using: :gin
   add_index "tickets", ["versions"], name: "index_tickets_on_versions", using: :gin
 
   create_table "tokens", force: :cascade do |t|

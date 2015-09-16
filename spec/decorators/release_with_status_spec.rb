@@ -7,14 +7,14 @@ RSpec.describe ReleaseWithStatus do
   let(:feature_review1) {
     instance_double(
       FeatureReview,
-      url: feature_review_url(frontend: 'abc', backend: 'xyx'),
+      path: feature_review_path(frontend: 'abc', backend: 'xyx'),
       versions: %w(commitsha1))
   }
 
   let(:feature_review2) {
     instance_double(
       FeatureReview,
-      url: feature_review_url(frontend: 'def', backend: 'uvw'),
+      path: feature_review_path(frontend: 'def', backend: 'uvw'),
       versions: %w(commitsha1 commitsha2))
   }
 
@@ -41,7 +41,6 @@ RSpec.describe ReleaseWithStatus do
     ReleaseWithStatus.new(
       release: release,
       git_repository: git_repository,
-      at: query_time,
       query_class: query_class)
   }
 
@@ -57,32 +56,6 @@ RSpec.describe ReleaseWithStatus do
       instance_double(FeatureReviewWithStatuses),
     ])
     expect(decorator.feature_reviews).to eq(release_query.feature_reviews)
-  end
-
-  describe '#time' do
-    context 'when initialized with a time' do
-      it 'returns the time it was initialized with' do
-        Timecop.freeze(time_now) do
-          decorator_with_specified_time = described_class.new(
-            release: release,
-            git_repository: git_repository,
-            at: query_time)
-          expect(decorator_with_specified_time.time).to eq(query_time)
-        end
-        expect(decorator.time).to eql(query_time)
-      end
-    end
-
-    context 'when NOT initialized with a time' do
-      it 'returns the time when it was initialized' do
-        Timecop.freeze(time_now) do
-          decorator_without_specified_time = described_class.new(
-            release: release,
-            git_repository: git_repository)
-          expect(decorator_without_specified_time.time).to eq(time_now)
-        end
-      end
-    end
   end
 
   describe '#approved?' do

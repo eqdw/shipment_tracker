@@ -1,15 +1,14 @@
 require 'queries/release_query'
 
 class ReleaseWithStatus < SimpleDelegator
-  attr_reader :time
-
-  def initialize(release:, git_repository:, at: Time.now, query_class: Queries::ReleaseQuery)
+  def initialize(release:, git_repository:, query_class: Queries::ReleaseQuery)
     super(release)
-    @time = at
-    @query = query_class.new(release: release, git_repository: git_repository, at: time)
+    @release = release
+    @git_repository = git_repository
+    @query = query_class.new(release: release, git_repository: git_repository)
   end
 
-  delegate :feature_reviews, to: :query
+  delegate :feature_reviews, to: :@query
 
   def approved?
     feature_reviews.any?(&:approved?)
@@ -19,8 +18,4 @@ class ReleaseWithStatus < SimpleDelegator
     return nil if feature_reviews.empty?
     approved? ? :approved : :unapproved
   end
-
-  private
-
-  attr_reader :query
 end

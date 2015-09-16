@@ -73,7 +73,7 @@ RSpec.describe Queries::FeatureReviewQuery do
 
     before do
       allow(ticket_repository).to receive(:tickets_for)
-        .with(feature_review_url: feature_review.url, at: time)
+        .with(feature_review_path: feature_review.path, at: time)
         .and_return(expected_tickets)
     end
 

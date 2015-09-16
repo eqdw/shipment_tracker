@@ -39,7 +39,7 @@ module Queries
 
     def tickets
       ticket_repository.tickets_for(
-        feature_review_url: feature_review.url,
+        feature_review_path: feature_review.path,
         at: time)
     end
 

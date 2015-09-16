@@ -137,14 +137,11 @@ class GitRepository
 
   def validate_commit!(commit_oid)
     fail CommitNotFound, commit_oid unless rugged_repository.exists?(commit_oid)
-  rescue Rugged::InvalidError
-    raise CommitNotValid, commit_oid
+  rescue Rugged::InvalidError; raise CommitNotValid, commit_oid
   end
 
   def instrument(name, &block)
-    ActiveSupport::Notifications.instrument(
-      "#{name}.git_repository",
-      &block)
+    ActiveSupport::Notifications.instrument("#{name}.git_repository", &block)
   end
 
   def main_branch

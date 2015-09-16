@@ -3,7 +3,7 @@ require 'queries/feature_review_query'
 class FeatureReviewWithStatuses < SimpleDelegator
   attr_reader :time
 
-  def initialize(feature_review, at: Time.now, query_class: Queries::FeatureReviewQuery)
+  def initialize(feature_review, at: Time.current, query_class: Queries::FeatureReviewQuery)
     super(feature_review)
     @time = at
     @query = query_class.new(feature_review, at: @time)
@@ -59,6 +59,15 @@ class FeatureReviewWithStatuses < SimpleDelegator
 
   def approval_status
     approved? ? :approved : :unapproved
+  end
+
+  def approved_path
+    return nil unless approved? && approved_at.present?
+    "#{base_path}?#{query_hash.merge(time: approved_at.utc).to_query}"
+  end
+
+  def path_with_query_time
+    "#{base_path}?#{query_hash.merge(time: time.utc).to_query}"
   end
 
   private
