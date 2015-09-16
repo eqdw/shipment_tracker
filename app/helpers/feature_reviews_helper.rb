@@ -61,7 +61,7 @@ module FeatureReviewsHelper
     end
   end
 
-  def to_link(url, options = {})
-    link_to url, Addressable::URI.heuristic_parse(url).to_s, options
+  def to_link(path, options = {})
+    link_to path, Addressable::URI.heuristic_parse(path).to_s, options
   end
 end

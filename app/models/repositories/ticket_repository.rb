@@ -12,11 +12,11 @@ module Repositories
 
     delegate :table_name, to: :store
 
-    def tickets_for(feature_review_url:, at: nil)
+    def tickets_for(feature_review_path:, at: nil)
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
       store
         .select('DISTINCT ON (key) *')
-        .where('paths @> ARRAY[?]', prepare_url(feature_review_url))
+        .where('paths @> ARRAY[?]', prepare_path(feature_review_path))
         .where(query)
         .order('key, id DESC')
         .map { |t| Ticket.new(t.attributes) }
@@ -47,8 +47,8 @@ module Repositories
 
     def merge_ticket_paths(ticket, feature_reviews)
       old_paths = ticket.fetch('paths', [])
-      new_paths = feature_review_urls(feature_reviews)
-      old_paths.concat(new_urls).uniq
+      new_paths = feature_review_paths(feature_reviews)
+      old_paths.concat(new_paths).uniq
     end
 
     def merge_ticket_versions(ticket, feature_reviews)
@@ -57,13 +57,13 @@ module Repositories
       old_versions.concat(new_versions).uniq
     end
 
-    def prepare_url(url_string)
-      Addressable::URI.parse(url_string).normalize.to_s
+    def prepare_path(path)
+      Addressable::URI.parse(path).normalize.to_s
     end
 
-    def feature_review_urls(feature_reviews)
+    def feature_review_paths(feature_reviews)
       feature_reviews.map { |feature_review|
-        prepare_url(feature_review.url)
+        prepare_path(feature_review.path)
       }
     end
 

@@ -24,11 +24,11 @@ Given 'developer prepares review known as "$a" for UAT "$b" with apps' do |known
 end
 
 When 'I visit the feature review known as "$known_as"' do |known_as|
-  visit scenario_context.review_url(feature_review_nickname: known_as)
+  visit scenario_context.review_path(feature_review_nickname: known_as)
 end
 
 When 'I visit feature review "$known_as" as at "$time"' do |known_as, time|
-  visit scenario_context.review_url(feature_review_nickname: known_as, time: time)
+  visit scenario_context.review_path(feature_review_nickname: known_as, time: time)
 end
 
 Then 'I should see the builds with heading "$status" and content' do |status, builds_table|

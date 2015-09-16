@@ -7,17 +7,13 @@ class FeatureReview
   include Virtus.value_object
 
   values do
-    attribute :url, String
+    attribute :path, String
     attribute :versions, Array
     attribute :approved_at, DateTime
   end
 
   def app_versions
     query_hash.fetch('apps', {}).select { |_name, version| version.present? }
-  end
-
-  def path
-    URI(url).request_uri
   end
 
   def uat_url
@@ -29,11 +25,11 @@ class FeatureReview
   end
 
   def query_hash
-    Rack::Utils.parse_nested_query(URI(url).query)
+    Rack::Utils.parse_nested_query(URI(path).query)
   end
 
-  def base_url
-    Addressable::URI.parse(url).omit(:query).to_s
+  def base_path
+    Addressable::URI.parse(path).omit(:query).to_s
   end
 
   private

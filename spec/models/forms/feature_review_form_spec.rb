@@ -152,11 +152,11 @@ RSpec.describe Forms::FeatureReviewForm do
     end
   end
 
-  describe '#url' do
+  describe '#path' do
     let(:apps) { { frontend: 'abc', backend: 'def' } }
     let(:uat_url) { 'http://foobar.com/blah/blah' }
 
-    subject { feature_review_form.url }
+    subject { feature_review_form.path }
 
     it do
       is_expected.to eq(

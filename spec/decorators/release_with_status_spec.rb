@@ -7,14 +7,14 @@ RSpec.describe ReleaseWithStatus do
   let(:feature_review1) {
     instance_double(
       FeatureReview,
-      url: feature_review_url(frontend: 'abc', backend: 'xyx'),
+      path: feature_review_path(frontend: 'abc', backend: 'xyx'),
       versions: %w(commitsha1))
   }
 
   let(:feature_review2) {
     instance_double(
       FeatureReview,
-      url: feature_review_url(frontend: 'def', backend: 'uvw'),
+      path: feature_review_path(frontend: 'def', backend: 'uvw'),
       versions: %w(commitsha1 commitsha2))
   }
 

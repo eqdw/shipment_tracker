@@ -16,7 +16,7 @@ module Factories
       query_hash = Rack::Utils.parse_nested_query(URI(url).query)
       versions = query_hash.fetch('apps', {}).values.reject(&:blank?)
       create(
-        url: url.to_s,
+        path: url.to_s,
         versions: versions,
       )
     end

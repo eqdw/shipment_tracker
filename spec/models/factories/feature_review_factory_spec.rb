@@ -19,8 +19,8 @@ RSpec.describe Factories::FeatureReviewFactory do
 
     it 'returns an array of FeatureReviews for each URL in the given text' do
       expect(feature_reviews).to match_array([
-        FeatureReview.new(url: url1, versions: %w(a b)),
-        FeatureReview.new(url: url2, versions: %w(a)),
+        FeatureReview.new(path: url1, versions: %w(a b)),
+        FeatureReview.new(path: url2, versions: %w(a)),
       ])
     end
 

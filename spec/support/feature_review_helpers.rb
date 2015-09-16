@@ -4,12 +4,12 @@ require 'factories/feature_review_factory'
 
 module Support
   module FeatureReviewHelpers
-    def feature_review_url(*args)
+    def feature_review_path(*args)
       UrlBuilder.build(*args)
     end
 
     def new_feature_review(*args)
-      new_feature_review_from_url(feature_review_url(*args))
+      new_feature_review_from_url(feature_review_path(*args))
     end
 
     def new_feature_review_from_url(url)

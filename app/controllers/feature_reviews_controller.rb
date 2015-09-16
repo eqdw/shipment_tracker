@@ -7,7 +7,7 @@ class FeatureReviewsController < ApplicationController
   def create
     @feature_review_form = feature_review_form
     if @feature_review_form.valid?
-      redirect_to @feature_review_form.url
+      redirect_to @feature_review_form.path
     else
       @app_names = GitRepositoryLocation.app_names
       render :new
@@ -30,7 +30,7 @@ class FeatureReviewsController < ApplicationController
 
     versions = VersionResolver.new(git_repository_for(@application)).related_versions(@version)
     repository = Repositories::FeatureReviewRepository.new
-    @links = repository.feature_reviews_for(versions: versions).map(&:url)
+    @links = repository.feature_reviews_for(versions: versions).map(&:path)
     flash[:error] = 'No Feature Reviews found.' if @links.empty?
   end
 

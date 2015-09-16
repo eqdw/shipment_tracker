@@ -10,7 +10,7 @@ Then 'I should see the feature review known as "$known_as" for' do |known_as, li
       row['uat'],
       known_as,
     )
-    scenario_context.review_url(feature_review_nickname: known_as)
+    scenario_context.review_path(feature_review_nickname: known_as)
   }
   expect(feature_review_search_page.links).to match_array(links)
 end

@@ -14,7 +14,7 @@ RSpec.describe 'Projection performance', type: :request do
   describe 'Feature Review' do
     let(:apps) { { 'frontend' => 'abc', 'backend' => 'def' } }
     let(:server) { 'uat.fc.com' }
-    let(:url) { feature_review_url(apps, server) }
+    let(:url) { feature_review_path(apps, server) }
     let(:path) { URI.parse(url).request_uri }
 
     it 'measures the request time' do
@@ -39,7 +39,7 @@ RSpec.describe 'Projection performance', type: :request do
   describe 'Feature Review Search' do
     let(:apps) { { 'frontend' => version, 'backend' => 'def' } }
     let(:server) { 'uat.fc.com' }
-    let(:url) { feature_review_url(apps, server) }
+    let(:url) { feature_review_path(apps, server) }
 
     let(:repo_name) { 'frontend' }
     let(:test_git_repo) { Support::GitTestRepository.new }
@@ -71,7 +71,7 @@ RSpec.describe 'Projection performance', type: :request do
   describe 'Releases' do
     let(:apps) { { 'frontend' => version, 'backend' => 'def' } }
     let(:server) { 'uat.fc.com' }
-    let(:url) { feature_review_url(apps, server) }
+    let(:url) { feature_review_path(apps, server) }
 
     let(:repo_name) { 'frontend' }
     let(:test_git_repo) { Support::GitTestRepository.new }
