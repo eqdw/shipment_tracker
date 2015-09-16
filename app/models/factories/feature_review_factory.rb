@@ -1,9 +1,12 @@
-require 'uri'
 require 'rack/utils'
+require 'uri'
+
 require 'feature_review'
 
 module Factories
   class FeatureReviewFactory
+    QUERY_PARAM_WHITELIST = %w(apps uat_url)
+
     def create_from_text(text)
       URI.extract(text, %w(http https))
         .map { |uri| parse_uri(uri) }
@@ -13,11 +16,11 @@ module Factories
     end
 
     def create_from_url_string(url)
-      uri = URI(url)
+      uri = Addressable::URI.parse(url)
       query_hash = Rack::Utils.parse_nested_query(uri.query)
       versions = query_hash.fetch('apps', {}).values.reject(&:blank?)
       create(
-        path: uri.request_uri,
+        path: whitelisted_path(uri, query_hash),
         versions: versions,
       )
     end
@@ -27,6 +30,13 @@ module Factories
     end
 
     private
+
+    def whitelisted_path(uri, query_hash)
+      white_listed_query = query_hash.select { |query_param, _|
+        QUERY_PARAM_WHITELIST.include?(query_param)
+      }.to_query
+      "#{uri.path}?#{white_listed_query}"
+    end
 
     def parse_uri(uri)
       URI.parse(uri)
