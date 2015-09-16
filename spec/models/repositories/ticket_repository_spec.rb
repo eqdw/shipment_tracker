@@ -14,15 +14,16 @@ RSpec.describe Repositories::TicketRepository do
   end
 
   describe '#tickets_for' do
-    let(:url) { 'http://foo.com/feature_reviews' }
+    let(:url) { feature_review_url(app: 'foo') }
+    let(:path) { feature_review_path(app: 'foo') }
 
     it 'projects latest associated tickets' do
       repository.apply(build(:jira_event, :created, key: 'JIRA-1', comment_body: url))
-      results = repository.tickets_for(feature_review_path: url)
+      results = repository.tickets_for(feature_review_path: path)
       expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '')])
 
       repository.apply(build(:jira_event, :started, key: 'JIRA-1'))
-      results = repository.tickets_for(feature_review_path: url)
+      results = repository.tickets_for(feature_review_path: path)
       expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '')])
     end
 
@@ -36,7 +37,12 @@ RSpec.describe Repositories::TicketRepository do
         build(:jira_event, :development_completed, jira_1.merge(comment_body: "Review #{url}")),
 
         build(:jira_event, :created, key: 'JIRA-2'),
-        build(:jira_event, :created, key: 'JIRA-3', comment_body: "Review #{url}/extra/stuff"),
+        build(
+          :jira_event,
+          :created,
+          key: 'JIRA-3',
+          comment_body: 'Review http://example.com/feature_reviews/extra/stuff',
+        ),
 
         build(:jira_event, :created, jira_4),
         build(:jira_event, :started, jira_4),
@@ -47,7 +53,7 @@ RSpec.describe Repositories::TicketRepository do
         repository.apply(event)
       end
 
-      expect(repository.tickets_for(feature_review_path: url)).to match_array([
+      expect(repository.tickets_for(feature_review_path: path)).to match_array([
         Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done'),
         Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review'),
       ])
@@ -58,6 +64,8 @@ RSpec.describe Repositories::TicketRepository do
     end
 
     context 'when multiple feature reviews are referenced in the same JIRA ticket' do
+      let(:url1) { feature_review_url(app1: 'one') }
+      let(:url2) { feature_review_url(app2: 'two') }
       let(:path1) { feature_review_path(app1: 'one') }
       let(:path2) { feature_review_path(app2: 'two') }
 
@@ -66,8 +74,8 @@ RSpec.describe Repositories::TicketRepository do
 
       it 'projects the ticket referenced in the JIRA comments for each repository' do
         [
-          build(:jira_event, key: 'JIRA-1', comment_body: "Review #{path1}"),
-          build(:jira_event, key: 'JIRA-1', comment_body: "Review again #{path2}"),
+          build(:jira_event, key: 'JIRA-1', comment_body: "Review #{url1}"),
+          build(:jira_event, key: 'JIRA-1', comment_body: "Review again #{url2}"),
         ].each do |event|
           repository1.apply(event)
           repository2.apply(event)
@@ -96,7 +104,7 @@ RSpec.describe Repositories::TicketRepository do
           repository.apply(event)
         end
 
-        expect(repository.tickets_for(feature_review_path: url, at: t[2])).to match_array([
+        expect(repository.tickets_for(feature_review_path: path, at: t[2])).to match_array([
           Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment'),
         ])
       end

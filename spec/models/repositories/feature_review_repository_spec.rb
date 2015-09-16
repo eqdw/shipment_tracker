@@ -68,17 +68,17 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
       [
         build(:jira_event,
-          comment_body: "Review: #{feature_review_path(frontend: 'abc', backend: 'NON1')}",
+          comment_body: "Review: #{feature_review_url(frontend: 'abc', backend: 'NON1')}",
           created_at: timestamp),
         build(:jira_event,
-          comment_body: "Review: #{feature_review_path(frontend: 'NON2', backend: 'def')}",
+          comment_body: "Review: #{feature_review_url(frontend: 'NON2', backend: 'def')}",
           created_at: timestamp),
         build(:jira_event,
-          comment_body: "Review: #{feature_review_path(frontend: 'NON2', backend: 'NON3')}",
+          comment_body: "Review: #{feature_review_url(frontend: 'NON2', backend: 'NON3')}",
           created_at: timestamp),
         build(:jira_event,
-          comment_body: "Review: #{feature_review_path(frontend: 'ghi', backend: 'NON3')} "\
-                        "and: #{feature_review_path(frontend: 'NON4', backend: 'NON5')}",
+          comment_body: "Review: #{feature_review_url(frontend: 'ghi', backend: 'NON3')} "\
+                        "and: #{feature_review_url(frontend: 'NON4', backend: 'NON5')}",
           created_at: timestamp),
       ].each do |event|
         repository.apply(event)
@@ -100,7 +100,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
           )
 
           repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_path(frontend: 'abc')}",
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
             created_at: timestamp))
         end
       end
@@ -119,7 +119,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
           )
 
           repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_path(frontend: 'abc')}",
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
             created_at: timestamp))
         end
       end
@@ -139,7 +139,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
           )
 
           repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_path(frontend: 'abc')}",
+            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
             created_at: timestamp))
         end
       end
@@ -159,7 +159,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         )
 
         repository.apply(build(:jira_event, :rejected,
-          comment_body: "Review: #{feature_review_path(frontend: 'abc')}",
+          comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
           created_at: timestamp))
       end
     end

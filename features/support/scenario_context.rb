@@ -71,9 +71,9 @@ module Support
     end
 
     def link_ticket_and_feature_review(jira_key:, feature_review_nickname:, time: nil)
-      path = review_path(feature_review_nickname: feature_review_nickname)
+      url = review_url(feature_review_nickname: feature_review_nickname)
       ticket_details = @tickets.fetch(jira_key).merge!(
-        comment_body: "Here you go: #{path}",
+        comment_body: "Here you go: #{url}",
         updated: time,
       )
       event = build(:jira_event, ticket_details)
@@ -94,9 +94,14 @@ module Support
       end
     end
 
+    def review_url(feature_review_nickname: nil, time: nil)
+      review = @reviews.fetch(feature_review_nickname)
+      feature_review_url(review[:apps_hash], review[:uat_url], time)
+    end
+
     def review_path(feature_review_nickname: nil, time: nil)
       review = @reviews.fetch(feature_review_nickname)
-      build_path_for(review, time)
+      feature_review_path(review[:apps_hash], review[:uat_url], time)
     end
 
     def post_event(type, payload)
@@ -126,10 +131,6 @@ module Support
 
     def build(*args)
       FactoryGirl.build(*args)
-    end
-
-    def build_path_for(review, time = nil)
-      UrlBuilder.new(@host).build(review[:apps_hash], review[:uat_url], time)
     end
   end
 

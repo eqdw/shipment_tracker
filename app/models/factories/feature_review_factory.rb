@@ -13,10 +13,11 @@ module Factories
     end
 
     def create_from_url_string(url)
-      query_hash = Rack::Utils.parse_nested_query(URI(url).query)
+      uri = URI(url)
+      query_hash = Rack::Utils.parse_nested_query(uri.query)
       versions = query_hash.fetch('apps', {}).values.reject(&:blank?)
       create(
-        path: url.to_s,
+        path: uri.request_uri,
         versions: versions,
       )
     end
