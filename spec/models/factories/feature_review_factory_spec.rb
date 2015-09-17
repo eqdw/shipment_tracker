@@ -5,7 +5,7 @@ RSpec.describe Factories::FeatureReviewFactory do
   subject(:factory) { described_class.new }
 
   describe '#create_from_text' do
-    let(:url1) { full_url('other' => 'true', 'apps[app1]' => 'a', 'apps[app2]' => 'b') }
+    let(:url1) { full_url('apps[app1]' => 'a', 'apps[app2]' => 'b') }
     let(:url2) { full_url('apps[app1]' => 'a') }
 
     let(:text) {
@@ -17,10 +17,10 @@ RSpec.describe Factories::FeatureReviewFactory do
 
     subject(:feature_reviews) { factory.create_from_text(text) }
 
-    it 'returns an array of FeatureReviews for each URL in the given text' do
+    it 'returns an array of Feature Reviews for each URL in the given text' do
       expect(feature_reviews).to match_array([
         FeatureReview.new(
-          path: '/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b&other=true',
+          path: '/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b',
           versions: %w(a b),
         ),
         FeatureReview.new(
@@ -28,6 +28,20 @@ RSpec.describe Factories::FeatureReviewFactory do
           versions: %w(a),
         ),
       ])
+    end
+
+    context 'when a Feature Review URL contains a non-whitelisted query param' do
+      let(:url) { full_url('non-whitelisted' => 'ignoreme', 'apps[foo]' => 'bar') }
+      let(:text) { "please review #{url}" }
+
+      it 'filters it out' do
+        expect(feature_reviews).to match_array([
+          FeatureReview.new(
+            path: '/feature_reviews?apps%5Bfoo%5D=bar',
+            versions: %w(bar),
+          ),
+        ])
+      end
     end
 
     context 'when a URL has an irrelevant path' do
@@ -67,6 +81,19 @@ RSpec.describe Factories::FeatureReviewFactory do
       feature_review = factory.create_from_url_string(actual_url)
       expect(feature_review.versions).to eq(%w(123 456))
       expect(feature_review.uat_url).to eq('http://foo.com')
+      expect(feature_review.path).to eq(expected_path)
+    end
+
+    it 'excludes non-whitelisted query parameters' do
+      actual_url = full_url(
+        'apps[a]' => '123',
+        'time'    => Time.current.utc.to_s,
+        'some'    => 'non-whitelisted',
+      )
+      expected_path = '/feature_reviews?apps%5Ba%5D=123'
+
+      feature_review = factory.create_from_url_string(actual_url)
+      expect(feature_review.versions).to eq(%w(123))
       expect(feature_review.path).to eq(expected_path)
     end
 
