@@ -32,10 +32,7 @@ module Factories
     private
 
     def whitelisted_path(uri, query_hash)
-      white_listed_query = query_hash.select { |query_param, _|
-        QUERY_PARAM_WHITELIST.include?(query_param)
-      }.to_query
-      "#{uri.path}?#{white_listed_query}"
+      "#{uri.path}?#{query_hash.extract!(*QUERY_PARAM_WHITELIST).to_query}"
     end
 
     def parse_uri(uri)
