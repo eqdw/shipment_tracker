@@ -69,7 +69,7 @@ module Pages
 
     def tickets
       verify!
-      Sections::TableSection.new(page.find('.tickets table')).items
+      Sections::TableSection.new(page.find('.feature-status table')).items
     end
 
     def uatest_panel
