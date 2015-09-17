@@ -6,8 +6,10 @@ require 'addressable/uri'
 
 module Repositories
   class TicketRepository
-    def initialize(store = Snapshots::Ticket)
+    def initialize(store = Snapshots::Ticket,
+      git_repository_location: GitRepositoryLocation)
       @store = store
+      @git_repository_location = git_repository_location
     end
 
     delegate :table_name, to: :store
@@ -39,11 +41,31 @@ module Repositories
       )
 
       store.create!(new_ticket)
+
+      new_ticket['paths'].each do |path|
+        update_feature_review(path)
+      end
+    end
+
+    def update_pull_request(app_name, version)
+      repository_location = git_repository_location.find_by_name(app_name)
+      PullRequestUpdateJob.perform_later(
+        repo_url: repository_location.uri,
+        sha: version,
+      ) if repository_location
     end
 
     private
 
-    attr_reader :store
+    attr_reader :store, :git_repository_location
+
+    def update_feature_review(path)
+      feature_review = Factories::FeatureReviewFactory.new.create_from_url_string(path)
+
+      feature_review.app_versions.each do |app_name, version|
+        update_pull_request(app_name, version)
+      end
+    end
 
     def merge_ticket_paths(ticket, feature_reviews)
       old_paths = ticket.fetch('paths', [])

@@ -5,12 +5,14 @@ gem 'rails', '~> 4.2.1'
 
 gem 'addressable', require: 'addressable/uri'
 gem 'bootstrap-sass'
+gem 'delayed_job_active_record'
 gem 'dotenv'
 gem 'haml-rails'
 gem 'has_secure_token'
 gem 'honeybadger', '~> 2.0'
 gem 'jquery-rails'
 gem 'newrelic_rpm'
+gem 'octokit', '~> 4.0', require: false
 gem 'omniauth'
 gem 'omniauth-auth0'
 gem 'pg'
@@ -52,4 +54,5 @@ group :test do
   gem 'shoulda-matchers'
   gem 'simplecov', require: false
   gem 'timecop'
+  gem 'webmock', require: false
 end
