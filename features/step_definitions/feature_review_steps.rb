@@ -97,8 +97,9 @@ Then 'I should see the results of the User Acceptance Tests with heading "$s" an
   expect(panel.items.first).to eq('test_suite_version' => v)
 end
 
-Then 'I should see the time when the Feature Review is for' do
-  expect(feature_review_page.time).to include('UTC')
+Then 'I should see the time "$time" for the Feature Review' do |time|
+  expect(feature_review_page.time).to be_present
+  expect(Time.zone.parse(feature_review_page.time)).to eq(Time.zone.parse(time))
 end
 
 When 'I reload the page after a while' do

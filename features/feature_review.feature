@@ -115,7 +115,7 @@ Scenario: Viewing a feature review as at a specified time
     | Key      | Summary       | Status      |
     | JIRA-123 | Urgent ticket | In Progress |
 
-  And I should see the time when the Feature Review is for
+  And I should see the time "2014-10-04 14:00:00" for the Feature Review
 
 Scenario: QA rejects feature
   Given I am logged in as "foo@bar.com"
