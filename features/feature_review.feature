@@ -111,7 +111,7 @@ Scenario: Viewing a feature review as at a specified time
 
   When I visit feature review "FR_123" as at "2014-10-04 14:00:00"
 
-  And I should only see the ticket
+  Then I should only see the ticket
     | Key      | Summary       | Status      |
     | JIRA-123 | Urgent ticket | In Progress |
 
