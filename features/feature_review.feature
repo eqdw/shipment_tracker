@@ -100,6 +100,23 @@ Scenario: Viewing a feature review
     | frontend | #abc    | yes     |
     | backend  | #old    | no      |
 
+@logged_in
+Scenario: Viewing a feature review as at a specified time
+  Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
+  And a commit "#abc" by "Alice" is created at "2014-10-04 13:05:00" for app "frontend"
+  And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
+    | app_name | version |
+    | frontend | #abc    |
+  And at time "2014-10-04 14:00:00.500" adds link for review "FR_123" to comment for ticket "JIRA-123"
+
+  When I visit feature review "FR_123" as at "2014-10-04 14:00:00"
+
+  And I should only see the ticket
+    | Key      | Summary       | Status      |
+    | JIRA-123 | Urgent ticket | In Progress |
+
+  And I should see the time when the Feature Review is for
+
 Scenario: QA rejects feature
   Given I am logged in as "foo@bar.com"
   And developer prepares review known as "FR_qa_rejects" for UAT "uat.fundingcircle.com" with apps

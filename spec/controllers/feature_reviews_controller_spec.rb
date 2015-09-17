@@ -111,7 +111,8 @@ RSpec.describe FeatureReviewsController do
 
         expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
         expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(Time.parse('1990-12-31T23:59:59Z'))
+        expected_time = Time.parse('1990-12-31T23:59:59.999999Z')
+        expect(assigns(:feature_review_with_statuses).time).to be_within(0.00001).of(expected_time)
       end
     end
   end
