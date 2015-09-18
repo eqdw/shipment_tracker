@@ -89,3 +89,12 @@ Given 'User Acceptance Tests at version "$sha" which "$outcome" on server "$serv
   end
 end
 # rubocop:enable LineLength
+
+When 'snapshots are regenerated' do
+  Rails.application.load_tasks
+  Rake::Task['db:clear_snapshots'].reenable
+  Rake::Task['db:clear_snapshots'].invoke
+
+  Rake::Task['jobs:update_events'].reenable
+  Rake::Task['jobs:update_events'].invoke
+end

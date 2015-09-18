@@ -56,7 +56,7 @@ module Repositories
     attr_reader :store, :ticket_store, :factory
 
     def approved_at_for(feature_review, event)
-      new_review = FeatureReviewWithStatuses.new(feature_review)
+      new_review = FeatureReviewWithStatuses.new(feature_review, at: event.created_at)
       return unless new_review.approved?
       last_review_approved_at(feature_review.path) || event.created_at
     end

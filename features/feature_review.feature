@@ -121,7 +121,7 @@ Scenario: Viewing a feature review as at a specified time
   And I should see the time "2014-10-04 14:00:00" for the Feature Review
 
   @logged_in
-  Scenario: Viewing an approved feature review before and after approval
+  Scenario: Viewing an approved feature review after regenerating snapshots
     Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
     And a commit "#abc" by "Alice" is created at "2014-10-04 13:05:00" for app "frontend"
     And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
@@ -129,6 +129,8 @@ Scenario: Viewing a feature review as at a specified time
       | frontend | #abc    |
     And at time "2014-10-04 14:00:00.500" adds link for review "FR_123" to comment for ticket "JIRA-123"
     And ticket "JIRA-123" is approved by "jim@fundingcircle.com" at "2014-10-05 17:30:10"
+
+    And snapshots are regenerated
 
     When I visit feature review "FR_123" as at "2014-10-04 15:00:00"
     Then I should see that the Feature Review was not approved
