@@ -52,9 +52,9 @@ module FeatureReviewsHelper
 
   def item_class(status)
     case status
-    when true, :success
+    when true, :success, :approved
       'success'
-    when false, :failure
+    when false, :failure, :unapproved
       'danger'
     else
       'warning'

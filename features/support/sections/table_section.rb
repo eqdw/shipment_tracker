@@ -30,12 +30,15 @@ module Sections
     end
 
     def cell_text(cell_element)
-      icon_element = cell_element.first('.glyphicon')
-      if icon_element
-        icon_translation_for(icon_element)
-      else
-        cell_element.text
+      if use_icon_translations?
+        icon_element = cell_element.first('.glyphicon')
+        return icon_translation_for(icon_element) if icon_element
       end
+      cell_element.text
+    end
+
+    def use_icon_translations?
+      !icon_translations.empty?
     end
 
     def icon_translation_for(icon_element)

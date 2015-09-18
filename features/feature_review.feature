@@ -86,7 +86,7 @@ Scenario: Viewing a feature review
     | warning | User Acceptance Tests |
 
   And I should only see the ticket
-    | Key      | Summary       | Status      |
+    | Ticket   | Summary       | Status      |
     | JIRA-123 | Urgent ticket | In Progress |
 
   And I should see the builds with heading "warning" and content

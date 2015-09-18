@@ -3,6 +3,21 @@
   .lead.time= "Projecting events up to #{@feature_review_with_statuses.time}"
 
 .row
+  .col-lg-12
+    - panel(heading: "Feature Status: #{@feature_review_with_statuses.approved? ? 'APPROVED' : 'NOT APPROVED'}", status: @feature_review_with_statuses.approval_status, klass: 'feature-status') do
+      - if @feature_review_with_statuses.tickets.empty?
+        .panel-body No tickets found
+      - else
+        - table(headers: %w(Ticket Summary Status)) do
+          - @feature_review_with_statuses.tickets.each do |ticket|
+            %tr.ticket
+              %td= ticket.key
+              %td= ticket.summary
+              %td
+                - icon(item_status_icon_class(ticket.approved?))
+                = ticket.status
+
+.row
   .col-lg-6
     - panel(heading: 'Summary', status: @feature_review_with_statuses.summary_status, klass: 'summary') do
       %ul.list-group
@@ -36,19 +51,6 @@
             %strong.uat-url= to_link(@feature_review_with_statuses.uat_url, target: '_blank')
           - else
             No UAT specified
-
-.row
-  .col-lg-12
-    - panel(heading: 'Associated Tickets', klass: 'tickets') do
-      - if @feature_review_with_statuses.tickets.empty?
-        .panel-body No tickets found
-      - else
-        - table(headers: %w(Key Summary Status)) do
-          - @feature_review_with_statuses.tickets.each do |ticket|
-            %tr.ticket
-              %td= ticket.key
-              %td= ticket.summary
-              %td= ticket.status
 
 .row
   .col-lg-6
