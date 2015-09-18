@@ -16,8 +16,10 @@ class FeatureReviewsController < ApplicationController
 
   def show
     @return_to = request.original_fullpath
-    feature_review = Factories::FeatureReviewFactory.new.create_from_url_string(request.original_url)
-    @feature_review_with_statuses = FeatureReviewWithStatuses.new(feature_review, at: time)
+    review = Factories::FeatureReviewFactory.new.create_from_url_string(request.original_url)
+    whitelisted_path = review.path
+    review_with_approved_at = repository.feature_review_for_path(whitelisted_path, at: time)
+    @feature_review_with_statuses = FeatureReviewWithStatuses.new(review_with_approved_at || review, at: time)
   end
 
   def search
@@ -29,7 +31,6 @@ class FeatureReviewsController < ApplicationController
     return unless @version && @application
 
     versions = VersionResolver.new(git_repository_for(@application)).related_versions(@version)
-    repository = Repositories::FeatureReviewRepository.new
     @links = repository.feature_reviews_for(versions: versions).map(&:path)
     flash[:error] = 'No Feature Reviews found.' if @links.empty?
   end
@@ -41,6 +42,10 @@ class FeatureReviewsController < ApplicationController
     # The "time" query value in the Feature Review URL has no microseconds (i.e. 0 usec),
     # whereas the times records are persisted to the DB have higher precision which includes microseconds.
     params.fetch(:time, nil).try { |t| Time.zone.parse(t) + 0.999999.seconds }
+  end
+
+  def repository
+    Repositories::FeatureReviewRepository.new
   end
 
   def feature_review_form
