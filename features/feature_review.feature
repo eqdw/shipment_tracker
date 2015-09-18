@@ -75,19 +75,22 @@ Scenario: Viewing a feature review
     | backend  | #def    |
     | mobile   | #ghi    |
   And at time "2014-10-05 16:00:01" adds link for review "FR_view" to comment for ticket "JIRA-123"
+  And ticket "JIRA-123" is approved by "jim@fundingcircle.com" at "2014-10-05 17:30:10"
 
   When I visit the feature review known as "FR_view"
 
-  Then I should see a summary with heading "danger" and content
+  Then I should see that the Feature Review was approved at "2014-10-05 17:30:10"
+
+  And I should only see the ticket
+    | Ticket   | Summary       | Status               |
+    | JIRA-123 | Urgent ticket | Ready for Deployment |
+
+  And I should see a summary with heading "danger" and content
     | status  | title                 |
     | warning | Test Results          |
     | failed  | UAT Environment       |
     | warning | QA Acceptance         |
     | warning | User Acceptance Tests |
-
-  And I should only see the ticket
-    | Ticket   | Summary       | Status      |
-    | JIRA-123 | Urgent ticket | In Progress |
 
   And I should see the builds with heading "warning" and content
     | Status  | App      | Source   |
@@ -112,10 +115,33 @@ Scenario: Viewing a feature review as at a specified time
   When I visit feature review "FR_123" as at "2014-10-04 14:00:00"
 
   Then I should only see the ticket
-    | Key      | Summary       | Status      |
+    | Ticket      | Summary       | Status      |
     | JIRA-123 | Urgent ticket | In Progress |
 
   And I should see the time "2014-10-04 14:00:00" for the Feature Review
+
+  @logged_in
+  Scenario: Viewing an approved feature review before and after approval
+    Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
+    And a commit "#abc" by "Alice" is created at "2014-10-04 13:05:00" for app "frontend"
+    And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
+      | app_name | version |
+      | frontend | #abc    |
+    And at time "2014-10-04 14:00:00.500" adds link for review "FR_123" to comment for ticket "JIRA-123"
+    And ticket "JIRA-123" is approved by "jim@fundingcircle.com" at "2014-10-05 17:30:10"
+
+    When I visit feature review "FR_123" as at "2014-10-04 15:00:00"
+    Then I should see that the Feature Review was not approved
+    Then I should only see the ticket
+      | Ticket   | Summary       | Status      |
+      | JIRA-123 | Urgent ticket | In Progress |
+
+    When I visit feature review "FR_123" as at "2014-10-06 10:00:00"
+    Then I should see that the Feature Review was approved at "2014-10-05 17:30:10"
+    And I should only see the ticket
+      | Ticket   | Summary       | Status               |
+      | JIRA-123 | Urgent ticket | Ready for Deployment |
+
 
 Scenario: QA rejects feature
   Given I am logged in as "foo@bar.com"

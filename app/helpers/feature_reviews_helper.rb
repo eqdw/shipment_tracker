@@ -64,4 +64,10 @@ module FeatureReviewsHelper
   def to_link(url, options = {})
     link_to url, Addressable::URI.heuristic_parse(url).to_s, options
   end
+
+  def feature_status(feature_review)
+    status = "Feature Status: #{feature_review.approval_status.to_s.humanize}"
+    status << " at #{feature_review.approved_at}" if feature_review.approved? && feature_review.approved_at
+    status
+  end
 end

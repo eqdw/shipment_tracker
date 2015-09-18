@@ -93,6 +93,11 @@ module Pages
       )
     end
 
+    def feature_status
+      verify!
+      page.find('.feature-status.panel').find('.panel-heading').text
+    end
+
     def time
       verify!
       page.find('.time').text

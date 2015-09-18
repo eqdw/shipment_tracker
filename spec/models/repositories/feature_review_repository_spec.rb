@@ -227,6 +227,65 @@ RSpec.describe Repositories::FeatureReviewRepository do
     end
   end
 
+  describe '#feature_review_for_path' do
+    let!(:attrs_1) {
+      {
+        path: feature_review_path(frontend: 'abc'),
+        versions: %w(abc),
+        event_created_at: 7.day.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_2) {
+      {
+        path: feature_review_path(frontend: 'def'),
+        versions: %w(def),
+        event_created_at: 5.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_3) {
+      {
+        path: feature_review_path(frontend: 'abc'),
+        versions: %w(abc),
+        event_created_at: 3.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_4) {
+      {
+        path: feature_review_path(frontend: 'ghi'),
+        versions: %w(ghi),
+        event_created_at: 1.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    before :each do
+      Snapshots::FeatureReview.create!(attrs_1)
+      Snapshots::FeatureReview.create!(attrs_2)
+      Snapshots::FeatureReview.create!(attrs_3)
+      Snapshots::FeatureReview.create!(attrs_4)
+    end
+
+    context 'with unspecified time' do
+      it 'returns the latest snapshot for the given path' do
+        path = feature_review_path(frontend: 'abc')
+        expect(repository.feature_review_for_path(path)).to eq(FeatureReview.new(attrs_3))
+      end
+    end
+
+    context 'with a specified time' do
+      it 'returns the latest snapshot for the given path at or before the specified time' do
+        path = feature_review_path(frontend: 'abc')
+        expect(repository.feature_review_for_path(path, at: 4.days.ago)).to eq(FeatureReview.new(attrs_1))
+      end
+    end
+  end
+
   describe '#feature_reviews_for' do
     let(:attrs_a) {
       { path: feature_review_path(frontend: 'abc', backend: 'NON1'),

@@ -28,6 +28,12 @@ module Repositories
         }
     end
 
+    def feature_review_for_path(path, at: nil)
+      query = at ? store.arel_table['event_created_at'].lteq(at) : nil
+      snapshot = store.where(query).where(path: path).last
+      factory.create(snapshot.attributes) if snapshot
+    end
+
     def apply(event)
       return unless event.is_a?(Events::JiraEvent) && event.issue?
 

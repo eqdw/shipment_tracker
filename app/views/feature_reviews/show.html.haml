@@ -4,7 +4,7 @@
 
 .row
   .col-lg-12
-    - panel(heading: "Feature Status: #{@feature_review_with_statuses.approved? ? 'APPROVED' : 'NOT APPROVED'}", status: @feature_review_with_statuses.approval_status, klass: 'feature-status') do
+    - panel(heading: feature_status(@feature_review_with_statuses), status: @feature_review_with_statuses.approval_status, klass: 'feature-status') do
       - if @feature_review_with_statuses.tickets.empty?
         .panel-body No tickets found
       - else

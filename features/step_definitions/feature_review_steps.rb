@@ -102,6 +102,15 @@ Then 'I should see the time "$time" for the Feature Review' do |time|
   expect(Time.zone.parse(feature_review_page.time)).to eq(Time.zone.parse(time))
 end
 
+Then 'I should see that the Feature Review was approved at "$time"' do |time|
+  expected_time = Time.zone.parse(time).utc
+  expect(feature_review_page.feature_status).to eq("Feature Status: Approved at #{expected_time}")
+end
+
+Then 'I should see that the Feature Review was not approved' do
+  expect(feature_review_page.feature_status).to eq('Feature Status: Unapproved')
+end
+
 When 'I reload the page after a while' do
   Repositories::Updater.from_rails_config.run
   page.visit(page.current_url)
