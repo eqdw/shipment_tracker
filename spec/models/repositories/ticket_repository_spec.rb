@@ -14,17 +14,99 @@ RSpec.describe Repositories::TicketRepository do
   end
 
   describe '#tickets_for' do
+    let(:attrs_a) {
+      { key: 'JIRA-A',
+        summary: 'JIRA-A summary',
+        status: 'Done',
+        paths: [
+          feature_review_path(frontend: 'NON3', backend: 'NON2'),
+          feature_review_path(frontend: 'abc', backend: 'NON1'),
+        ],
+        event_created_at: 9.days.ago,
+        versions: %w(abc NON1 NON3 NON2) }
+    }
+
+    let(:attrs_b) {
+      { key: 'JIRA-B',
+        summary: 'JIRA-B summary',
+        status: 'Done',
+        paths: [
+          feature_review_path(frontend: 'def', backend: 'abc'),
+          feature_review_path(frontend: 'NON3', backend: 'ghi'),
+        ],
+        event_created_at: 7.days.ago,
+        versions: %w(def abc NON3 ghi) }
+    }
+
+    let(:attrs_c) {
+      { key: 'JIRA-C',
+        summary: 'JIRA-C summary',
+        status: 'Done',
+        paths: [feature_review_path(frontend: 'NON3', backend: 'NON2')],
+        event_created_at: 5.days.ago,
+        versions: %w(NON3 NON2) }
+    }
+
+    let(:attrs_d) {
+      { key: 'JIRA-D',
+        summary: 'JIRA-D summary',
+        status: 'Done',
+        paths: [feature_review_path(frontend: 'NON3', backend: 'ghi')],
+        event_created_at: 3.days.ago,
+        versions: %w(NON3 ghi) }
+    }
+
+    let(:attrs_e) {
+      { key: 'JIRA-E',
+        summary: 'JIRA-E summary',
+        status: 'Done',
+        paths: [feature_review_path(frontend: 'abc', backend: 'NON1')],
+        event_created_at: 1.day.ago,
+        versions: %w(abc NON1) }
+    }
+
+    before :each do
+      Snapshots::Ticket.create!(attrs_a)
+      Snapshots::Ticket.create!(attrs_b)
+      Snapshots::Ticket.create!(attrs_c)
+      Snapshots::Ticket.create!(attrs_d)
+      Snapshots::Ticket.create!(attrs_e)
+    end
+
+    context 'with unspecified time' do
+      subject {
+        repository.tickets_for(
+          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
+        )
+      }
+
+      it { is_expected.to match_array([Ticket.new(attrs_a), Ticket.new(attrs_e)]) }
+    end
+
+    context 'with a specified time' do
+      subject {
+        repository.tickets_for(
+          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
+          at: 4.days.ago,
+        )
+      }
+
+      it { is_expected.to match_array([Ticket.new(attrs_a)]) }
+    end
+  end
+
+  describe '#apply' do
     let(:url) { feature_review_url(app: 'foo') }
     let(:path) { feature_review_path(app: 'foo') }
 
     it 'projects latest associated tickets' do
       repository.apply(build(:jira_event, :created, key: 'JIRA-1', comment_body: url))
       results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '')])
+      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '', paths: [path])])
 
       repository.apply(build(:jira_event, :started, key: 'JIRA-1'))
       results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '')])
+      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '', paths: [path])])
     end
 
     it 'projects the tickets referenced in JIRA comments' do
@@ -54,8 +136,8 @@ RSpec.describe Repositories::TicketRepository do
       end
 
       expect(repository.tickets_for(feature_review_path: path)).to match_array([
-        Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done'),
-        Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review'),
+        Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done', paths: [path]),
+        Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review', paths: [path]),
       ])
     end
 
@@ -83,11 +165,11 @@ RSpec.describe Repositories::TicketRepository do
 
         expect(
           repository1.tickets_for(feature_review_path: path1),
-        ).to eq([Ticket.new(key: 'JIRA-1')])
+        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
 
         expect(
           repository2.tickets_for(feature_review_path: path2),
-        ).to eq([Ticket.new(key: 'JIRA-1')])
+        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
       end
     end
 
@@ -105,7 +187,7 @@ RSpec.describe Repositories::TicketRepository do
         end
 
         expect(repository.tickets_for(feature_review_path: path, at: t[2])).to match_array([
-          Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment'),
+          Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment', paths: [path]),
         ])
       end
     end
