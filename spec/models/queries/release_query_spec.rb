@@ -106,9 +106,9 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_F) }
 
       it "returns the feature reviews for itself, it's descendants and it's branch parent" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_F, sha_for_E],
+            [sha_for_F, sha_for_E],
             at: query_time,
           )
           .and_return([feature_review_for_E, feature_review_for_F, feature_review_for_G])
@@ -124,9 +124,9 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_A) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_A],
+            [sha_for_A],
             at: query_time,
           )
           .and_return([feature_review_for_A])
@@ -141,9 +141,9 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_D) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_D],
+            [sha_for_D],
             at: query_time,
           )
           .and_return([feature_review_for_D])
@@ -158,9 +158,9 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_C) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_E, sha_for_F, sha_for_C],
+            [sha_for_E, sha_for_F, sha_for_C],
             at: query_time,
           )
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
@@ -177,7 +177,7 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_C) }
 
       it 'returns feature reviews that respond to :approved?' do
-        allow(feature_review_repository).to receive(:feature_reviews_for)
+        allow(feature_review_repository).to receive(:feature_reviews_for_versions)
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
 
         expect(query.feature_reviews.all? {|fr|

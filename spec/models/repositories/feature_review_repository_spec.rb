@@ -413,7 +413,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
     end
   end
 
-  describe '#feature_reviews_for' do
+  describe '#feature_reviews_for_versions' do
     let(:attrs_a) {
       { path: feature_review_path(frontend: 'abc', backend: 'NON1'),
         versions: %w(NON1 abc),
@@ -455,7 +455,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
     context 'with unspecified time' do
       it 'returns the latest snapshots for the versions specified' do
-        expect(repository.feature_reviews_for(versions: %w(abc def ghi))).to match_array([
+        expect(repository.feature_reviews_for_versions(%w(abc def ghi))).to match_array([
           FeatureReview.new(attrs_a),
           FeatureReview.new(attrs_b),
           FeatureReview.new(attrs_d),
@@ -465,7 +465,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
     context 'with a specified time' do
       it 'returns snapshots for the versions specified created at or before the time specified' do
-        expect(repository.feature_reviews_for(versions: %w(abc def ghi), at: 2.days.ago)).to match_array([
+        expect(repository.feature_reviews_for_versions(%w(abc def ghi), at: 2.days.ago)).to match_array([
           FeatureReview.new(attrs_b),
           FeatureReview.new(attrs_d),
         ])

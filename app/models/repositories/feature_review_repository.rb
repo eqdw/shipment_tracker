@@ -11,7 +11,7 @@ module Repositories
 
     delegate :table_name, to: :store
 
-    def feature_reviews_for(versions:, at: nil)
+    def feature_reviews_for_versions(versions, at: nil)
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
 
       store

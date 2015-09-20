@@ -29,8 +29,8 @@ module Queries
     end
 
     def raw_feature_reviews
-      @feature_reviews ||= feature_review_repository.feature_reviews_for(
-        versions: associated_versions,
+      @feature_reviews ||= feature_review_repository.feature_reviews_for_versions(
+        associated_versions,
         at: time,
       )
     end

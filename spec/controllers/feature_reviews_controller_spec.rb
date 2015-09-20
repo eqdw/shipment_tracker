@@ -150,8 +150,8 @@ RSpec.describe FeatureReviewsController do
       allow(GitRepositoryLocation).to receive(:app_names).and_return(applications)
       allow(GitRepositoryLoader).to receive(:new).and_return(git_repository_loader)
       allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(repository)
-      allow(repository).to receive(:feature_reviews_for)
-        .with(versions: related_versions)
+      allow(repository).to receive(:feature_reviews_for_versions)
+        .with(related_versions)
         .and_return(expected_feature_reviews)
 
       allow(git_repository_loader).to receive(:load).with('frontend').and_return(repo)

@@ -31,7 +31,7 @@ class FeatureReviewsController < ApplicationController
     return unless @version && @application
 
     versions = VersionResolver.new(git_repository_for(@application)).related_versions(@version)
-    @links = repository.feature_reviews_for(versions: versions).map(&:path)
+    @links = repository.feature_reviews_for_versions(versions).map(&:path)
     flash[:error] = 'No Feature Reviews found.' if @links.empty?
   end
 
