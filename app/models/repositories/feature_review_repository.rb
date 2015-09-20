@@ -63,13 +63,17 @@ module Repositories
     end
 
     def approved_at_for(feature_review, event)
-      new_review = FeatureReviewWithStatuses.new(feature_review, at: event.created_at)
-      return unless new_review.approved?
+      return unless approved?(feature_review, at: event.created_at)
       last_review_approved_at(feature_review.path) || event.created_at
     end
 
     def last_review_approved_at(path)
       store.most_recent_snapshot(path).try(:approved_at)
+    end
+
+    def approved?(feature_review, at:)
+      new_review = FeatureReviewWithStatuses.new(feature_review, at: at)
+      new_review.approved?
     end
   end
 end
