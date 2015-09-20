@@ -46,10 +46,6 @@ module Repositories
       )
 
       store.create!(new_ticket)
-
-      new_ticket['paths'].each do |path|
-        update_feature_review(path)
-      end
     end
 
     def update_pull_request(app_name, version)

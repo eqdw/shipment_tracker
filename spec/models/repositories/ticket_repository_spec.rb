@@ -215,33 +215,4 @@ RSpec.describe Repositories::TicketRepository do
       end
     end
   end
-
-  describe '#update_pull_request' do
-    let(:active_record_class) { class_double(Snapshots::Ticket) }
-    let(:git_repository_location) { class_double(GitRepositoryLocation) }
-
-    subject(:repository) {
-      described_class.new(
-        active_record_class,
-        git_repository_location: git_repository_location,
-      )
-    }
-
-    it 'schedules an update to the pull request for the repo and version specified' do
-      repo_location = instance_double(GitRepositoryLocation, uri: 'http://github.com/owner/my_app')
-      allow(git_repository_location).to receive(:find_by_name).with('my_app').and_return(repo_location)
-      expect(PullRequestUpdateJob).to receive(:perform_later).with(
-        repo_url: 'http://github.com/owner/my_app',
-        sha: '123456',
-      )
-
-      repository.update_pull_request('my_app', '123456')
-    end
-
-    it 'does not schedule an update to the pull request if the repository location is unrecognised' do
-      allow(git_repository_location).to receive(:find_by_name).with('my_app').and_return(nil)
-      expect(PullRequestUpdateJob).to_not receive(:perform_later)
-      repository.update_pull_request('my_app', '123456')
-    end
-  end
 end

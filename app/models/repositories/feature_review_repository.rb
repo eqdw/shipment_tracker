@@ -3,9 +3,12 @@ require 'snapshots/feature_review'
 
 module Repositories
   class FeatureReviewRepository
-    def initialize(store = Snapshots::FeatureReview, ticket_repository: Repositories::TicketRepository.new)
+    def initialize(store = Snapshots::FeatureReview,
+        ticket_repository: Repositories::TicketRepository.new,
+        git_repository_location: GitRepositoryLocation)
       @store = store
       @ticket_repository = ticket_repository
+      @git_repository_location = git_repository_location
       @factory = Factories::FeatureReviewFactory.new
     end
 
@@ -42,29 +45,43 @@ module Repositories
     def apply(event)
       return unless relevant?(event)
       feature_review_paths = ticket_repository.most_recent_snapshot(event.key).try(:paths) || []
-      create_snapshots_from_paths(feature_review_paths, event)
+      feature_review_paths.each do |feature_review_path|
+        feature_review = factory.create_from_url_string(feature_review_path)
+        create_snapshot(feature_review, event)
+        update_pull_requests_for(feature_review)
+      end
+    end
+
+    def update_pull_request(app_name, version)
+      repository_location = git_repository_location.find_by_name(app_name)
+      PullRequestUpdateJob.perform_later(
+        repo_url: repository_location.uri,
+        sha: version,
+      ) if repository_location
     end
 
     private
 
-    attr_reader :store, :ticket_repository, :factory
+    attr_reader :store, :ticket_repository, :factory, :git_repository_location
 
     def relevant?(event)
       event.is_a?(Events::JiraEvent) && event.issue? &&
         (event.approval? || event.unapproval? || event.comment.present?)
     end
 
-    def create_snapshots_from_paths(feature_review_paths, event)
-      feature_review_paths.each do |feature_review_path|
-        feature_review = factory.create_from_url_string(feature_review_path)
-
-        store.create!(
-          path: feature_review.path,
-          versions: feature_review.versions,
-          event_created_at: event.created_at,
-          approved_at: approved_at_for(feature_review, event),
-        )
+    def update_pull_requests_for(feature_review)
+      feature_review.app_versions.each do |app_name, version|
+        update_pull_request(app_name, version)
       end
+    end
+
+    def create_snapshot(feature_review, event)
+      store.create!(
+        path: feature_review.path,
+        versions: feature_review.versions,
+        event_created_at: event.created_at,
+        approved_at: approved_at_for(feature_review, event),
+      )
     end
 
     def approved_at_for(feature_review, event)

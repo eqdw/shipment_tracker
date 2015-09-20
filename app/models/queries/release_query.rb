@@ -11,7 +11,7 @@ module Queries
     end
 
     def feature_reviews
-      feature_reviews_with_statuses.select { |fr|
+      feature_reviews_with_dependent_versions.select { |fr|
         fr.dependent_versions(git_repository).include?(release.version)
       }
     end
@@ -19,10 +19,6 @@ module Queries
     private
 
     attr_reader :feature_review_repository, :git_repository, :release, :time
-
-    def feature_reviews_with_statuses
-      feature_reviews_with_dependent_versions.map { |fr| FeatureReviewWithStatuses.new(fr, at: time) }
-    end
 
     def feature_reviews_with_dependent_versions
       raw_feature_reviews.map { |fr| FeatureReviewWithDependentVersions.new(fr) }

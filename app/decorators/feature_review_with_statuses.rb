@@ -51,21 +51,6 @@ class FeatureReviewWithStatuses < SimpleDelegator
     end
   end
 
-  def approved?
-    tickets = query.tickets
-    return false if tickets.empty?
-    tickets.all?(&:approved?)
-  end
-
-  def approval_status
-    approved? ? :approved : :not_approved
-  end
-
-  def approved_path
-    return nil unless approved? && approved_at.present?
-    "#{base_path}?#{query_hash.merge(time: approved_at.utc).to_query}"
-  end
-
   def path_with_query_time
     "#{base_path}?#{query_hash.merge(time: time.utc).to_query}"
   end
