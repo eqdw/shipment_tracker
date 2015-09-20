@@ -58,7 +58,7 @@ class FeatureReviewWithStatuses < SimpleDelegator
   end
 
   def approval_status
-    approved? ? :approved : :unapproved
+    approved? ? :approved : :not_approved
   end
 
   def approved_path

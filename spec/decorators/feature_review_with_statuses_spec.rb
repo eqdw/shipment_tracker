@@ -276,9 +276,9 @@ RSpec.describe FeatureReviewWithStatuses do
     end
 
     context 'when no feature review is NOT approved' do
-      it 'is :unapproved' do
+      it 'is :not_approved' do
         allow(decorator).to receive(:approved?).and_return(false)
-        expect(decorator.approval_status).to eq(:unapproved)
+        expect(decorator.approval_status).to eq(:not_approved)
       end
     end
   end

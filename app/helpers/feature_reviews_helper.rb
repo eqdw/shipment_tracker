@@ -54,7 +54,7 @@ module FeatureReviewsHelper
     case status
     when true, :success, :approved
       'success'
-    when false, :failure, :unapproved
+    when false, :failure, :not_approved
       'danger'
     else
       'warning'

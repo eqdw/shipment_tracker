@@ -108,7 +108,7 @@ Then 'I should see that the Feature Review was approved at "$time"' do |time|
 end
 
 Then 'I should see that the Feature Review was not approved' do
-  expect(feature_review_page.feature_status).to eq('Feature Status: Unapproved')
+  expect(feature_review_page.feature_status).to eq('Feature Status: Not approved')
 end
 
 When 'I reload the page after a while' do
