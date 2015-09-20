@@ -35,10 +35,21 @@ module Repositories
     end
 
     def apply(event)
-      return unless event.is_a?(Events::JiraEvent) && event.issue?
-
+      return unless relevant?(event)
       feature_review_paths = ticket_store.most_recent_snapshot(event.key).try(:paths) || []
+      create_snapshots_from_paths(feature_review_paths, event)
+    end
 
+    private
+
+    attr_reader :store, :ticket_store, :factory
+
+    def relevant?(event)
+      event.is_a?(Events::JiraEvent) && event.issue? &&
+        (event.approval? || event.unapproval? || event.comment.present?)
+    end
+
+    def create_snapshots_from_paths(feature_review_paths, event)
       feature_review_paths.each do |feature_review_path|
         feature_review = factory.create_from_url_string(feature_review_path)
 
@@ -51,10 +62,6 @@ module Repositories
       end
     end
 
-    private
-
-    attr_reader :store, :ticket_store, :factory
-
     def approved_at_for(feature_review, event)
       new_review = FeatureReviewWithStatuses.new(feature_review, at: event.created_at)
       return unless new_review.approved?
@@ -62,8 +69,7 @@ module Repositories
     end
 
     def last_review_approved_at(path)
-      last_review = store.most_recent_snapshot(path)
-      FeatureReviewWithStatuses.new(last_review).try(:approved_at)
+      store.most_recent_snapshot(path).try(:approved_at)
     end
   end
 end
