@@ -3,9 +3,9 @@ require 'snapshots/feature_review'
 
 module Repositories
   class FeatureReviewRepository
-    def initialize(store = Snapshots::FeatureReview, ticket_store: Snapshots::Ticket)
+    def initialize(store = Snapshots::FeatureReview, ticket_repository: Repositories::TicketRepository.new)
       @store = store
-      @ticket_store = ticket_store
+      @ticket_repository = ticket_repository
       @factory = Factories::FeatureReviewFactory.new
     end
 
@@ -19,11 +19,11 @@ module Repositories
         .where('versions && ARRAY[?]::varchar[]', versions)
         .group_by(&:path)
         .map { |_, snapshots|
-          most_recent_snapshot = snapshots.max_by(&:event_created_at)
+          most_recent = snapshots.max_by(&:event_created_at)
           factory.create(
-            path: most_recent_snapshot.path,
-            versions: most_recent_snapshot.versions,
-            approved_at: most_recent_snapshot.approved_at,
+            path: most_recent.path,
+            versions: most_recent.versions,
+            approved_at: most_recent.approved_at,
           )
         }
     end
@@ -34,15 +34,20 @@ module Repositories
       factory.create(snapshot.attributes) if snapshot
     end
 
+    def most_recent_snapshot(path = nil)
+      return store.last if path.nil?
+      store.where(path: path).last
+    end
+
     def apply(event)
       return unless relevant?(event)
-      feature_review_paths = ticket_store.most_recent_snapshot(event.key).try(:paths) || []
+      feature_review_paths = ticket_repository.most_recent_snapshot(event.key).try(:paths) || []
       create_snapshots_from_paths(feature_review_paths, event)
     end
 
     private
 
-    attr_reader :store, :ticket_store, :factory
+    attr_reader :store, :ticket_repository, :factory
 
     def relevant?(event)
       event.is_a?(Events::JiraEvent) && event.issue? &&
@@ -64,16 +69,13 @@ module Repositories
 
     def approved_at_for(feature_review, event)
       return unless approved?(feature_review, at: event.created_at)
-      last_review_approved_at(feature_review.path) || event.created_at
-    end
-
-    def last_review_approved_at(path)
-      store.most_recent_snapshot(path).try(:approved_at)
+      most_recent_snapshot(feature_review.path).try(:approved_at) || event.created_at
     end
 
     def approved?(feature_review, at:)
-      new_review = FeatureReviewWithStatuses.new(feature_review, at: at)
-      new_review.approved?
+      tickets = ticket_repository.tickets_for(feature_review_path: feature_review.path, at: at)
+      return false if tickets.empty?
+      tickets.all?(&:approved?)
     end
   end
 end

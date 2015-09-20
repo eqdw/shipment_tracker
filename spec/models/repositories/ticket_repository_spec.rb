@@ -193,6 +193,29 @@ RSpec.describe Repositories::TicketRepository do
     end
   end
 
+  describe '#most_recent_snapshot' do
+    let!(:tickets) {
+      [
+        Snapshots::Ticket.create(key: '1', summary: 'first'),
+        Snapshots::Ticket.create(key: '2', summary: 'second'),
+        Snapshots::Ticket.create(key: '1', summary: 'fourth'),
+        Snapshots::Ticket.create(key: '3', summary: 'third'),
+      ]
+    }
+
+    context 'when key is specified' do
+      it 'returns the last snapshot with that key' do
+        expect(subject.most_recent_snapshot('1')).to eq(tickets[2])
+      end
+    end
+
+    context 'when key is not specified' do
+      it 'returns the last snapshot' do
+        expect(subject.most_recent_snapshot).to eq(tickets.last)
+      end
+    end
+  end
+
   describe '#update_pull_request' do
     let(:active_record_class) { class_double(Snapshots::Ticket) }
     let(:git_repository_location) { class_double(GitRepositoryLocation) }

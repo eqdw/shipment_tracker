@@ -24,6 +24,11 @@ module Repositories
         .map { |t| Ticket.new(t.attributes) }
     end
 
+    def most_recent_snapshot(key = nil)
+      return store.last if key.nil?
+      store.where(key: key).last
+    end
+
     def apply(event)
       return unless event.is_a?(Events::JiraEvent) && event.issue?
 
