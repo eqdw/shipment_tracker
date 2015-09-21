@@ -5,9 +5,9 @@ RSpec.describe Repositories::FeatureReviewRepository do
   subject(:repository) { Repositories::FeatureReviewRepository.new }
 
   describe '#table_name' do
-    let(:active_record_class) { class_double(Snapshots::FeatureReview, table_name: 'the_table_name') }
+    let(:store) { class_double(Snapshots::FeatureReview, table_name: 'the_table_name') }
 
-    subject(:repository) { Repositories::FeatureReviewRepository.new(active_record_class) }
+    subject(:repository) { Repositories::FeatureReviewRepository.new(store) }
 
     it 'delegates to the active record class backing the repository' do
       expect(repository.table_name).to eq('the_table_name')
@@ -15,157 +15,488 @@ RSpec.describe Repositories::FeatureReviewRepository do
   end
 
   describe '#apply' do
-    let(:active_record_class) { class_double(Snapshots::FeatureReview) }
-    let(:timestamp) { Time.parse('2014-08-21 00:00:00 UTC') }
-
-    before :each do
-      allow(active_record_class).to receive(:where).and_return(active_record_class)
-      allow(active_record_class).to receive(:order).and_return([last_snapshot])
-    end
-
-    let(:last_snapshot) {
+    let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
+    let(:store) { Snapshots::FeatureReview }
+    let!(:time1) { 4.days.ago.change(usec: 0) }
+    let!(:time2) { 3.days.ago.change(usec: 0) }
+    let!(:time3) { 2.days.ago.change(usec: 0) }
+    let(:git_repository_location) { class_double(GitRepositoryLocation) }
+    let(:repository_location) {
+      instance_double(GitRepositoryLocation, uri: 'http://github.com/owner/frontend')
+    }
+    let(:fr_snapshot1) {
       Snapshots::FeatureReview.create!(
         path: feature_review_path(frontend: 'abc'),
         versions: %w(abc),
-        event_created_at: timestamp - 2.days,
-        approved_at: Time.parse('2014-09-19 00:00:00 UTC'),
+        event_created_at: time1,
+        approved_at: nil,
       )
     }
 
-    subject(:repository) { Repositories::FeatureReviewRepository.new(active_record_class) }
+    let(:fr_snapshot2) {
+      Snapshots::FeatureReview.create!(
+        path: feature_review_path(frontend: 'def'),
+        versions: %w(def),
+        event_created_at: time2,
+        approved_at: nil,
+      )
+    }
 
-    it 'creates a snapshot for each feature review path in the event comment' do
-      expect(active_record_class).to receive(:create!).with(
-        path: feature_review_path(frontend: 'abc', backend: 'NON1'),
-        versions: %w(NON1 abc),
-        event_created_at: timestamp,
-        approved_at: nil,
-      )
-      expect(active_record_class).to receive(:create!).with(
-        path: feature_review_path(frontend: 'NON2', backend: 'def'),
-        versions: %w(def NON2),
-        event_created_at: timestamp,
-        approved_at: nil,
-      )
-      expect(active_record_class).to receive(:create!).with(
-        path: feature_review_path(frontend: 'NON2', backend: 'NON3'),
-        versions: %w(NON3 NON2),
-        event_created_at: timestamp,
-        approved_at: nil,
-      )
-      expect(active_record_class).to receive(:create!).with(
-        path: feature_review_path(frontend: 'ghi', backend: 'NON3'),
-        versions: %w(NON3 ghi),
-        event_created_at: timestamp,
-        approved_at: nil,
-      )
-      expect(active_record_class).to receive(:create!).with(
-        path: feature_review_path(frontend: 'NON4', backend: 'NON5'),
-        versions: %w(NON5 NON4),
-        event_created_at: timestamp,
-        approved_at: nil,
-      )
+    let(:ticket1) {
+      instance_double(Ticket,
+        key: 'JIRA-ABC',
+        paths: [fr_snapshot1.path],
+        approved?: false,
+                     )
+    }
 
-      [
+    let(:ticket2) {
+      instance_double(Ticket,
+        key: 'JIRA-XYZ',
+        paths: [fr_snapshot1.path, fr_snapshot2.path],
+        approved?: false,
+                     )
+    }
+
+    subject(:repository) {
+      Repositories::FeatureReviewRepository.new(store,
+        ticket_repository: ticket_repository,
+        git_repository_location: git_repository_location,
+                                               )
+    }
+
+    before do
+      allow(ticket_repository).to receive(:find_last_by_key)
+        .with('JIRA-XYZ')
+        .and_return(ticket2)
+      allow(ticket_repository).to receive(:tickets_for)
+        .with(feature_review_path: fr_snapshot1.path, at: time3)
+        .and_return([ticket1, ticket2])
+      allow(ticket_repository).to receive(:tickets_for)
+        .with(feature_review_path: fr_snapshot2.path, at: time3)
+        .and_return([ticket2])
+      allow(PullRequestUpdateJob).to receive(:perform_later)
+      allow(git_repository_location).to receive(:find_by_name)
+        .with('frontend')
+        .and_return(repository_location)
+    end
+
+    context 'given a comment event' do
+      let(:event) {
         build(:jira_event,
-          comment_body: "Review: #{feature_review_url(frontend: 'abc', backend: 'NON1')}",
-          created_at: timestamp),
-        build(:jira_event,
-          comment_body: "Review: #{feature_review_url(frontend: 'NON2', backend: 'def')}",
-          created_at: timestamp),
-        build(:jira_event,
-          comment_body: "Review: #{feature_review_url(frontend: 'NON2', backend: 'NON3')}",
-          created_at: timestamp),
-        build(:jira_event,
-          comment_body: "Review: #{feature_review_url(frontend: 'ghi', backend: 'NON3')} "\
-                        "and: #{feature_review_url(frontend: 'NON4', backend: 'NON5')}",
-          created_at: timestamp),
-      ].each do |event|
+          key: 'JIRA-XYZ',
+          comment_body: "Reviews: http://foo.com#{fr_snapshot1.path}, http://foo.com#{fr_snapshot2.path}",
+          created_at: time3,
+             )
+      }
+
+      it 'creates snapshots for each feature review path in the event comment' do
+        expect(store).to receive(:create!).with(
+          path: fr_snapshot1.path,
+          versions: fr_snapshot1.versions,
+          event_created_at: event.created_at,
+          approved_at: nil,
+        )
+
+        expect(store).to receive(:create!).with(
+          path: fr_snapshot2.path,
+          versions: fr_snapshot2.versions,
+          event_created_at: event.created_at,
+          approved_at: nil,
+        )
+
         repository.apply(event)
       end
     end
 
-    context 'when the feature is approved,' do
-      before :each do
-        allow_any_instance_of(FeatureReviewWithStatuses).to receive(:approved?).and_return(true)
+    context 'when the feature review is NOT already approved' do
+      let(:fr_snapshot1) {
+        Snapshots::FeatureReview.create!(
+          path: feature_review_path(frontend: 'abc'),
+          versions: %w(abc),
+          event_created_at: time1,
+          approved_at: nil,
+        )
+      }
+
+      context 'when the event is an approval event' do
+        let(:ticket1) {
+          instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:ticket2) {
+          instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: time3) }
+
+        before do
+          expect(event.approval?).to be_truthy
+          expect(event.unapproval?).to be_falsy
+          expect(event.comment).to be_blank
+        end
+
+        it 'sets the approved_at to the created_at time for the approval event' do
+          expect(store).to receive(:create!).with(
+            path: fr_snapshot1.path,
+            versions: fr_snapshot1.versions,
+            event_created_at: event.created_at,
+            approved_at: event.created_at,
+          )
+          repository.apply(event)
+        end
       end
 
-      context 'when the approved_at time is set on the last snapshot,' do
-        it 'reuses the approved_at time from the last snapshot' do
-          expect(active_record_class).to receive(:create!).with(
-            path: feature_review_path(frontend: 'abc'),
-            versions: %w(abc),
-            event_created_at: timestamp,
-            approved_at: last_snapshot.approved_at,
-          )
+      context 'when the event is an unapproval event' do
+        let(:ticket1) {
+          instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: false)
+        }
 
-          repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
-            created_at: timestamp))
+        let(:ticket2) {
+          instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: time3) }
+
+        before do
+          expect(event.approval?).to be_falsy
+          expect(event.unapproval?).to be_truthy
+          expect(event.comment).to be_blank
+        end
+
+        it 'sets the approved_at to nil' do
+          expect(store).to receive(:create!).with(
+            path: fr_snapshot1.path,
+            versions: fr_snapshot1.versions,
+            event_created_at: event.created_at,
+            approved_at: nil,
+          )
+          repository.apply(event)
         end
       end
 
-      context 'when the approved_at time is NOT set on the last snapshot,' do
-        before :each do
-          last_snapshot.update_attributes!(approved_at: nil)
+      context 'when the event neither approves nor unapproves the ticket' do
+        context 'when the event has a comment' do
+          let(:ticket1) {
+            instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: false)
+          }
+
+          let(:ticket2) {
+            instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: true)
+          }
+
+          let(:event) {
+            build(:jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "Reviews: http://foo.com#{fr_snapshot1.path}",
+              created_at: time3,
+                 )
+          }
+
+          before do
+            expect(event.approval?).to be_falsy
+            expect(event.unapproval?).to be_falsy
+            expect(event.comment).to be_present
+          end
+
+          it 'sets the approved_at time to nil' do
+            expect(store).to receive(:create!).with(
+              path: fr_snapshot1.path,
+              versions: fr_snapshot1.versions,
+              event_created_at: event.created_at,
+              approved_at: nil,
+            )
+
+            repository.apply(event)
+          end
         end
 
-        it 'sets the approved_at time to the event_created_at time' do
-          expect(active_record_class).to receive(:create!).with(
-            path: feature_review_path(frontend: 'abc'),
-            versions: %w(abc),
-            event_created_at: timestamp,
-            approved_at: timestamp,
-          )
+        context 'when the event has no comment' do
+          let(:event) { build(:jira_event, key: 'JIRA-XYZ', created_at: time3) }
 
-          repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
-            created_at: timestamp))
-        end
-      end
+          before do
+            expect(event.approval?).to be_falsy
+            expect(event.unapproval?).to be_falsy
+            expect(event.comment).to be_blank
+          end
 
-      context 'when there is no previous snapshot,' do
-        before :each do
-          allow(active_record_class).to receive(:where).and_return(active_record_class)
-          allow(active_record_class).to receive(:order).and_return([])
-        end
-
-        it 'sets the approved_at time to the event_created_at time' do
-          expect(active_record_class).to receive(:create!).with(
-            path: feature_review_path(frontend: 'abc'),
-            versions: %w(abc),
-            event_created_at: timestamp,
-            approved_at: timestamp,
-          )
-
-          repository.apply(build(:jira_event, :approved,
-            comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
-            created_at: timestamp))
+          it 'does NOT create a new snapshot' do
+            expect(store).not_to receive(:create!)
+            repository.apply(event)
+          end
         end
       end
     end
 
-    context 'when the feature is NOT approved,' do
-      before :each do
-        allow_any_instance_of(FeatureReviewWithStatuses).to receive(:approved?).and_return(false)
-      end
-
-      it 'nullifies the approved_at' do
-        expect(active_record_class).to receive(:create!).with(
+    context 'when the feature review is ALREADY approved' do
+      let(:fr_snapshot1) {
+        Snapshots::FeatureReview.create!(
           path: feature_review_path(frontend: 'abc'),
           versions: %w(abc),
-          event_created_at: timestamp,
-          approved_at: nil,
+          event_created_at: time1,
+          approved_at: time2,
         )
+      }
 
-        repository.apply(build(:jira_event, :rejected,
-          comment_body: "Review: #{feature_review_url(frontend: 'abc')}",
-          created_at: timestamp))
+      context 'when the event is an approval event' do
+        let(:ticket1) {
+          instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:ticket2) {
+          instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: time3) }
+
+        before do
+          expect(event.approval?).to be_truthy
+          expect(event.unapproval?).to be_falsy
+          expect(event.comment).to be_blank
+        end
+
+        it 'reuses the approved_at time from the last snapshot' do
+          expect(store).to receive(:create!).with(
+            path: fr_snapshot1.path,
+            versions: fr_snapshot1.versions,
+            event_created_at: event.created_at,
+            approved_at: fr_snapshot1.approved_at,
+          )
+          repository.apply(event)
+        end
+      end
+
+      context 'when the event is an unapproval event' do
+        let(:ticket1) {
+          instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: true)
+        }
+
+        let(:ticket2) {
+          instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: false)
+        }
+
+        let(:event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: time3) }
+
+        before do
+          expect(event.approval?).to be_falsy
+          expect(event.unapproval?).to be_truthy
+          expect(event.comment).to be_blank
+        end
+
+        it 'sets the approved_at to nil' do
+          expect(store).to receive(:create!).with(
+            path: fr_snapshot1.path,
+            versions: fr_snapshot1.versions,
+            event_created_at: event.created_at,
+            approved_at: nil,
+          )
+          repository.apply(event)
+        end
+      end
+
+      context 'when the event neither approves nor unapproves the ticket' do
+        context 'when the event has a comment' do
+          let(:ticket1) {
+            instance_double(Ticket, key: 'JIRA-ABC', paths: [fr_snapshot1.path], approved?: true)
+          }
+
+          let(:ticket2) {
+            instance_double(Ticket, key: 'JIRA-XYZ', paths: [fr_snapshot1.path], approved?: true)
+          }
+
+          let(:event) {
+            build(:jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "Reviews: http://foo.com#{fr_snapshot1.path}",
+              created_at: time3,
+                 )
+          }
+
+          before do
+            expect(event.approval?).to be_falsy
+            expect(event.unapproval?).to be_falsy
+            expect(event.comment).to be_present
+          end
+
+          it 'reuses the approved_at time from the last snapshot' do
+            expect(store).to receive(:create!).with(
+              path: fr_snapshot1.path,
+              versions: fr_snapshot1.versions,
+              event_created_at: event.created_at,
+              approved_at: fr_snapshot1.approved_at,
+            )
+            repository.apply(event)
+          end
+        end
+
+        context 'when the event has no comment' do
+          let(:event) { build(:jira_event, key: 'JIRA-XYZ', created_at: time3) }
+
+          before do
+            expect(event.approval?).to be_falsy
+            expect(event.unapproval?).to be_falsy
+            expect(event.comment).to be_blank
+          end
+
+          it 'does NOT create a new snapshot' do
+            expect(store).not_to receive(:create!)
+            repository.apply(event)
+          end
+        end
+      end
+    end
+
+    describe 'updating Github pull requests' do
+      context 'given a comment event' do
+        let(:event) {
+          build(:jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{fr_snapshot1.path}, http://foo.com#{fr_snapshot2.path}",
+            created_at: time3,
+               )
+        }
+
+        it 'schedules an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'abc',
+          )
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'def',
+          )
+          repository.apply(event)
+        end
+      end
+
+      context 'given an approval event' do
+        let(:event) {
+          build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: time3)
+        }
+
+        it 'schedules an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'abc',
+          )
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'def',
+          )
+          repository.apply(event)
+        end
+      end
+
+      context 'given an unaproval event' do
+        let(:event) {
+          build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: time3)
+        }
+
+        it 'schedules an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'abc',
+          )
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'def',
+          )
+          repository.apply(event)
+        end
+      end
+
+      context 'given another event' do
+        let(:event) {
+          build(:jira_event, key: 'JIRA-XYZ', created_at: time3)
+        }
+
+        it 'does not schedule an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).not_to receive(:perform_later)
+          repository.apply(event)
+        end
+      end
+
+      context 'given repository location can not be found' do
+        let(:event) {
+          build(:jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{fr_snapshot1.path}, http://foo.com#{fr_snapshot2.path}",
+            created_at: time3,
+               )
+        }
+
+        before do
+          allow(git_repository_location).to receive(:find_by_name).with('frontend').and_return(nil)
+        end
+
+        it 'does not schedule an update to the pull request' do
+          expect(PullRequestUpdateJob).to_not receive(:perform_later)
+          repository.apply(event)
+        end
       end
     end
   end
 
-  describe '#feature_reviews_for' do
+  describe '#feature_review_for_path' do
+    let!(:attrs_1) {
+      {
+        path: feature_review_path(frontend: 'abc'),
+        versions: %w(abc),
+        event_created_at: 7.day.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_2) {
+      {
+        path: feature_review_path(frontend: 'def'),
+        versions: %w(def),
+        event_created_at: 5.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_3) {
+      {
+        path: feature_review_path(frontend: 'abc'),
+        versions: %w(abc),
+        event_created_at: 3.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    let!(:attrs_4) {
+      {
+        path: feature_review_path(frontend: 'ghi'),
+        versions: %w(ghi),
+        event_created_at: 1.days.ago,
+        approved_at: nil,
+      }
+    }
+
+    before :each do
+      Snapshots::FeatureReview.create!(attrs_1)
+      Snapshots::FeatureReview.create!(attrs_2)
+      Snapshots::FeatureReview.create!(attrs_3)
+      Snapshots::FeatureReview.create!(attrs_4)
+    end
+
+    context 'with unspecified time' do
+      it 'returns the latest snapshot for the given path' do
+        path = feature_review_path(frontend: 'abc')
+        expect(repository.feature_review_for_path(path)).to eq(FeatureReview.new(attrs_3))
+      end
+    end
+
+    context 'with a specified time' do
+      it 'returns the latest snapshot for the given path at or before the specified time' do
+        path = feature_review_path(frontend: 'abc')
+        expect(repository.feature_review_for_path(path, at: 4.days.ago)).to eq(FeatureReview.new(attrs_1))
+      end
+    end
+  end
+
+  describe '#feature_reviews_for_versions' do
     let(:attrs_a) {
       { path: feature_review_path(frontend: 'abc', backend: 'NON1'),
         versions: %w(NON1 abc),
@@ -207,7 +538,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
     context 'with unspecified time' do
       it 'returns the latest snapshots for the versions specified' do
-        expect(repository.feature_reviews_for(versions: %w(abc def ghi))).to match_array([
+        expect(repository.feature_reviews_for_versions(%w(abc def ghi))).to match_array([
           FeatureReview.new(attrs_a),
           FeatureReview.new(attrs_b),
           FeatureReview.new(attrs_d),
@@ -217,7 +548,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
 
     context 'with a specified time' do
       it 'returns snapshots for the versions specified created at or before the time specified' do
-        expect(repository.feature_reviews_for(versions: %w(abc def ghi), at: 2.days.ago)).to match_array([
+        expect(repository.feature_reviews_for_versions(%w(abc def ghi), at: 3.days.ago)).to match_array([
           FeatureReview.new(attrs_b),
           FeatureReview.new(attrs_d),
         ])

@@ -5,6 +5,7 @@ class Ticket
     attribute :key, String
     attribute :summary, String, default: ''
     attribute :status, String, default: 'To Do'
+    attribute :paths, Array, default: []
   end
 
   def approved?

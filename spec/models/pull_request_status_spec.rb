@@ -152,8 +152,8 @@ RSpec.describe PullRequestStatus do
 
   describe '#status_for' do
     it 'is success if some feature reviews are approved and others are not' do
-      approved = instance_double(FeatureReviewWithStatuses, approved?: true)
-      unapproved = instance_double(FeatureReviewWithStatuses, approved?: false)
+      approved = instance_double(FeatureReview, approved?: true)
+      unapproved = instance_double(FeatureReview, approved?: false)
       expect(pull_request_status.status_for([approved, unapproved])).to eq(
         status: 'success',
         description: 'There are approved feature reviews for this commit',
@@ -161,7 +161,7 @@ RSpec.describe PullRequestStatus do
     end
 
     it 'is success if all of the feature reviews are approved' do
-      feature_review = instance_double(FeatureReviewWithStatuses, approved?: true)
+      feature_review = instance_double(FeatureReview, approved?: true)
       expect(pull_request_status.status_for([feature_review])).to eq(
         status: 'success',
         description: 'There are approved feature reviews for this commit',
@@ -169,7 +169,7 @@ RSpec.describe PullRequestStatus do
     end
 
     it 'is failure if all of the feature reviews are not approved' do
-      feature_review = instance_double(FeatureReviewWithStatuses, approved?: false)
+      feature_review = instance_double(FeatureReview, approved?: false)
       expect(pull_request_status.status_for([feature_review])).to eq(
         status: 'failure',
         description: 'No feature reviews for this commit have been approved',

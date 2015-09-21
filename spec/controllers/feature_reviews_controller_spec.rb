@@ -92,26 +92,42 @@ RSpec.describe FeatureReviewsController do
     let(:events) { [Events::BaseEvent.new, Events::BaseEvent.new, Events::BaseEvent.new] }
     let(:uat_url) { 'http://uat.fundingcircle.com' }
     let(:apps_with_versions) { { 'frontend' => 'abc', 'backend' => 'def' } }
+    let(:feature_review) {
+      instance_double(FeatureReview, app_versions: apps_with_versions, uat_url: uat_url)
+    }
 
     before do
       request.host = 'www.example.com'
+
+      allow_any_instance_of(Repositories::FeatureReviewRepository).to receive(:feature_review_for_path)
+        .with(whitelisted_path, at: precise_time)
+        .and_return(feature_review)
     end
 
-    it 'sets up the correct query parameters' do
-      get :show, apps: apps_with_versions, uat_url: uat_url
+    context 'when time is NOT specified' do
+      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
+      let(:precise_time) { nil }
 
-      expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
-      expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-      expect(assigns(:feature_review_with_statuses).time).to eq(nil)
-    end
-
-    context 'when time is specified' do
-      it 'sets up the correct query parameters (including time)' do
-        get :show, apps: apps_with_versions, uat_url: uat_url, time: '1990-12-31T23:59:59Z'
+      it 'sets up the correct query parameters' do
+        get :show, apps: apps_with_versions, uat_url: uat_url
 
         expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
         expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(Time.parse('1990-12-31T23:59:59Z'))
+        expect(assigns(:feature_review_with_statuses).time).to eq(nil)
+      end
+    end
+
+    context 'when time is specified' do
+      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
+      let(:time) { Time.parse('2015-09-09 12:00:00 UTC') }
+      let(:precise_time) { time.change(usec: 999_999.999) }
+
+      it 'sets up the correct query parameters' do
+        get :show, apps: apps_with_versions, uat_url: uat_url, time: time
+
+        expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
+        expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
+        expect(assigns(:feature_review_with_statuses).time).to eq(precise_time)
       end
     end
   end
@@ -134,8 +150,8 @@ RSpec.describe FeatureReviewsController do
       allow(GitRepositoryLocation).to receive(:app_names).and_return(applications)
       allow(GitRepositoryLoader).to receive(:new).and_return(git_repository_loader)
       allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(repository)
-      allow(repository).to receive(:feature_reviews_for)
-        .with(versions: related_versions)
+      allow(repository).to receive(:feature_reviews_for_versions)
+        .with(related_versions)
         .and_return(expected_feature_reviews)
 
       allow(git_repository_loader).to receive(:load).with('frontend').and_return(repo)

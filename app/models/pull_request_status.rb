@@ -35,9 +35,7 @@ class PullRequestStatus
   end
 
   def feature_reviews(commits)
-    Repositories::FeatureReviewRepository.new.feature_reviews_for(versions: commits).map do |feature_review|
-      FeatureReviewWithStatuses.new(feature_review)
-    end
+    Repositories::FeatureReviewRepository.new.feature_reviews_for_versions(commits)
   end
 
   def publish_status(repo_url:, sha:, status:, description:, target_url: nil)

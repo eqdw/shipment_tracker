@@ -16,6 +16,6 @@ class ReleaseWithStatus < SimpleDelegator
 
   def approval_status
     return nil if feature_reviews.empty?
-    approved? ? :approved : :unapproved
+    approved? ? :approved : :not_approved
   end
 end

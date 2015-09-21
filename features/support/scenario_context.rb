@@ -95,7 +95,7 @@ module Support
     end
 
     def approve_ticket(jira_key:, approver_email:, approve:, time: nil)
-      ticket_details = @tickets.fetch(jira_key).except(:status)
+      ticket_details = @tickets.fetch(jira_key).except(:status, :comment_body)
       event = build(
         :jira_event,
         approve ? :approved : :rejected,

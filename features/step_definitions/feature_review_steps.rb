@@ -97,8 +97,18 @@ Then 'I should see the results of the User Acceptance Tests with heading "$s" an
   expect(panel.items.first).to eq('test_suite_version' => v)
 end
 
-Then 'I should see the time when the Feature Review is for' do
-  expect(feature_review_page.time).to include('UTC')
+Then 'I should see the time "$time" for the Feature Review' do |time|
+  expect(feature_review_page.time).to be_present
+  expect(Time.zone.parse(feature_review_page.time)).to eq(Time.zone.parse(time))
+end
+
+Then 'I should see that the Feature Review was approved at "$time"' do |time|
+  expected_time = Time.zone.parse(time).utc
+  expect(feature_review_page.feature_status).to eq("Feature Status: Approved at #{expected_time}")
+end
+
+Then 'I should see that the Feature Review was not approved' do
+  expect(feature_review_page.feature_status).to eq('Feature Status: Not approved')
 end
 
 When 'I reload the page after a while' do

@@ -52,8 +52,8 @@ RSpec.describe ReleaseWithStatus do
 
   it 'delegates :feature_reviews to the query' do
     allow(release_query).to receive(:feature_reviews).and_return([
-      instance_double(FeatureReviewWithStatuses),
-      instance_double(FeatureReviewWithStatuses),
+      instance_double(FeatureReview),
+      instance_double(FeatureReview),
     ])
     expect(decorator.feature_reviews).to eq(release_query.feature_reviews)
   end
@@ -61,16 +61,16 @@ RSpec.describe ReleaseWithStatus do
   describe '#approved?' do
     it 'returns true if any of its feature reviews are approved' do
       allow(release_query).to receive(:feature_reviews).and_return([
-        instance_double(FeatureReviewWithStatuses, approved?: true),
-        instance_double(FeatureReviewWithStatuses, approved?: false),
+        instance_double(FeatureReview, approved?: true),
+        instance_double(FeatureReview, approved?: false),
       ])
       expect(decorator.approved?).to be true
     end
 
     it 'returns false if none of its feature reviews are approved' do
       allow(release_query).to receive(:feature_reviews).and_return([
-        instance_double(FeatureReviewWithStatuses, approved?: false),
-        instance_double(FeatureReviewWithStatuses, approved?: false),
+        instance_double(FeatureReview, approved?: false),
+        instance_double(FeatureReview, approved?: false),
       ])
       expect(decorator.approved?).to eq(false)
     end
@@ -92,7 +92,7 @@ RSpec.describe ReleaseWithStatus do
 
       it 'returns "unapproved" when the release is NOT :approved?' do
         allow(decorator).to receive(:approved?).and_return(false)
-        expect(decorator.approval_status).to eq(:unapproved)
+        expect(decorator.approval_status).to eq(:not_approved)
       end
     end
   end

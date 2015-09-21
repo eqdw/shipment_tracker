@@ -106,17 +106,16 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_F) }
 
       it "returns the feature reviews for itself, it's descendants and it's branch parent" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_F, sha_for_E],
+            [sha_for_F, sha_for_E],
             at: query_time,
           )
           .and_return([feature_review_for_E, feature_review_for_F, feature_review_for_G])
 
-        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
-          /base_path_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
-          /base_path_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
-        ))
+        expect(query.feature_reviews).to match_array([
+          feature_review_for_E, feature_review_for_F
+        ])
       end
     end
 
@@ -124,16 +123,16 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_A) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_A],
+            [sha_for_A],
             at: query_time,
           )
           .and_return([feature_review_for_A])
 
-        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
-          /base_path_for_A?apps%5Bapp1%5D=A&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FA
-        ))
+        expect(query.feature_reviews).to match_array([
+          feature_review_for_A,
+        ])
       end
     end
 
@@ -141,16 +140,16 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_D) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_D],
+            [sha_for_D],
             at: query_time,
           )
           .and_return([feature_review_for_D])
 
-        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
-          /base_path_for_D?apps%5Bapp1%5D=D&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FD
-        ))
+        expect(query.feature_reviews).to match_array([
+          feature_review_for_D,
+        ])
       end
     end
 
@@ -158,31 +157,16 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) { instance_double(Release, version: sha_for_C) }
 
       it "returns feature reviews for itself and it's descendants" do
-        expect(feature_review_repository).to receive(:feature_reviews_for)
+        expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            versions: [sha_for_E, sha_for_F, sha_for_C],
+            [sha_for_E, sha_for_F, sha_for_C],
             at: query_time,
           )
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
 
-        expect(query.feature_reviews.map(&:path_with_query_time)).to match_array(%w(
-          /base_path_for_C?apps%5Bapp1%5D=C&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FC
-          /base_path_for_E?apps%5Bapp1%5D=E&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FE
-          /base_path_for_F?apps%5Bapp1%5D=F&time=2014-08-10+14%3A40%3A48+UTC&uat_url=uat.com%2FF
-        ))
-      end
-    end
-
-    describe 'the returned feature reviews' do
-      let(:release) { instance_double(Release, version: sha_for_C) }
-
-      it 'returns feature reviews that respond to :approved?' do
-        allow(feature_review_repository).to receive(:feature_reviews_for)
-          .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
-
-        expect(query.feature_reviews.all? {|fr|
-          fr.respond_to?(:approved?)
-        }).to be true
+        expect(query.feature_reviews).to match_array([
+          feature_review_for_C, feature_review_for_E, feature_review_for_F
+        ])
       end
     end
   end
