@@ -120,14 +120,14 @@ RSpec.describe FeatureReviewsController do
     context 'when time is specified' do
       let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
       let(:time) { Time.parse('2015-09-09 12:00:00 UTC') }
-      let(:precise_time) { time + 0.999999.seconds }
+      let(:precise_time) { time.change(usec: 999_999.999) }
 
       it 'sets up the correct query parameters' do
         get :show, apps: apps_with_versions, uat_url: uat_url, time: time
 
         expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
         expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to be_within(0.0001).of(precise_time)
+        expect(assigns(:feature_review_with_statuses).time).to eq(precise_time)
       end
     end
   end

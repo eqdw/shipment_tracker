@@ -41,7 +41,7 @@ class FeatureReviewsController < ApplicationController
     # Add fraction of a second to work around microsecond time difference.
     # The "time" query value in the Feature Review URL has no microseconds (i.e. 0 usec),
     # whereas the times records are persisted to the DB have higher precision which includes microseconds.
-    params.fetch(:time, nil).try { |t| Time.zone.parse(t) + 0.999999.seconds }
+    params.fetch(:time, nil).try { |t| Time.zone.parse(t).change(usec: 999_999.999) }
   end
 
   def repository
