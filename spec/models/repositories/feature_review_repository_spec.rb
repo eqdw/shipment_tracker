@@ -14,32 +14,9 @@ RSpec.describe Repositories::FeatureReviewRepository do
     end
   end
 
-  describe '#most_recent_snapshot' do
-    let!(:feature_reviews) {
-      [
-        Snapshots::FeatureReview.create(path: '/1', versions: ['first']),
-        Snapshots::FeatureReview.create(path: '/2', versions: ['second']),
-        Snapshots::FeatureReview.create(path: '/1', versions: ['fourth']),
-        Snapshots::FeatureReview.create(path: '/3', versions: ['third']),
-      ]
-    }
-
-    context 'when path is specified' do
-      it 'returns the last snapshot with that path' do
-        expect(subject.most_recent_snapshot('/1')).to eq(feature_reviews[2])
-      end
-    end
-
-    context 'when path is not specified' do
-      it 'returns the last snapshot' do
-        expect(subject.most_recent_snapshot).to eq(feature_reviews.last)
-      end
-    end
-  end
-
   describe '#apply' do
     let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
-    let(:store) { class_double(Snapshots::FeatureReview) }
+    let(:store) { Snapshots::FeatureReview }
     let!(:time1) { 4.days.ago }
     let!(:time2) { 3.days.ago }
     let!(:time3) { 2.days.ago }
@@ -47,12 +24,6 @@ RSpec.describe Repositories::FeatureReviewRepository do
     subject(:repository) {
       Repositories::FeatureReviewRepository.new(store, ticket_repository: ticket_repository)
     }
-
-    before do
-      allow(subject).to receive(:most_recent_snapshot)
-        .with(fr_snapshot1.path)
-        .and_return(fr_snapshot1)
-    end
 
     context 'given a comment event' do
       let(:fr_snapshot1) {
@@ -98,9 +69,6 @@ RSpec.describe Repositories::FeatureReviewRepository do
       }
 
       before do
-        allow(subject).to receive(:most_recent_snapshot)
-          .with(fr_snapshot2.path)
-          .and_return(fr_snapshot2)
         allow(ticket_repository).to receive(:find_last_by_key)
           .with('JIRA-XYZ')
           .and_return(ticket2)

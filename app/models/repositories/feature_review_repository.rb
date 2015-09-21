@@ -37,11 +37,6 @@ module Repositories
       factory.create(snapshot.attributes) if snapshot
     end
 
-    def most_recent_snapshot(path = nil)
-      return store.last if path.nil?
-      store.where(path: path).last
-    end
-
     def apply(event)
       return unless relevant?(event)
       feature_review_paths = ticket_repository.find_last_by_key(event.key).try(:paths) || []
@@ -86,7 +81,8 @@ module Repositories
 
     def approved_at_for(feature_review, event)
       return unless approved?(feature_review, at: event.created_at)
-      most_recent_snapshot(feature_review.path).try(:approved_at) || event.created_at
+      last_feature_review = store.where(path: feature_review.path).order('id ASC').last
+      last_feature_review.try(:approved_at) || event.created_at
     end
 
     def approved?(feature_review, at:)
