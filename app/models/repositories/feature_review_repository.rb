@@ -47,14 +47,6 @@ module Repositories
       end
     end
 
-    def update_pull_request(app_name, version)
-      repository_location = git_repository_location.find_by_name(app_name)
-      PullRequestUpdateJob.perform_later(
-        repo_url: repository_location.uri,
-        sha: version,
-      ) if repository_location
-    end
-
     private
 
     attr_reader :store, :ticket_repository, :factory, :git_repository_location
@@ -66,7 +58,11 @@ module Repositories
 
     def update_pull_requests_for(feature_review)
       feature_review.app_versions.each do |app_name, version|
-        update_pull_request(app_name, version)
+        repository_location = git_repository_location.find_by_name(app_name)
+        PullRequestUpdateJob.perform_later(
+          repo_url: repository_location.uri,
+          sha: version,
+        ) if repository_location
       end
     end
 
