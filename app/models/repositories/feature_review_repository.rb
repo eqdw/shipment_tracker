@@ -44,7 +44,7 @@ module Repositories
 
     def apply(event)
       return unless relevant?(event)
-      feature_review_paths = ticket_repository.most_recent_snapshot(event.key).try(:paths) || []
+      feature_review_paths = ticket_repository.find_last_by_key(event.key).try(:paths) || []
       feature_review_paths.each do |feature_review_path|
         feature_review = factory.create_from_url_string(feature_review_path)
         create_snapshot(feature_review, event)

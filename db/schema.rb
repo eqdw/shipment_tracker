@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150915161859) do
+ActiveRecord::Schema.define(version: 20150921110831) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -103,6 +103,7 @@ ActiveRecord::Schema.define(version: 20150915161859) do
     t.string   "versions",         array: true
   end
 
+  add_index "tickets", ["key"], name: "index_tickets_on_key", using: :btree
   add_index "tickets", ["paths"], name: "index_tickets_on_paths", using: :gin
   add_index "tickets", ["versions"], name: "index_tickets_on_versions", using: :gin
 

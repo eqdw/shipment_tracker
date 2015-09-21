@@ -101,7 +101,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         allow(subject).to receive(:most_recent_snapshot)
           .with(fr_snapshot2.path)
           .and_return(fr_snapshot2)
-        allow(ticket_repository).to receive(:most_recent_snapshot)
+        allow(ticket_repository).to receive(:find_last_by_key)
           .with('JIRA-XYZ')
           .and_return(ticket2)
         allow(ticket_repository).to receive(:tickets_for)
@@ -153,7 +153,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         let(:event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: time3) }
 
         before do
-          allow(ticket_repository).to receive(:most_recent_snapshot)
+          allow(ticket_repository).to receive(:find_last_by_key)
             .with('JIRA-XYZ')
             .and_return(ticket2)
           allow(ticket_repository).to receive(:tickets_for)
@@ -188,7 +188,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         let(:event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: time3) }
 
         before do
-          allow(ticket_repository).to receive(:most_recent_snapshot)
+          allow(ticket_repository).to receive(:find_last_by_key)
             .with('JIRA-XYZ')
             .and_return(ticket2)
           allow(ticket_repository).to receive(:tickets_for)
@@ -230,7 +230,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
           }
 
           before do
-            allow(ticket_repository).to receive(:most_recent_snapshot)
+            allow(ticket_repository).to receive(:find_last_by_key)
               .with('JIRA-XYZ')
               .and_return(ticket2)
             allow(ticket_repository).to receive(:tickets_for)
@@ -293,7 +293,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         let(:event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: time3) }
 
         before do
-          allow(ticket_repository).to receive(:most_recent_snapshot)
+          allow(ticket_repository).to receive(:find_last_by_key)
             .with('JIRA-XYZ')
             .and_return(ticket2)
           allow(ticket_repository).to receive(:tickets_for)
@@ -328,7 +328,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
         let(:event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: time3) }
 
         before do
-          allow(ticket_repository).to receive(:most_recent_snapshot)
+          allow(ticket_repository).to receive(:find_last_by_key)
             .with('JIRA-XYZ')
             .and_return(ticket2)
           allow(ticket_repository).to receive(:tickets_for)
@@ -370,7 +370,7 @@ RSpec.describe Repositories::FeatureReviewRepository do
           }
 
           before do
-            allow(ticket_repository).to receive(:most_recent_snapshot)
+            allow(ticket_repository).to receive(:find_last_by_key)
               .with('JIRA-XYZ')
               .and_return(ticket2)
             allow(ticket_repository).to receive(:tickets_for)
