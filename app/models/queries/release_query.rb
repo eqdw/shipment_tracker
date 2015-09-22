@@ -32,17 +32,9 @@ module Queries
     end
 
     def associated_versions
-      versions = descendant_versions.push(release.version)
-      versions.push(parent_version) if git_repository.merge?(release.version)
-      versions
-    end
-
-    def descendant_versions
-      git_repository.get_descendant_commits_of_branch(release.version).map(&:id)
-    end
-
-    def parent_version
-      git_repository.branch_parent(release.version)
+      versions = [release.version]
+      versions.push(release.commit.parents[1])
+      versions.compact
     end
   end
 end

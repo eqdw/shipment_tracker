@@ -28,7 +28,7 @@ module Projections
     end
 
     def commits
-      @commits ||= @git_repository.recent_commits(@per_page)
+      @commits ||= @git_repository.recent_commits_by_first_parent(@per_page)
     end
 
     def versions
@@ -56,7 +56,7 @@ module Projections
 
     def create_release_from(commit:, deploy: nil)
       release = Release.new(
-        version: commit.id,
+        commit: commit,
         production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
       )

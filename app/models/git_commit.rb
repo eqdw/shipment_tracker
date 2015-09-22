@@ -8,6 +8,7 @@ class GitCommit
     attribute :author_name, String
     attribute :message, String
     attribute :time, Time
+    attribute :parents, Array
   end
 
   def subject_line
