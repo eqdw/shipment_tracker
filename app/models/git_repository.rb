@@ -26,10 +26,11 @@ class GitRepository
     end
   end
 
-  def recent_commits(count = 50)
+  def recent_commits_on_main_branch(count = 50)
     walker = Rugged::Walker.new(rugged_repository)
     walker.sorting(Rugged::SORT_TOPO)
     walker.push(main_branch.target_id)
+    walker.simplify_first_parent
 
     build_commits(walker.take(count))
   end
@@ -128,7 +129,9 @@ class GitRepository
       id: commit.oid,
       author_name: commit.author[:name],
       message: commit.message,
-      time: commit.time)
+      time: commit.time,
+      parent_ids: commit.parents.map(&:oid),
+    )
   end
 
   def build_commits(commits)

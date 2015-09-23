@@ -17,7 +17,7 @@ RSpec.describe GitRepository do
     subject { repo.exists?(sha) }
 
     context 'when commit id exists' do
-      let(:sha) { commit('A') }
+      let(:sha) { version('A') }
       it { is_expected.to be(true) }
     end
 
@@ -27,7 +27,7 @@ RSpec.describe GitRepository do
     end
 
     context 'when commit id is too short (even if it exists)' do
-      let(:sha) { commit('A').slice(1..3) }
+      let(:sha) { version('A').slice(1..3) }
       it { is_expected.to be(false) }
     end
 
@@ -41,9 +41,17 @@ RSpec.describe GitRepository do
     let(:git_diagram) { '-A-B-C-o' }
 
     it 'returns all commits between two commits' do
-      commits = repo.commits_between(commit('A'), commit('C')).map(&:id)
+      commits = repo.commits_between(version('A'), version('C')).map(&:id)
 
-      expect(commits).to contain_exactly(commit('B'), commit('C'))
+      expect(commits).to eq([version('B'), version('C')])
+    end
+
+    it 'returns commit objects with correct author and message' do
+      commit = repo.commits_between(version('A'), version('C')).second
+      expect(commit).to be_a(GitCommit)
+      expect(commit.id).to eq(version('C'))
+      expect(commit.author_name).to eq('Charly')
+      expect(commit.message).to eq('Change can confuse')
     end
 
     context 'when an invalid commit is provided' do
@@ -51,7 +59,7 @@ RSpec.describe GitRepository do
         invalid_commit = '1NV4LiD'
 
         expect {
-          repo.commits_between(commit('C'), invalid_commit)
+          repo.commits_between(version('C'), invalid_commit)
         }.to raise_error(GitRepository::CommitNotValid, invalid_commit)
       end
     end
@@ -61,19 +69,41 @@ RSpec.describe GitRepository do
         non_existent_commit = '8120765f3fce2da11a5c8e17d3ca800847912424'
 
         expect {
-          repo.commits_between(commit('C'), non_existent_commit)
+          repo.commits_between(version('C'), non_existent_commit)
         }.to raise_error(GitRepository::CommitNotFound, non_existent_commit)
       end
     end
   end
 
-  describe '#recent_commits' do
-    let(:git_diagram) { '-o-A-B-C' }
+  describe '#recent_commits_on_main_branch' do
+    let(:git_diagram) do
+      <<-'EOS'
+        B--C----E
+       /         \
+ -X---A-------D---F---G-
+        EOS
+    end
 
-    it 'returns specified number of recent commits' do
-      commits = repo.recent_commits(3).map(&:id)
+    it 'returns specified number of recent commits on the main branch' do
+      commits = repo.recent_commits_on_main_branch(4).map(&:id)
 
-      expect(commits).to eq([commit('C'), commit('B'), commit('A')])
+      expect(commits).to eq([version('G'), version('F'), version('D'), version('A')])
+    end
+
+    it 'returns commit objects with correct 1st and 2nd Parent IDs' do
+      commit = repo.recent_commits_on_main_branch(2).second
+      expect(commit).to be_a(GitCommit)
+      expect(commit.id).to eq(version('F'))
+      expect(commit.parent_ids.first).to eq(version('D'))
+      expect(commit.parent_ids.second).to eq(version('E'))
+    end
+
+    it 'returns commit objects with correct author and message' do
+      commit = repo.recent_commits_on_main_branch(1).first
+      expect(commit).to be_a(GitCommit)
+      expect(commit.id).to eq(version('G'))
+      expect(commit.author_name).to eq('Gregory')
+      expect(commit.message).to eq('Good goes green')
     end
 
     describe 'branch selection' do
@@ -83,32 +113,32 @@ RSpec.describe GitRepository do
         allow(rugged_repo).to receive(:branches).and_return(branches)
       end
 
-      subject { repo.recent_commits(3).map(&:id) }
+      subject { repo.recent_commits_on_main_branch(3).map(&:id) }
 
       context 'when there is a remote production branch' do
         let(:branches) {
           {
-            'origin/production' => double('branch', target_id: commit('A')),
+            'origin/production' => double('branch', target_id: version('A')),
             'origin/master' => double('branch'),
             'master' => double('branch'),
           }
         }
 
         it 'returns commits from origin/production' do
-          is_expected.to eq([commit('A')])
+          is_expected.to eq([version('A')])
         end
       end
 
       context 'when there is a remote master branch, but no remote production' do
         let(:branches) {
           {
-            'origin/master' => double('branch', target_id: commit('A')),
+            'origin/master' => double('branch', target_id: version('A')),
             'master' => double('branch'),
           }
         }
 
         it 'returns commits from origin/master' do
-          is_expected.to eq([commit('A')])
+          is_expected.to eq([version('A')])
         end
       end
 
@@ -116,12 +146,12 @@ RSpec.describe GitRepository do
         let(:branches) {
           {
             'origin/other' => double('branch'),
-            'master' => double('branch', target_id: commit('A')),
+            'master' => double('branch', target_id: version('A')),
           }
         }
 
         it 'returns commits from master' do
-          is_expected.to eq([commit('A')])
+          is_expected.to eq([version('A')])
         end
       end
     end
@@ -138,9 +168,17 @@ RSpec.describe GitRepository do
       end
 
       it 'returns the descendant commits up to and including the merge commit' do
-        descendant_commits = repo.get_descendant_commits_of_branch(commit('A')).map(&:id)
+        descendant_commits = repo.get_descendant_commits_of_branch(version('A')).map(&:id)
 
-        expect(descendant_commits).to contain_exactly(commit('B'), commit('C'))
+        expect(descendant_commits).to eq([version('B'), version('C')])
+      end
+
+      it 'returns commit objects with correct author and message' do
+        commit = repo.get_descendant_commits_of_branch(version('A')).first
+        expect(commit).to be_a(GitCommit)
+        expect(commit.id).to eq(version('B'))
+        expect(commit.author_name).to eq('Berta')
+        expect(commit.message).to eq('Built by Berta')
       end
     end
 
@@ -149,12 +187,12 @@ RSpec.describe GitRepository do
         <<-'EOS'
         B--C----E
        /         \
- -o---A-------D---F---G-
+ -X---A-------D---F---G-
         EOS
       end
 
       it 'returns empty array' do
-        descendant_commits = repo.get_descendant_commits_of_branch(commit('A')).map(&:id)
+        descendant_commits = repo.get_descendant_commits_of_branch(version('A')).map(&:id)
 
         expect(descendant_commits).to be_empty
       end
@@ -164,14 +202,14 @@ RSpec.describe GitRepository do
       let(:git_diagram) { '-o-A-o' }
 
       it 'returns empty' do
-        expect(repo.get_descendant_commits_of_branch(commit('A'))).to be_empty
+        expect(repo.get_descendant_commits_of_branch(version('A'))).to be_empty
       end
 
       context 'and it is the initial commit' do
         let(:git_diagram) { '-A-o' }
 
         it 'returns empty' do
-          expect(repo.get_descendant_commits_of_branch(commit('A'))).to be_empty
+          expect(repo.get_descendant_commits_of_branch(version('A'))).to be_empty
         end
       end
     end
@@ -186,7 +224,7 @@ RSpec.describe GitRepository do
       end
 
       it 'returns the descendant commits up to the tip of the branch' do
-        expect(repo.get_descendant_commits_of_branch(commit('A'))).to be_empty
+        expect(repo.get_descendant_commits_of_branch(version('A'))).to be_empty
       end
     end
 
@@ -216,12 +254,12 @@ RSpec.describe GitRepository do
     subject { repo.merge?(sha) }
 
     context 'when on a merge commit' do
-      let(:sha) { commit('C') }
+      let(:sha) { version('C') }
       it { is_expected.to be(true) }
     end
 
     context 'when on a non merge commit' do
-      let(:sha) { commit('B') }
+      let(:sha) { version('B') }
       it { is_expected.to be(false) }
     end
 
@@ -249,8 +287,8 @@ RSpec.describe GitRepository do
 
     context 'when on a merge commit' do
       context 'branch_parent was committed BEFORE parent on master' do
-        let(:sha) { commit('C') }
-        it { is_expected.to eq(commit('B')) }
+        let(:sha) { version('C') }
+        it { is_expected.to eq(version('B')) }
       end
 
       context 'branch_parent was committed AFTER parent on master' do
@@ -262,14 +300,14 @@ RSpec.describe GitRepository do
           EOS
         end
 
-        let(:sha) { commit('C') }
-        it { is_expected.to eq(commit('B')) }
+        let(:sha) { version('C') }
+        it { is_expected.to eq(version('B')) }
       end
     end
 
     context 'when on a non merge commit' do
-      let(:sha) { commit('B') }
-      it { is_expected.to eq(commit('A')) }
+      let(:sha) { version('B') }
+      it { is_expected.to eq(version('A')) }
     end
 
     context 'when not a real commit id' do
@@ -294,9 +332,17 @@ RSpec.describe GitRepository do
 
     subject { repo.get_dependent_commits(sha).map(&:id) }
 
-    let(:sha) { commit('C') }
+    let(:sha) { version('C') }
     it 'returns the ancestors of a commit up to the merge base' do
-      is_expected.to contain_exactly(commit('B'), commit('A'))
+      is_expected.to contain_exactly(version('B'), version('A'))
+    end
+
+    it 'returns commit objects with correct author and message' do
+      commit = repo.get_dependent_commits(sha).detect { |c| c.id == version('B') }
+      expect(commit).to be_a(GitCommit)
+      expect(commit.id).to eq(version('B'))
+      expect(commit.author_name).to eq('Berta')
+      expect(commit.message).to eq('Built by Berta')
     end
 
     context 'when the commit is the parent of a merge commit' do
@@ -308,9 +354,9 @@ RSpec.describe GitRepository do
         EOS
       end
 
-      let(:sha) { commit('B') }
+      let(:sha) { version('B') }
       it 'includes the merge commit in the result' do
-        is_expected.to contain_exactly(commit('A'), commit('C'))
+        is_expected.to contain_exactly(version('A'), version('C'))
       end
     end
 
@@ -323,9 +369,9 @@ RSpec.describe GitRepository do
         EOS
       end
 
-      let(:sha) { commit('C') }
+      let(:sha) { version('C') }
       it 'returns the feature branch ancestors of the merge commit but not the merge commit itself' do
-        is_expected.to contain_exactly(commit('A'), commit('B'))
+        is_expected.to contain_exactly(version('A'), version('B'))
       end
     end
 
@@ -344,12 +390,12 @@ RSpec.describe GitRepository do
 
     context 'when commmit is on master' do
       let(:git_diagram) { '-A-B-C-o' }
-      let(:sha) { commit('B') }
+      let(:sha) { version('B') }
 
       it { is_expected.to be_empty }
 
       context 'when commit is first commit' do
-        let(:sha) { commit('A') }
+        let(:sha) { version('A') }
 
         it { is_expected.to be_empty }
       end
@@ -364,7 +410,7 @@ RSpec.describe GitRepository do
 
   private
 
-  def commit(version)
-    test_git_repo.commit_for_pretend_version(version)
+  def version(pretend_version)
+    test_git_repo.commit_for_pretend_version(pretend_version)
   end
 end

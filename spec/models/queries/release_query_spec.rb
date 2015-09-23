@@ -11,7 +11,7 @@ RSpec.describe Queries::ReleaseQuery do
     <<-'EOS'
         B--C----E
        /         \
- -o---A-------D---F---G-
+ -X---A-------D---F---G-
         EOS
   }
 
@@ -19,6 +19,7 @@ RSpec.describe Queries::ReleaseQuery do
   let(:rugged_repo) { Rugged::Repository.new(test_git_repo.dir) }
   let(:git_repository) { GitRepository.new(rugged_repo) }
 
+  let(:sha_for_X) { version_for('X') }
   let(:sha_for_A) { version_for('A') }
   let(:sha_for_B) { version_for('B') }
   let(:sha_for_C) { version_for('C') }
@@ -103,9 +104,15 @@ RSpec.describe Queries::ReleaseQuery do
 
   describe '#feature_reviews' do
     context 'when release is a merge commit on master branch (F)' do
-      let(:release) { instance_double(Release, version: sha_for_F) }
+      let(:release) {
+        instance_double(
+          Release,
+          version: sha_for_F,
+          commit: GitCommit.new(id: sha_for_F, parent_ids: [sha_for_D, sha_for_E]),
+        )
+      }
 
-      it "returns the feature reviews for itself, it's descendants and it's branch parent" do
+      it "returns the feature reviews for itself, and it's branch parent" do
         expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
             [sha_for_F, sha_for_E],
@@ -120,9 +127,15 @@ RSpec.describe Queries::ReleaseQuery do
     end
 
     context 'when release is fork commit (A)' do
-      let(:release) { instance_double(Release, version: sha_for_A) }
+      let(:release) {
+        instance_double(
+          Release,
+          version: sha_for_A,
+          commit: GitCommit.new(id: sha_for_A, parent_ids: [sha_for_X]),
+        )
+      }
 
-      it "returns feature reviews for itself and it's descendants" do
+      it 'returns feature reviews for itself' do
         expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
             [sha_for_A],
@@ -137,9 +150,15 @@ RSpec.describe Queries::ReleaseQuery do
     end
 
     context 'when release is master branch non-merge commit (D)' do
-      let(:release) { instance_double(Release, version: sha_for_D) }
+      let(:release) {
+        instance_double(
+          Release,
+          version: sha_for_D,
+          commit: GitCommit.new(id: sha_for_D, parent_ids: [sha_for_A]),
+        )
+      }
 
-      it "returns feature reviews for itself and it's descendants" do
+      it 'returns feature reviews for itself' do
         expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
             [sha_for_D],
@@ -154,12 +173,20 @@ RSpec.describe Queries::ReleaseQuery do
     end
 
     context 'when release is feature branch commit (C)' do
-      let(:release) { instance_double(Release, version: sha_for_C) }
+      # TODO: This case is no longer expected as we only show master commits on the releases page.
+      # Once we refactor releases query and releases projection, this test could be dropped.
+      let(:release) {
+        instance_double(
+          Release,
+          version: sha_for_C,
+          commit: GitCommit.new(id: sha_for_C, parent_ids: [sha_for_B]),
+        )
+      }
 
-      it "returns feature reviews for itself and it's descendants" do
+      it 'returns feature reviews for itself' do
         expect(feature_review_repository).to receive(:feature_reviews_for_versions)
           .with(
-            [sha_for_E, sha_for_F, sha_for_C],
+            [sha_for_C],
             at: query_time,
           )
           .and_return([feature_review_for_C, feature_review_for_E, feature_review_for_F])
