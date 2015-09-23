@@ -105,10 +105,11 @@ RSpec.describe Queries::ReleaseQuery do
   describe '#feature_reviews' do
     context 'when release is a merge commit on master branch (F)' do
       let(:release) {
-        instance_double(Release,
+        instance_double(
+          Release,
           version: sha_for_F,
           commit: GitCommit.new(id: sha_for_F, parent_ids: [sha_for_D, sha_for_E]),
-                       )
+        )
       }
 
       it "returns the feature reviews for itself, and it's branch parent" do
@@ -127,10 +128,11 @@ RSpec.describe Queries::ReleaseQuery do
 
     context 'when release is fork commit (A)' do
       let(:release) {
-        instance_double(Release,
+        instance_double(
+          Release,
           version: sha_for_A,
           commit: GitCommit.new(id: sha_for_A, parent_ids: [sha_for_X]),
-                       )
+        )
       }
 
       it 'returns feature reviews for itself' do
@@ -149,10 +151,11 @@ RSpec.describe Queries::ReleaseQuery do
 
     context 'when release is master branch non-merge commit (D)' do
       let(:release) {
-        instance_double(Release,
+        instance_double(
+          Release,
           version: sha_for_D,
           commit: GitCommit.new(id: sha_for_D, parent_ids: [sha_for_A]),
-                       )
+        )
       }
 
       it 'returns feature reviews for itself' do
@@ -170,13 +173,14 @@ RSpec.describe Queries::ReleaseQuery do
     end
 
     context 'when release is feature branch commit (C)' do
-      # This case is no longer expected as we only show master commits on the releases page. Once we refactor
-      # releases query and releases projection, this test could be dropped.
+      # TODO: This case is no longer expected as we only show master commits on the releases page.
+      # Once we refactor releases query and releases projection, this test could be dropped.
       let(:release) {
-        instance_double(Release,
+        instance_double(
+          Release,
           version: sha_for_C,
           commit: GitCommit.new(id: sha_for_C, parent_ids: [sha_for_B]),
-                       )
+        )
       }
 
       it 'returns feature reviews for itself' do

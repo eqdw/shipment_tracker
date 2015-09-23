@@ -32,9 +32,7 @@ module Queries
     end
 
     def associated_versions
-      versions = [release.version]
-      versions.push(release.commit.parent_ids.second)
-      versions.compact
+      [release.version, release.commit.parent_ids.second].compact
     end
   end
 end
