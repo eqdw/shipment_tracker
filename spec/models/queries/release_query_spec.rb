@@ -107,7 +107,7 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) {
         instance_double(Release,
           version: sha_for_F,
-          commit: GitCommit.new(id: sha_for_F, parents: [sha_for_D, sha_for_E]),
+          commit: GitCommit.new(id: sha_for_F, parent_ids: [sha_for_D, sha_for_E]),
                        )
       }
 
@@ -129,7 +129,7 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) {
         instance_double(Release,
           version: sha_for_A,
-          commit: GitCommit.new(id: sha_for_A, parents: [sha_for_X]),
+          commit: GitCommit.new(id: sha_for_A, parent_ids: [sha_for_X]),
                        )
       }
 
@@ -151,7 +151,7 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) {
         instance_double(Release,
           version: sha_for_D,
-          commit: GitCommit.new(id: sha_for_D, parents: [sha_for_A]),
+          commit: GitCommit.new(id: sha_for_D, parent_ids: [sha_for_A]),
                        )
       }
 
@@ -175,7 +175,7 @@ RSpec.describe Queries::ReleaseQuery do
       let(:release) {
         instance_double(Release,
           version: sha_for_C,
-          commit: GitCommit.new(id: sha_for_C, parents: [sha_for_B]),
+          commit: GitCommit.new(id: sha_for_C, parent_ids: [sha_for_B]),
                        )
       }
 

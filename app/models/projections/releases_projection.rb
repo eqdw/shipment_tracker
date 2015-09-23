@@ -28,7 +28,7 @@ module Projections
     end
 
     def commits
-      @commits ||= @git_repository.recent_commits_by_first_parent(@per_page)
+      @commits ||= @git_repository.recent_commits_on_main_branch(@per_page)
     end
 
     def versions

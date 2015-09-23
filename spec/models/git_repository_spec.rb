@@ -67,7 +67,7 @@ RSpec.describe GitRepository do
     end
   end
 
-  describe '#recent_commits_by_first_parent' do
+  describe '#recent_commits_on_main_branch' do
     let(:git_diagram) do
       <<-'EOS'
         B--C----E
@@ -77,7 +77,7 @@ RSpec.describe GitRepository do
     end
 
     it 'returns specified number of recent commits, showing first parents only' do
-      commits = repo.recent_commits_by_first_parent(4).map(&:id)
+      commits = repo.recent_commits_on_main_branch(4).map(&:id)
 
       expect(commits).to eq([commit('G'), commit('F'), commit('D'), commit('A')])
     end
@@ -89,7 +89,7 @@ RSpec.describe GitRepository do
         allow(rugged_repo).to receive(:branches).and_return(branches)
       end
 
-      subject { repo.recent_commits_by_first_parent(3).map(&:id) }
+      subject { repo.recent_commits_on_main_branch(3).map(&:id) }
 
       context 'when there is a remote production branch' do
         let(:branches) {
