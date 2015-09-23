@@ -11,6 +11,17 @@ RSpec.describe GitRepositoryLocation do
     end
   end
 
+  describe '.uris' do
+    let(:uris) { %w(ssh://git@github.com/some/some-repo.git ssh://git@github.com/some/some-repo.git) }
+    it 'returns an array of uris' do
+      uris.each do |uri|
+        GitRepositoryLocation.create(uri: uri)
+      end
+
+      expect(GitRepositoryLocation.uris).to match_array(uris)
+    end
+  end
+
   describe '.from_github_notification' do
     let(:github_payload) {
       JSON.parse(<<-END)

@@ -47,7 +47,12 @@ class GithubNotificationsController < ApplicationController
   end
 
   def relevant_pull_request?
-    payload.action == 'opened' || payload.action == 'synchronize'
+    (payload.action == 'opened' || payload.action == 'synchronize') && audited_repo?
+  end
+
+  def audited_repo?
+    inferred_repo_name = payload.base_repo_url.split('/').last
+    GitRepositoryLocation.uris.any? { |uri| uri.include?(inferred_repo_name) }
   end
 
   def payload
