@@ -2,9 +2,12 @@ require 'rails_helper'
 
 RSpec.describe GithubNotificationsController do
   describe 'POST #create', :logged_in do
+    let(:repo_location_uri) { 'ssh://git@github.com/FundingCircle/hello_world_rails.git' }
+
     context 'when event is a pull request' do
       before do
         request.env['HTTP_X_GITHUB_EVENT'] = 'pull_request'
+        GitRepositoryLocation.create(uri: repo_location_uri)
       end
 
       context 'when the pull request is newly opened' do
@@ -57,6 +60,19 @@ RSpec.describe GithubNotificationsController do
         let(:sha) { '12345' }
         let(:repo_url) { 'https://github.com/FundingCircle/hello_world_rails' }
         let(:payload) { github_pr_payload(action: 'reopened', repo_url: repo_url, sha: sha) }
+
+        it 'does not set the pull request status' do
+          expect(PullRequestStatus).to_not receive(:new)
+
+          post :create, github_notification: payload
+        end
+      end
+
+      context 'when the pull request is not for an audited repo' do
+        let(:repo_location_uri) { 'ssh://git@github.com/FundingCircle/another_repo.git' }
+        let(:sha) { '12345' }
+        let(:repo_url) { 'https://github.com/FundingCircle/hello_world_rails' }
+        let(:payload) { github_pr_payload(action: 'opened', repo_url: repo_url, sha: sha) }
 
         it 'does not set the pull request status' do
           expect(PullRequestStatus).to_not receive(:new)

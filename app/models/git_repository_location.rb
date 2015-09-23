@@ -13,6 +13,10 @@ class GitRepositoryLocation < ActiveRecord::Base
     all.order(name: :asc).pluck(:name)
   end
 
+  def self.uris
+    all.pluck(:uri)
+  end
+
   def self.update_from_github_notification(payload)
     ssh_url = payload.fetch('repository', {}).fetch('ssh_url', nil)
     git_repository_location = find_by_github_ssh_url(ssh_url)
