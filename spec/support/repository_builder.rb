@@ -47,7 +47,7 @@ Support::RepositoryBuilder.add_example(
   proc do |repo|
     repo.create_commit(pretend_version: 'A')
     repo.create_commit(pretend_version: 'B')
-    repo.create_commit(pretend_version: 'C')
+    repo.create_commit(pretend_version: 'C', author_name: 'Charly', message: 'Change can confuse')
     repo.create_commit
   end,
 )
@@ -69,7 +69,7 @@ Support::RepositoryBuilder.add_example(
     repo.checkout_branch('master')
     repo.create_commit
     repo.checkout_branch(branch_name)
-    repo.create_commit(pretend_version: 'B')
+    repo.create_commit(pretend_version: 'B', author_name: 'Berta', message: 'Built by Berta')
     repo.checkout_branch('master')
     repo.merge_branch(branch_name: branch_name, pretend_version: 'C')
     repo.create_commit
@@ -121,7 +121,7 @@ Support::RepositoryBuilder.add_example(
     repo.create_commit(pretend_version: 'E')
     repo.checkout_branch('master')
     repo.merge_branch(branch_name: branch_name, pretend_version: 'F')
-    repo.create_commit(pretend_version: 'G')
+    repo.create_commit(pretend_version: 'G', author_name: 'Gregory', message: 'Good goes green')
   end,
 )
 
@@ -175,7 +175,8 @@ Support::RepositoryBuilder.add_example(
     repo.create_branch(branch_name)
     repo.checkout_branch(branch_name)
     repo.create_commit(pretend_version: 'A')
-    repo.create_commit(pretend_version: 'B')
+    # repo.create_commit(pretend_version: 'B')
+    repo.create_commit(pretend_version: 'B', author_name: 'Berta', message: 'Built by Berta')
     repo.create_commit(pretend_version: 'C')
     repo.create_commit
     repo.checkout_branch('master')
