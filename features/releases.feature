@@ -44,6 +44,10 @@ Scenario: Viewing releases for an app
   And the branch "feature2" is checked out
   And a commit "#feat2_b" with message "feat2 second commit" is created at "2014-10-03 14:04:19"
   And commit "#feat2_b" of "frontend" is deployed by "Alice" to server "uat.fundingcircle.com" at "2014-10-03 14:25:00"
+  And developer prepares review known as "FR_123b" for UAT "uat.fundingcircle.com" with apps
+    | app_name | version  |
+    | frontend | #feat2_b |
+  And at time "2014-10-03 15:12:45" adds link for review "FR_123b" to comment for ticket "JIRA-123"
   And developer prepares review known as "FR_456" for UAT "uat.example.com" with apps
     | app_name | version  |
     | frontend | #feat2_b |
@@ -71,7 +75,7 @@ Scenario: Viewing releases for an app
 
   Then I should see the "pending" releases
     | version  | subject                         | feature reviews | review statuses        | review times          | approved |
-    | #merge2  | Merged `feature2` into `master` | FR_456          | Approved               | 2014-10-04 15:24:34   | yes      |
+    | #merge2  | Merged `feature2` into `master` | FR_123b, FR_456 | Not approved Approved  | , 2014-10-04 15:24:34 | yes      |
 
   And I should see the "deployed" releases
     | version  | subject                         | feature reviews | review statuses       | review times          | approved | last deployed at |
