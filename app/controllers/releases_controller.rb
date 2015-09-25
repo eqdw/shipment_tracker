@@ -15,7 +15,7 @@ class ReleasesController < ApplicationController
   private
 
   def build_projection
-    Projections::ReleasesProjection.new(
+    Queries::ReleasesQuery.new(
       per_page: 50,
       git_repo: git_repository,
       deploy_repo: deploy_repository,

@@ -1,10 +1,8 @@
-require 'git_repository'
-require 'release_with_status'
 require 'release'
-require 'repositories/deploy_repository'
+require 'release_with_status'
 
-module Projections
-  class ReleasesProjection
+module Queries
+  class ReleasesQuery
     attr_reader :pending_releases, :deployed_releases
 
     def initialize(per_page:, git_repo:, app_name:, deploy_repo:, feature_review_repo:)

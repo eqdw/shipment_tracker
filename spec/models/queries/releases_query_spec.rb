@@ -1,8 +1,8 @@
 require 'rails_helper'
 
-RSpec.describe Projections::ReleasesProjection do
-  subject(:projection) {
-    Projections::ReleasesProjection.new(
+RSpec.describe Queries::ReleasesQuery do
+  subject(:releases_query) {
+    Queries::ReleasesQuery.new(
       per_page: 50,
       git_repo: git_repository,
       deploy_repo: deploy_repository,
@@ -47,7 +47,7 @@ RSpec.describe Projections::ReleasesProjection do
   end
 
   describe '#pending_releases' do
-    subject(:pending_releases) { projection.pending_releases }
+    subject(:pending_releases) { releases_query.pending_releases }
     it 'returns list of releases not yet deployed to production' do
       expect(pending_releases.map(&:version)).to eq(['abc'])
       expect(pending_releases.map(&:subject)).to eq(['new commit on master'])
@@ -59,7 +59,7 @@ RSpec.describe Projections::ReleasesProjection do
   end
 
   describe '#deployed_releases' do
-    subject(:deployed_releases) { projection.deployed_releases }
+    subject(:deployed_releases) { releases_query.deployed_releases }
     it 'returns list of releases deployed to production' do
       expect(deployed_releases.map(&:version)).to eq(%w(def ghi))
       expect(deployed_releases.map(&:subject)).to eq(['merge commit', 'first commit on master branch'])
