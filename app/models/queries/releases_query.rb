@@ -1,5 +1,4 @@
 require 'release'
-require 'release_with_status'
 
 module Queries
   class ReleasesQuery
@@ -63,14 +62,10 @@ module Queries
     end
 
     def create_release_from(commit:, deploy: nil)
-      release = Release.new(
+      Release.new(
         commit: commit,
         production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
-      )
-
-      ReleaseWithStatus.new(
-        release: release,
         feature_reviews: feature_reviews.select { |fr| (fr.versions & commit.associated_ids).present? },
       )
     end
