@@ -1,14 +1,10 @@
-require 'queries/release_query'
-
 class ReleaseWithStatus < SimpleDelegator
-  def initialize(release:, git_repository:, query_class: Queries::ReleaseQuery)
-    super(release)
-    @release = release
-    @git_repository = git_repository
-    @query = query_class.new(release: release, git_repository: git_repository)
-  end
+  attr_reader :feature_reviews
 
-  delegate :feature_reviews, to: :@query
+  def initialize(release:, feature_reviews:)
+    super(release)
+    @feature_reviews = feature_reviews
+  end
 
   def approved?
     feature_reviews.any?(&:approved?)
