@@ -24,7 +24,9 @@ module Support
 
     def build(git_ascii_graph)
       self.class.examples.fetch(git_ascii_graph.strip_heredoc) {
+        # :nocov:
         fail "Unrecognised git tree:\n#{git_ascii_graph}"
+        # :nocov:
       }.call(test_git_repo)
       test_git_repo
     end
