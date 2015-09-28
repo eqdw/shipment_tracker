@@ -18,8 +18,13 @@ class FeatureReviewsController < ApplicationController
     @return_to = request.original_fullpath
     review = Factories::FeatureReviewFactory.new.create_from_url_string(request.original_url)
     whitelisted_path = review.path
+
+    # TODO: remove this once we simplify the feature review snapshot and migrate approved_at to the decorator
     review_with_approved_at = repository.feature_review_for_path(whitelisted_path, at: time)
-    @feature_review_with_statuses = FeatureReviewWithStatuses.new(review_with_approved_at || review, at: time)
+
+    @feature_review_with_statuses = Queries::FeatureReviewQuery
+                                    .new(review_with_approved_at || review, at: time)
+                                    .feature_review_with_statuses
   end
 
   def search

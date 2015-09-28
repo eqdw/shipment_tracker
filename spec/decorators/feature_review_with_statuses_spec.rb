@@ -1,12 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe FeatureReviewWithStatuses do
-  let(:tickets) { [] }
-  let(:builds) { {} }
-  let(:deploys) { [] }
-  let(:qa_submission) { nil }
-  let(:uatest) { nil }
-  let(:apps) { {} }
+  let(:tickets) { double(:tickets) }
+  let(:builds) { double(:builds) }
+  let(:deploys) { double(:deploys) }
+  let(:qa_submission) { double(:qa_submission) }
+  let(:uatest) { double(:uatest) }
+  let(:apps) { double(:apps) }
   let(:uat_url) { 'http://uat.com' }
 
   let(:feature_review) {
@@ -17,51 +17,31 @@ RSpec.describe FeatureReviewWithStatuses do
     )
   }
 
-  let(:feature_review_query) {
-    instance_double(
-      Queries::FeatureReviewQuery,
-      tickets: tickets,
+  let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
+
+  let(:decorator) {
+    described_class.new(
+      feature_review,
       builds: builds,
       deploys: deploys,
       qa_submission: qa_submission,
+      tickets: tickets,
       uatest: uatest,
+      at: query_time,
     )
   }
 
-  let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
-  let(:time_now) { Time.now }
-
-  let(:query_class) { class_double(Queries::FeatureReviewQuery, new: feature_review_query) }
-
-  let(:decorator) { described_class.new(feature_review, at: query_time, query_class: query_class) }
-
-  it 'delegates #apps, #tickets, #builds, #deploys and #qa_submission to the feature_review_query' do
-    expect(decorator.tickets).to eq(feature_review_query.tickets)
-    expect(decorator.builds).to eq(feature_review_query.builds)
-    expect(decorator.deploys).to eq(feature_review_query.deploys)
-    expect(decorator.qa_submission).to eq(feature_review_query.qa_submission)
-    expect(decorator.uatest).to eq(feature_review_query.uatest)
+  it 'returns #builds, #deploy, #qa_submission, #tickets, #uatest and time as initialized' do
+    expect(decorator.builds).to eq(builds)
+    expect(decorator.deploys).to eq(deploys)
+    expect(decorator.qa_submission).to eq(qa_submission)
+    expect(decorator.tickets).to eq(tickets)
+    expect(decorator.uatest).to eq(uatest)
+    expect(decorator.time).to eq(query_time)
   end
 
   it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
-  end
-
-  describe '#time' do
-    context 'when initialized with a time' do
-      it 'returns the time it was initialized with' do
-        expect(decorator.time).to eq(query_time)
-      end
-    end
-
-    context 'when NOT initialized with a time' do
-      it 'returns the time when it was initialized' do
-        Timecop.freeze(time_now) do
-          decorator_without_specific_time = described_class.new(feature_review)
-          expect(decorator_without_specific_time.time).to eq(time_now)
-        end
-      end
-    end
   end
 
   describe '#build_status' do
@@ -105,6 +85,8 @@ RSpec.describe FeatureReviewWithStatuses do
     end
 
     context 'when there are no builds' do
+      let(:builds) { {} }
+
       it 'returns nil' do
         expect(decorator.build_status).to be nil
       end
@@ -138,6 +120,8 @@ RSpec.describe FeatureReviewWithStatuses do
     end
 
     context 'when there are no deploys' do
+      let(:deploys) { [] }
+
       it 'returns nil' do
         expect(decorator.deploy_status).to be nil
       end
@@ -162,6 +146,8 @@ RSpec.describe FeatureReviewWithStatuses do
     end
 
     context 'when QA submission is missing' do
+      let(:qa_submission) { nil }
+
       it 'returns nil' do
         expect(decorator.qa_status).to be nil
       end
@@ -186,6 +172,8 @@ RSpec.describe FeatureReviewWithStatuses do
     end
 
     context 'when User Acceptance Tests are missing' do
+      let(:uatest) { nil }
+
       it 'returns nil' do
         expect(decorator.uatest_status).to be nil
       end

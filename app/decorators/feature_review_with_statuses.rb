@@ -1,42 +1,39 @@
-require 'queries/feature_review_query'
-
 class FeatureReviewWithStatuses < SimpleDelegator
-  attr_reader :time
+  attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time
 
-  def initialize(feature_review, at: Time.current, query_class: Queries::FeatureReviewQuery)
+  def initialize(feature_review, builds:, deploys:, qa_submission:, tickets:, uatest:, at:)
     super(feature_review)
     @time = at
-    @query = query_class.new(feature_review, at: @time)
+    @builds = builds
+    @deploys = deploys
+    @qa_submission = qa_submission
+    @tickets = tickets
+    @uatest = uatest
   end
 
-  delegate :tickets, :builds, :deploys, :qa_submission, :uatest, to: :query
-
   def build_status
-    builds = query.builds.values
+    build_values = builds.values
 
-    return nil if builds.empty?
+    return nil if build_values.empty?
 
-    if builds.all? { |b| b.success == true }
+    if build_values.all? { |b| b.success == true }
       :success
-    elsif builds.any? { |b| b.success == false }
+    elsif build_values.any? { |b| b.success == false }
       :failure
     end
   end
 
   def deploy_status
-    deploys = query.deploys
     return nil if deploys.empty?
     deploys.all?(&:correct) ? :success : :failure
   end
 
   def qa_status
-    qa_submission = query.qa_submission
     return nil unless qa_submission
     qa_submission.accepted ? :success : :failure
   end
 
   def uatest_status
-    uatest = query.uatest
     return nil unless uatest
     uatest.success ? :success : :failure
   end
@@ -50,12 +47,4 @@ class FeatureReviewWithStatuses < SimpleDelegator
       :failure
     end
   end
-
-  def path_with_query_time
-    "#{base_path}?#{query_hash.merge(time: time.utc).to_query}"
-  end
-
-  private
-
-  attr_reader :query
 end

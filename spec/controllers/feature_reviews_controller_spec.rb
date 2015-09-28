@@ -89,12 +89,13 @@ RSpec.describe FeatureReviewsController do
   end
 
   describe 'GET #show', :logged_in do
-    let(:events) { [Events::BaseEvent.new, Events::BaseEvent.new, Events::BaseEvent.new] }
     let(:uat_url) { 'http://uat.fundingcircle.com' }
     let(:apps_with_versions) { { 'frontend' => 'abc', 'backend' => 'def' } }
     let(:feature_review) {
-      instance_double(FeatureReview, app_versions: apps_with_versions, uat_url: uat_url)
+      instance_double(FeatureReview)
     }
+    let(:feature_review_query) { instance_double(Queries::FeatureReviewQuery) }
+    let(:feature_review_with_statuses) { instance_double(FeatureReviewWithStatuses) }
 
     before do
       request.host = 'www.example.com'
@@ -102,6 +103,9 @@ RSpec.describe FeatureReviewsController do
       allow_any_instance_of(Repositories::FeatureReviewRepository).to receive(:feature_review_for_path)
         .with(whitelisted_path, at: precise_time)
         .and_return(feature_review)
+      allow(Queries::FeatureReviewQuery).to receive(:new).and_return(feature_review_query)
+      allow(feature_review_query).to receive(:feature_review_with_statuses)
+        .and_return(feature_review_with_statuses)
     end
 
     context 'when time is NOT specified' do
@@ -109,11 +113,13 @@ RSpec.describe FeatureReviewsController do
       let(:precise_time) { nil }
 
       it 'sets up the correct query parameters' do
+        expect(Queries::FeatureReviewQuery).to receive(:new)
+          .with(feature_review, at: nil)
+          .and_return(feature_review_query)
+
         get :show, apps: apps_with_versions, uat_url: uat_url
 
-        expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
-        expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(nil)
+        expect(assigns(:feature_review_with_statuses)).to eq(feature_review_with_statuses)
       end
     end
 
@@ -123,11 +129,13 @@ RSpec.describe FeatureReviewsController do
       let(:precise_time) { time.change(usec: 999_999.999) }
 
       it 'sets up the correct query parameters' do
+        expect(Queries::FeatureReviewQuery).to receive(:new)
+          .with(feature_review, at: precise_time)
+          .and_return(feature_review_query)
+
         get :show, apps: apps_with_versions, uat_url: uat_url, time: time
 
-        expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
-        expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(precise_time)
+        expect(assigns(:feature_review_with_statuses)).to eq(feature_review_with_statuses)
       end
     end
   end
