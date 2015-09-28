@@ -41,7 +41,7 @@ RSpec.describe GitRepository do
   describe '#commits_between' do
     let(:git_diagram) { '-A-B-C-o' }
 
-    it 'returns all commits between two commits' do
+    it 'returns all commits between two commits, including the end commit' do
       commits = repo.commits_between(version('A'), version('C')).map(&:id)
 
       expect(commits).to eq([version('B'), version('C')])
