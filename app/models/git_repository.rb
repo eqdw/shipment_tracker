@@ -4,6 +4,11 @@ class GitRepository
   class CommitNotFound < RuntimeError; end
   class CommitNotValid < RuntimeError; end
 
+  # Some commits have two parents, the result of merging two branches together.
+  # The first parent is the last commit on the current branch.
+  # The second parent is the last commit on the branch being merged in.
+  PARENT_ON_MERGED_BRANCH = 1
+
   def initialize(rugged_repository)
     @rugged_repository = rugged_repository
   end
@@ -120,8 +125,8 @@ class GitRepository
     walker.first.oid == commit_oid
   end
 
-  def merge_commit_for?(merge_commit, commit_oid)
-    merge_commit.parent_ids.second == commit_oid
+  def merge_commit_for?(merge_commit_candidate, commit_oid)
+    merge_commit_candidate.parent_ids[PARENT_ON_MERGED_BRANCH] == commit_oid
   end
 
   def build_commit(commit)
