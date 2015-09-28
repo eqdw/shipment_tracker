@@ -17,7 +17,7 @@ RSpec.describe GitCommit do
     let(:first_parent_id) { '789' }
     let(:id) { '123' }
 
-    context 'when commit is a merge commit, resp. has a second parent' do
+    context 'when commit is a merge commit (i.e. has a second parent)' do
       let(:second_parent_id) { '456' }
 
       it 'returns an array id and id of second parent' do
@@ -25,7 +25,7 @@ RSpec.describe GitCommit do
       end
     end
 
-    context 'when commit is not a merge commit, resp. has no second parent' do
+    context 'when commit is not a merge commit (i.e. has no second parent)' do
       let(:second_parent_id) { nil }
 
       it 'return array with id' do

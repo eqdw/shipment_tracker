@@ -26,29 +26,7 @@ RSpec.describe Release do
     it 'returns false if none of its feature reviews are approved' do
       allow(feature_review1).to receive(:approved?).and_return(false)
       allow(feature_review2).to receive(:approved?).and_return(false)
-      expect(release.approved?).to eq(false)
-    end
-  end
-
-  describe '#approval_status' do
-    context 'when release has NO feature review(s)' do
-      it 'returns blank when the release has no features' do
-        expect(release.approval_status).to be_nil
-      end
-    end
-
-    context 'when release has feature review(s)' do
-      subject(:release) { Release.new(feature_reviews: feature_reviews) }
-
-      it 'returns "approved" when the release is :approved' do
-        allow(release).to receive(:approved?).and_return(true)
-        expect(release.approval_status).to eq(:approved)
-      end
-
-      it 'returns "unapproved" when the release is NOT :approved?' do
-        allow(release).to receive(:approved?).and_return(false)
-        expect(release.approval_status).to eq(:not_approved)
-      end
+      expect(release.approved?).to be false
     end
   end
 end

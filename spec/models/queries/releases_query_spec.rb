@@ -52,7 +52,6 @@ RSpec.describe Queries::ReleasesQuery do
       expect(pending_releases.map(&:version)).to eq(['abc'])
       expect(pending_releases.map(&:subject)).to eq(['new commit on master'])
       expect(pending_releases.map(&:production_deploy_time)).to eq([nil])
-      expect(pending_releases.map(&:approval_status)).to eq([:not_approved])
       expect(pending_releases.map(&:approved?)).to eq([false])
       expect(pending_releases.map(&:feature_reviews)).to eq([[not_approved_feature_review]])
     end
@@ -64,7 +63,6 @@ RSpec.describe Queries::ReleasesQuery do
       expect(deployed_releases.map(&:version)).to eq(%w(def ghi))
       expect(deployed_releases.map(&:subject)).to eq(['merge commit', 'first commit on master branch'])
       expect(deployed_releases.map(&:production_deploy_time)).to eq([deploy_time, nil])
-      expect(deployed_releases.map(&:approval_status)).to eq([:approved, nil])
       expect(deployed_releases.map(&:approved?)).to eq([true, false])
       expect(deployed_releases.map(&:feature_reviews)).to eq([[approved_feature_review], []])
     end
