@@ -1,18 +1,17 @@
-require 'git_repository'
-require 'release_with_status'
 require 'release'
-require 'repositories/deploy_repository'
 
-module Projections
-  class ReleasesProjection
+module Queries
+  class ReleasesQuery
     attr_reader :pending_releases, :deployed_releases
 
-    def initialize(per_page:, git_repo:, app_name:, deploy_repo:)
+    def initialize(per_page:, git_repo:, app_name:, deploy_repo:, feature_review_repo:)
       @per_page = per_page
       @git_repository = git_repo
       @app_name = app_name
 
       @deploy_repository = deploy_repo
+      @feature_review_repository = feature_review_repo
+
       @pending_releases = []
       @deployed_releases = []
 
@@ -21,7 +20,7 @@ module Projections
 
     private
 
-    attr_reader :app_name, :deploy_repository, :git_repository
+    attr_reader :app_name, :deploy_repository, :feature_review_repository, :git_repository
 
     def production_deploys
       @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
@@ -31,8 +30,16 @@ module Projections
       @commits ||= @git_repository.recent_commits_on_main_branch(@per_page)
     end
 
+    def feature_reviews
+      @feature_reviews ||= feature_review_repository.feature_reviews_for_versions(associated_versions)
+    end
+
     def versions
-      @versions ||= commits.map(&:id)
+      commits.map(&:id)
+    end
+
+    def associated_versions
+      commits.map(&:associated_ids).flatten.uniq
     end
 
     def production_deploy_for_commit(commit)
@@ -55,15 +62,11 @@ module Projections
     end
 
     def create_release_from(commit:, deploy: nil)
-      release = Release.new(
+      Release.new(
         commit: commit,
         production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
-      )
-
-      ReleaseWithStatus.new(
-        release: release,
-        git_repository: git_repository,
+        feature_reviews: feature_reviews.select { |fr| (fr.versions & commit.associated_ids).present? },
       )
     end
   end

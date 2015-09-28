@@ -29,9 +29,10 @@ RSpec.describe ReleasesController do
     let(:pending_releases) { double(:pending_releases) }
     let(:deployed_releases) { double(:deployed_releases) }
     let(:deploy_repo) { Repositories::DeployRepository.new }
-    let(:projection) {
+    let(:feature_review_repo) { Repositories::FeatureReviewRepository.new }
+    let(:releases_query) {
       instance_double(
-        Projections::ReleasesProjection,
+        Queries::ReleasesQuery,
         pending_releases: pending_releases,
         deployed_releases: deployed_releases,
       )
@@ -42,12 +43,14 @@ RSpec.describe ReleasesController do
       allow(repository_loader).to receive(:load).with('frontend').and_return(repository)
       allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
       allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repo)
-      allow(Projections::ReleasesProjection).to receive(:new).with(
+      allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repo)
+      allow(Queries::ReleasesQuery).to receive(:new).with(
         per_page: 50,
         git_repo: repository,
         deploy_repo: deploy_repo,
+        feature_review_repo: feature_review_repo,
         app_name: app_name,
-      ).and_return(projection)
+      ).and_return(releases_query)
       allow(Events::BaseEvent).to receive(:in_order_of_creation).and_return(events)
     end
 

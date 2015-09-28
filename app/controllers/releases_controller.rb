@@ -15,10 +15,11 @@ class ReleasesController < ApplicationController
   private
 
   def build_projection
-    Projections::ReleasesProjection.new(
+    Queries::ReleasesQuery.new(
       per_page: 50,
       git_repo: git_repository,
       deploy_repo: deploy_repository,
+      feature_review_repo: feature_review_repository,
       app_name: app_name)
   end
 
@@ -28,6 +29,10 @@ class ReleasesController < ApplicationController
 
   def deploy_repository
     Repositories::DeployRepository.new
+  end
+
+  def feature_review_repository
+    Repositories::FeatureReviewRepository.new
   end
 
   def git_repository

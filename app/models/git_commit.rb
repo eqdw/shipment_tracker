@@ -14,4 +14,8 @@ class GitCommit
   def subject_line
     message.split("\n").first
   end
+
+  def associated_ids
+    [id, parent_ids.second].compact
+  end
 end
