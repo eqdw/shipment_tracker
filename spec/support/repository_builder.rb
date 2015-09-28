@@ -106,12 +106,12 @@ Support::RepositoryBuilder.add_example(
   <<-'EOS'.strip_heredoc,
              B--C----E
             /         \
-      -X---A-------D---F---G-
+      -o---A-------D---F---G-
       EOS
   proc do |repo|
     branch_name = "branch-#{SecureRandom.hex(10)}"
 
-    repo.create_commit(pretend_version: 'X')
+    repo.create_commit
     repo.create_commit(pretend_version: 'A')
     repo.create_branch(branch_name)
     repo.checkout_branch(branch_name)

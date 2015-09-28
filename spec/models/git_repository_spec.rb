@@ -80,7 +80,7 @@ RSpec.describe GitRepository do
       <<-'EOS'
         B--C----E
        /         \
- -X---A-------D---F---G-
+ -o---A-------D---F---G-
         EOS
     end
 
@@ -187,7 +187,7 @@ RSpec.describe GitRepository do
         <<-'EOS'
         B--C----E
        /         \
- -X---A-------D---F---G-
+ -o---A-------D---F---G-
         EOS
       end
 
