@@ -19,7 +19,9 @@
 
 if ENV['COVERAGE']
   require 'simplecov'
-  SimpleCov.start
+  SimpleCov.start('rails') do
+    add_filter 'lib/tasks/'
+  end
 end
 
 require 'pathname'
