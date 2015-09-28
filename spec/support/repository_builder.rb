@@ -175,7 +175,6 @@ Support::RepositoryBuilder.add_example(
     repo.create_branch(branch_name)
     repo.checkout_branch(branch_name)
     repo.create_commit(pretend_version: 'A')
-    # repo.create_commit(pretend_version: 'B')
     repo.create_commit(pretend_version: 'B', author_name: 'Berta', message: 'Built by Berta')
     repo.create_commit(pretend_version: 'C')
     repo.create_commit
@@ -227,16 +226,6 @@ Support::RepositoryBuilder.add_example(
   end,
 )
 # :nocov:
-
-Support::RepositoryBuilder.add_example(
-  '-o-A-B-C',
-  proc do |repo|
-    repo.create_commit
-    repo.create_commit(pretend_version: 'A')
-    repo.create_commit(pretend_version: 'B')
-    repo.create_commit(pretend_version: 'C')
-  end,
-)
 
 Support::RepositoryBuilder.add_example(
   <<-'EOS'.strip_heredoc,
