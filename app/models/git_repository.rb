@@ -1,3 +1,5 @@
+require 'git_commit'
+
 require 'rugged'
 
 class GitRepository

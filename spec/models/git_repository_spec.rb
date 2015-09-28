@@ -1,7 +1,8 @@
-require 'rails_helper'
-require 'git_repository'
+require 'spec_helper'
 require 'support/git_test_repository'
 require 'support/repository_builder'
+
+require 'git_repository'
 
 require 'rugged'
 
@@ -47,7 +48,7 @@ RSpec.describe GitRepository do
     end
 
     it 'returns commit objects with correct author and message' do
-      commit = repo.commits_between(version('A'), version('C')).second
+      commit = repo.commits_between(version('B'), version('C')).first
       expect(commit).to be_a(GitCommit)
       expect(commit.id).to eq(version('C'))
       expect(commit.author_name).to eq('Charly')
@@ -91,11 +92,11 @@ RSpec.describe GitRepository do
     end
 
     it 'returns commit objects with correct 1st and 2nd Parent IDs' do
-      commit = repo.recent_commits_on_main_branch(2).second
+      commit = repo.recent_commits_on_main_branch(2)[1]
       expect(commit).to be_a(GitCommit)
       expect(commit.id).to eq(version('F'))
-      expect(commit.parent_ids.first).to eq(version('D'))
-      expect(commit.parent_ids.second).to eq(version('E'))
+      expect(commit.parent_ids[0]).to eq(version('D'))
+      expect(commit.parent_ids[1]).to eq(version('E'))
     end
 
     it 'returns commit objects with correct author and message' do

@@ -1,7 +1,8 @@
-require 'rails_helper'
+require 'spec_helper'
 require 'support/git_test_repository'
 require 'support/repository_builder'
 
+require 'git_repository'
 require 'version_resolver'
 
 RSpec.describe VersionResolver do

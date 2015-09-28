@@ -1,6 +1,7 @@
 require 'support/git_test_repository'
 
 require 'securerandom'
+require 'active_support/core_ext/string/strip'
 
 module Support
   class RepositoryBuilder
