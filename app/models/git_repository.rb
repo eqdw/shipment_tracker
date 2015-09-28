@@ -16,7 +16,9 @@ class GitRepository
   end
 
   def exists?(full_sha)
-    lookup(full_sha).present?
+    full_sha.length == 40 && rugged_repository.exists?(full_sha)
+  rescue Rugged::InvalidError
+    false
   end
 
   def commits_between(from, to)

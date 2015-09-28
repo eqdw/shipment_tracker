@@ -33,7 +33,7 @@ RSpec.describe GitRepository do
     end
 
     context 'when commit id is invalid' do
-      let(:sha) { '1NV4LiD' }
+      let(:sha) { 'A COMMIT SHA THAT IS 1NV4LiD AND DOES NOT EXIST' }
       it { is_expected.to be(false) }
     end
   end
