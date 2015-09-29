@@ -41,14 +41,9 @@ RSpec.describe ReleasesController do
     before do
       allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
       allow(repository_loader).to receive(:load).with('frontend').and_return(repository)
-      allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
-      allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repo)
-      allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repo)
       allow(Queries::ReleasesQuery).to receive(:new).with(
         per_page: 50,
         git_repo: repository,
-        deploy_repo: deploy_repo,
-        feature_review_repo: feature_review_repo,
         app_name: app_name,
       ).and_return(releases_query)
       allow(Events::BaseEvent).to receive(:in_order_of_creation).and_return(events)

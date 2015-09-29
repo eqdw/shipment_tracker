@@ -4,13 +4,13 @@ module Queries
   class ReleasesQuery
     attr_reader :pending_releases, :deployed_releases
 
-    def initialize(per_page:, git_repo:, app_name:, deploy_repo:, feature_review_repo:)
+    def initialize(per_page:, git_repo:, app_name:)
       @per_page = per_page
       @git_repository = git_repo
       @app_name = app_name
 
-      @deploy_repository = deploy_repo
-      @feature_review_repository = feature_review_repo
+      @deploy_repository = Repositories::DeployRepository.new
+      @feature_review_repository = Repositories::FeatureReviewRepository.new
 
       @pending_releases = []
       @deployed_releases = []

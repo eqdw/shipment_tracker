@@ -5,8 +5,6 @@ RSpec.describe Queries::ReleasesQuery do
     Queries::ReleasesQuery.new(
       per_page: 50,
       git_repo: git_repository,
-      deploy_repo: deploy_repository,
-      feature_review_repo: feature_review_repository,
       app_name: app_name,
     )
   }
@@ -38,6 +36,7 @@ RSpec.describe Queries::ReleasesQuery do
   let(:feature_reviews) { [approved_feature_review, not_approved_feature_review] }
 
   before do
+    allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
     allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
     allow(git_repository).to receive(:recent_commits_on_main_branch).with(50).and_return(commits)
     allow(deploy_repository).to receive(:deploys_for_versions).with(versions, environment: 'production')
