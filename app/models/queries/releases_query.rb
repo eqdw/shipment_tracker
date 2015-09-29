@@ -10,7 +10,8 @@ module Queries
       @app_name = app_name
 
       @deploy_repository = Repositories::DeployRepository.new
-      @feature_review_repository = Repositories::FeatureReviewRepository.new
+      @feature_review_factory = Factories::FeatureReviewFactory.new
+      @ticket_repository = Repositories::TicketRepository.new
 
       @pending_releases = []
       @deployed_releases = []
@@ -20,7 +21,7 @@ module Queries
 
     private
 
-    attr_reader :app_name, :deploy_repository, :feature_review_repository, :git_repository
+    attr_reader :app_name, :deploy_repository, :feature_review_factory, :git_repository, :ticket_repository
 
     def production_deploys
       @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
@@ -31,7 +32,15 @@ module Queries
     end
 
     def feature_reviews
-      @feature_reviews ||= feature_review_repository.feature_reviews_for_versions(associated_versions)
+      @feature_reviews ||= tickets
+                           .map(&:paths)
+                           .flatten
+                           .uniq
+                           .map { |path| feature_review_factory.create_from_url_string(path) }
+    end
+
+    def tickets
+      @tickets ||= ticket_repository.tickets_for_versions(associated_versions)
     end
 
     def versions
@@ -62,11 +71,22 @@ module Queries
     end
 
     def create_release_from(commit:, deploy: nil)
+      decorated_feature_reviews = feature_reviews
+                                  .select { |fr| (fr.versions & commit.associated_ids).present? }
+                                  .map { |fr| decorate_feature_review(fr) }
+
       Release.new(
         commit: commit,
         production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
-        feature_reviews: feature_reviews.select { |fr| (fr.versions & commit.associated_ids).present? },
+        feature_reviews: decorated_feature_reviews,
+      )
+    end
+
+    def decorate_feature_review(feature_review)
+      FeatureReviewWithStatuses.new(
+        feature_review,
+        tickets: tickets.select { |t| t.paths.include?(feature_review.path) },
       )
     end
   end
