@@ -8,6 +8,7 @@ class PullRequestStatus
                  routes: Rails.application.routes.url_helpers)
     @token = token
     @routes = routes
+    @feature_review_repository = Repositories::FeatureReviewRepository.new
   end
 
   def update(repo_url:, sha:)
@@ -34,8 +35,12 @@ class PullRequestStatus
       description: reset_status[:description])
   end
 
+  private
+
+  attr_reader :token, :routes, :feature_review_repository
+
   def feature_reviews(commits)
-    Repositories::FeatureReviewRepository.new.feature_reviews_for_versions(commits)
+    feature_review_repository.feature_reviews_for_versions(commits)
   end
 
   def publish_status(repo_url:, sha:, status:, description:, target_url: nil)
@@ -68,10 +73,6 @@ class PullRequestStatus
       unapproved_status
     end
   end
-
-  private
-
-  attr_reader :token, :routes
 
   def not_reviewed_status
     {
