@@ -13,7 +13,7 @@ RSpec.describe Repositories::TicketRepository do
     end
   end
 
-  describe '#tickets_for_path' do
+  describe '#tickets_for_* queries' do
     let(:attrs_a) {
       { key: 'JIRA-A',
         summary: 'JIRA-A summary',
@@ -56,7 +56,16 @@ RSpec.describe Repositories::TicketRepository do
         versions: %w(NON3 ghi) }
     }
 
-    let(:attrs_e) {
+    let(:attrs_e1) {
+      { key: 'JIRA-E',
+        summary: 'JIRA-E summary',
+        status: 'Done',
+        paths: [feature_review_path(frontend: 'abc', backend: 'NON1')],
+        event_created_at: 1.day.ago,
+        versions: %w(abc NON1) }
+    }
+
+    let(:attrs_e2) {
       { key: 'JIRA-E',
         summary: 'JIRA-E summary',
         status: 'Done',
@@ -70,28 +79,42 @@ RSpec.describe Repositories::TicketRepository do
       Snapshots::Ticket.create!(attrs_b)
       Snapshots::Ticket.create!(attrs_c)
       Snapshots::Ticket.create!(attrs_d)
-      Snapshots::Ticket.create!(attrs_e)
+      Snapshots::Ticket.create!(attrs_e1)
+      Snapshots::Ticket.create!(attrs_e2)
     end
+    describe '#tickets_for_path' do
+      context 'with unspecified time' do
+        subject {
+          repository.tickets_for_path(
+            feature_review_path(frontend: 'abc', backend: 'NON1'),
+          )
+        }
 
-    context 'with unspecified time' do
-      subject {
-        repository.tickets_for_path(
-          feature_review_path(frontend: 'abc', backend: 'NON1'),
-        )
-      }
+        it { is_expected.to match_array([Ticket.new(attrs_a), Ticket.new(attrs_e2)]) }
+      end
 
-      it { is_expected.to match_array([Ticket.new(attrs_a), Ticket.new(attrs_e)]) }
+      context 'with a specified time' do
+        subject {
+          repository.tickets_for_path(
+            feature_review_path(frontend: 'abc', backend: 'NON1'),
+            at: 4.days.ago,
+          )
+        }
+
+        it { is_expected.to match_array([Ticket.new(attrs_a)]) }
+      end
     end
+    describe '#tickets_for_versions' do
+      subject { repository.tickets_for_versions(versions) }
+      let(:versions) { %w(abc def) }
 
-    context 'with a specified time' do
-      subject {
-        repository.tickets_for_path(
-          feature_review_path(frontend: 'abc', backend: 'NON1'),
-          at: 4.days.ago,
-        )
+      it {
+        is_expected.to match_array([
+          Ticket.new(attrs_a),
+          Ticket.new(attrs_b),
+          Ticket.new(attrs_e2),
+        ])
       }
-
-      it { is_expected.to match_array([Ticket.new(attrs_a)]) }
     end
   end
 

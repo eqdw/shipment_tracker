@@ -25,6 +25,14 @@ module Repositories
         .map { |t| Ticket.new(t.attributes) }
     end
 
+    def tickets_for_versions(versions)
+      store
+        .select('DISTINCT ON (key) *')
+        .where('versions && ARRAY[?]::varchar[]', versions)
+        .order('key, id DESC')
+        .map { |t| Ticket.new(t.attributes) }
+    end
+
     def find_last_by_key(key)
       store.where(key: key).order('id ASC').last
     end
