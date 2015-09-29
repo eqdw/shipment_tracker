@@ -1,7 +1,8 @@
 class FeatureReviewWithStatuses < SimpleDelegator
   attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time
 
-  def initialize(feature_review, builds:, deploys:, qa_submission:, tickets:, uatest:, at:)
+  # rubocop:disable LineLength
+  def initialize(feature_review, builds: {}, deploys: [], qa_submission: nil, tickets: [], uatest: nil, at: nil)
     super(feature_review)
     @time = at
     @builds = builds
@@ -46,5 +47,22 @@ class FeatureReviewWithStatuses < SimpleDelegator
     elsif statuses.any? { |status| status == :failure }
       :failure
     end
+  end
+
+  def approved_at
+    return nil unless approved?
+    tickets.map(&:approved_at).max
+  end
+
+  def approved?
+    tickets.present? && tickets.all?(&:approved?)
+  end
+
+  def approval_status
+    approved? ? :approved : :not_approved
+  end
+
+  def approved_path
+    "#{base_path}?#{query_hash.merge(time: approved_at.utc).to_query}" if approved?
   end
 end

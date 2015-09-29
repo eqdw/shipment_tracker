@@ -31,13 +31,26 @@ RSpec.describe FeatureReviewWithStatuses do
     )
   }
 
-  it 'returns #builds, #deploy, #qa_submission, #tickets, #uatest and time as initialized' do
+  it 'returns #builds, #deploys, #qa_submission, #tickets, #uatest and #time as initialized' do
     expect(decorator.builds).to eq(builds)
     expect(decorator.deploys).to eq(deploys)
     expect(decorator.qa_submission).to eq(qa_submission)
     expect(decorator.tickets).to eq(tickets)
     expect(decorator.uatest).to eq(uatest)
     expect(decorator.time).to eq(query_time)
+  end
+
+  context 'when initialized without builds, deploys, qa_submission, tickets, uatest and time' do
+    let(:decorator) { described_class.new(feature_review) }
+
+    it 'returns default values for #builds, #deploy,s #qa_submission, #tickets, #uatest and #time' do
+      expect(decorator.builds).to eq({})
+      expect(decorator.deploys).to eq([])
+      expect(decorator.qa_submission).to eq(nil)
+      expect(decorator.tickets).to eq([])
+      expect(decorator.uatest).to eq(nil)
+      expect(decorator.time).to eq(nil)
+    end
   end
 
   it 'delegates unknown messages to the feature_review' do
@@ -208,6 +221,130 @@ RSpec.describe FeatureReviewWithStatuses do
 
       it 'returns nil' do
         expect(decorator.summary_status).to be(nil)
+      end
+    end
+  end
+
+  describe 'approval' do
+    subject(:decorator) {
+      described_class.new(
+        feature_review,
+        tickets: tickets,
+      )
+    }
+    let(:expected_approval_time) { Time.current }
+    let(:tickets) {
+      [
+        Ticket.new(approved_at: expected_approval_time),
+        Ticket.new(approved_at: expected_approval_time - 1.hour),
+      ]
+    }
+
+    describe 'approved_at' do
+      context 'feature review is approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(true)
+        end
+
+        it 'returns the approval time of the ticket that was approved last' do
+          expect(decorator.approved_at).to eq(expected_approval_time)
+        end
+      end
+
+      context 'feature review is not approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(false)
+        end
+
+        it 'returns nil' do
+          expect(decorator.approved_at).to be_nil
+        end
+      end
+    end
+
+    describe '#approved?' do
+      subject { decorator.approved? }
+
+      context 'when there are tickets' do
+        context 'and all are approved' do
+          let(:tickets) {
+            [
+              instance_double(Ticket, approved?: true),
+              instance_double(Ticket, approved?: true),
+            ]
+          }
+
+          it { is_expected.to eq(true) }
+        end
+
+        context 'and not all are approved' do
+          let(:tickets) {
+            [
+              instance_double(Ticket, approved?: true),
+              instance_double(Ticket, approved?: false),
+            ]
+          }
+          it { is_expected.to eq(false) }
+        end
+      end
+
+      context 'when there are no tickets' do
+        let(:tickets) { [] }
+        it { is_expected.to eq(false) }
+      end
+    end
+
+    describe '#approval_status' do
+      context 'feature review is approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(true)
+        end
+
+        it 'returns :approved' do
+          expect(decorator.approval_status).to eq(:approved)
+        end
+      end
+
+      context 'feature review is not approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(false)
+        end
+
+        it 'returns :not_approved' do
+          expect(subject.approval_status).to eq(:not_approved)
+        end
+      end
+    end
+
+    describe '#approved_path' do
+      let(:path) { '/something?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&uat_url=http://uat.com' }
+      let(:time) { Time.parse('2013-09-05 14:56:52 UTC') }
+
+      let(:feature_review) { FeatureReview.new(path: path, versions: %w(xxx yyy)) }
+      let(:tickets) { [Ticket.new(approved_at: time)] }
+
+      context 'feature review is approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(true)
+        end
+
+        it 'returns the the path as at the approved_at time' do
+          expect(decorator.approved_path).to eq(
+            '/something?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&'\
+            'time=2013-09-05T14%3A56%3A52%2B00%3A00&'\
+            'uat_url=http%3A%2F%2Fuat.com',
+          )
+        end
+      end
+
+      context 'feature review is not approved' do
+        before do
+          allow(decorator).to receive(:approved?).and_return(false)
+        end
+
+        it 'returns nil' do
+          expect(subject.approved_path).to be_nil
+        end
       end
     end
   end

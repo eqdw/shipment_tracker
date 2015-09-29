@@ -1,3 +1,5 @@
+require 'virtus'
+
 class Ticket
   include Virtus.value_object
 
