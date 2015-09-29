@@ -6,6 +6,7 @@ class Ticket
     attribute :summary, String, default: ''
     attribute :status, String, default: 'To Do'
     attribute :paths, Array, default: []
+    attribute :approved_at, DateTime
   end
 
   def approved?

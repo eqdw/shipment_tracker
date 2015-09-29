@@ -42,6 +42,7 @@ module Repositories
         'paths' => merge_ticket_paths(last_ticket, feature_reviews),
         'event_created_at' => event.created_at,
         'versions' => merge_ticket_versions(last_ticket, feature_reviews),
+        'approved_at' => merge_approved_at(last_ticket, event),
       )
 
       store.create!(new_ticket)
@@ -61,6 +62,11 @@ module Repositories
       old_versions = ticket.fetch('versions', [])
       new_versions = feature_review_versions(feature_reviews)
       old_versions.concat(new_versions).uniq
+    end
+
+    def merge_approved_at(last_ticket, event)
+      return nil unless Ticket.new(status: event.status).approved?
+      last_ticket['approved_at'] || event.created_at
     end
 
     def prepare_path(path)

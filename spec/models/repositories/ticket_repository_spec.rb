@@ -98,15 +98,36 @@ RSpec.describe Repositories::TicketRepository do
   describe '#apply' do
     let(:url) { feature_review_url(app: 'foo') }
     let(:path) { feature_review_path(app: 'foo') }
+    let(:approval_time) { Time.current }
 
     it 'projects latest associated tickets' do
-      repository.apply(build(:jira_event, :created, key: 'JIRA-1', comment_body: url))
-      results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '', paths: [path])])
+      jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
 
-      repository.apply(build(:jira_event, :started, key: 'JIRA-1'))
+      repository.apply(build(:jira_event, :created, jira_1.merge(comment_body: url)))
       results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '', paths: [path])])
+      expect(results).to eq([Ticket.new(jira_1.merge(status: 'To Do', paths: [path]))])
+
+      repository.apply(build(:jira_event, :started, jira_1))
+      results = repository.tickets_for(feature_review_path: path)
+      expect(results).to eq([Ticket.new(jira_1.merge(status: 'In Progress', paths: [path]))])
+
+      repository.apply(build(:jira_event, :approved, jira_1.merge(created_at: approval_time)))
+      results = repository.tickets_for(feature_review_path: path)
+      expect(results).to eq([
+        Ticket.new(jira_1.merge(status: 'Ready for Deployment', paths: [path], approved_at: approval_time)),
+      ])
+
+      repository.apply(build(:jira_event, :deployed, jira_1.merge(created_at: approval_time + 1.hour)))
+      results = repository.tickets_for(feature_review_path: path)
+      expect(results).to eq([
+        Ticket.new(jira_1.merge(status: 'Done', paths: [path], approved_at: approval_time)),
+      ])
+
+      repository.apply(build(:jira_event, :rejected, jira_1.merge(created_at: approval_time + 2.hours)))
+      results = repository.tickets_for(feature_review_path: path)
+      expect(results).to eq([
+        Ticket.new(jira_1.merge(status: 'In Progress', paths: [path], approved_at: nil)),
+      ])
     end
 
     it 'projects the tickets referenced in JIRA comments' do
@@ -129,15 +150,14 @@ RSpec.describe Repositories::TicketRepository do
         build(:jira_event, :created, jira_4),
         build(:jira_event, :started, jira_4),
         build(:jira_event, :development_completed, jira_4.merge(comment_body: "#{url} is ready!")),
-
-        build(:jira_event, :deployed, jira_1),
+        build(:jira_event, :deployed, jira_1.merge(created_at: approval_time)),
       ].each do |event|
         repository.apply(event)
       end
 
       expect(repository.tickets_for(feature_review_path: path)).to match_array([
-        Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done', paths: [path]),
-        Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review', paths: [path]),
+        Ticket.new(jira_1.merge(status: 'Done', paths: [path], approved_at: approval_time)),
+        Ticket.new(jira_4.merge(status: 'Ready For Review', paths: [path])),
       ])
     end
 
@@ -176,18 +196,20 @@ RSpec.describe Repositories::TicketRepository do
     context 'with at specified' do
       it 'returns the state at that moment' do
         t = [3.hours.ago, 2.hours.ago, 1.hour.ago, 1.minute.ago]
+        jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
+        jira_2 = { key: 'JIRA-2', summary: 'Ticket 2' }
 
         [
-          build(:jira_event, :created, key: 'J-1', summary: 'Job', comment_body: url, created_at: t[0]),
-          build(:jira_event, :approved, key: 'J-1', summary: 'Job', created_at: t[1]),
-          build(:jira_event, :created, key: 'J-2', summary: 'Job', created_at: t[2]),
-          build(:jira_event, :created, key: 'J-2', summary: 'Job', comment_body: url, created_at: t[3]),
+          build(:jira_event, :created, jira_1.merge(comment_body: url, created_at: t[0])),
+          build(:jira_event, :approved, jira_1.merge(created_at: t[1])),
+          build(:jira_event, :created, jira_2.merge(created_at: t[2])),
+          build(:jira_event, :created, jira_2.merge(comment_body: url, created_at: t[3])),
         ].each do |event|
           repository.apply(event)
         end
 
         expect(repository.tickets_for(feature_review_path: path, at: t[2])).to match_array([
-          Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment', paths: [path]),
+          Ticket.new(jira_1.merge(status: 'Ready for Deployment', paths: [path], approved_at: t[1])),
         ])
       end
     end
