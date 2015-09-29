@@ -57,9 +57,7 @@ module Queries
     end
 
     def tickets
-      ticket_repository.tickets_for(
-        feature_review_path: feature_review.path,
-        at: time)
+      ticket_repository.tickets_for_path(feature_review.path, at: time)
     end
 
     def uatest

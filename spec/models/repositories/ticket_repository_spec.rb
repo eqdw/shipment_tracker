@@ -13,7 +13,7 @@ RSpec.describe Repositories::TicketRepository do
     end
   end
 
-  describe '#tickets_for' do
+  describe '#tickets_for_path' do
     let(:attrs_a) {
       { key: 'JIRA-A',
         summary: 'JIRA-A summary',
@@ -75,8 +75,8 @@ RSpec.describe Repositories::TicketRepository do
 
     context 'with unspecified time' do
       subject {
-        repository.tickets_for(
-          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
+        repository.tickets_for_path(
+          feature_review_path(frontend: 'abc', backend: 'NON1'),
         )
       }
 
@@ -85,8 +85,8 @@ RSpec.describe Repositories::TicketRepository do
 
     context 'with a specified time' do
       subject {
-        repository.tickets_for(
-          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
+        repository.tickets_for_path(
+          feature_review_path(frontend: 'abc', backend: 'NON1'),
           at: 4.days.ago,
         )
       }
@@ -104,27 +104,27 @@ RSpec.describe Repositories::TicketRepository do
       jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
 
       repository.apply(build(:jira_event, :created, jira_1.merge(comment_body: url)))
-      results = repository.tickets_for(feature_review_path: path)
+      results = repository.tickets_for_path(path)
       expect(results).to eq([Ticket.new(jira_1.merge(status: 'To Do', paths: [path]))])
 
       repository.apply(build(:jira_event, :started, jira_1))
-      results = repository.tickets_for(feature_review_path: path)
+      results = repository.tickets_for_path(path)
       expect(results).to eq([Ticket.new(jira_1.merge(status: 'In Progress', paths: [path]))])
 
       repository.apply(build(:jira_event, :approved, jira_1.merge(created_at: approval_time)))
-      results = repository.tickets_for(feature_review_path: path)
+      results = repository.tickets_for_path(path)
       expect(results).to eq([
         Ticket.new(jira_1.merge(status: 'Ready for Deployment', paths: [path], approved_at: approval_time)),
       ])
 
       repository.apply(build(:jira_event, :deployed, jira_1.merge(created_at: approval_time + 1.hour)))
-      results = repository.tickets_for(feature_review_path: path)
+      results = repository.tickets_for_path(path)
       expect(results).to eq([
         Ticket.new(jira_1.merge(status: 'Done', paths: [path], approved_at: approval_time)),
       ])
 
       repository.apply(build(:jira_event, :rejected, jira_1.merge(created_at: approval_time + 2.hours)))
-      results = repository.tickets_for(feature_review_path: path)
+      results = repository.tickets_for_path(path)
       expect(results).to eq([
         Ticket.new(jira_1.merge(status: 'In Progress', paths: [path], approved_at: nil)),
       ])
@@ -155,7 +155,7 @@ RSpec.describe Repositories::TicketRepository do
         repository.apply(event)
       end
 
-      expect(repository.tickets_for(feature_review_path: path)).to match_array([
+      expect(repository.tickets_for_path(path)).to match_array([
         Ticket.new(jira_1.merge(status: 'Done', paths: [path], approved_at: approval_time)),
         Ticket.new(jira_4.merge(status: 'Ready For Review', paths: [path])),
       ])
@@ -184,11 +184,11 @@ RSpec.describe Repositories::TicketRepository do
         end
 
         expect(
-          repository1.tickets_for(feature_review_path: path1),
+          repository1.tickets_for_path(path1),
         ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
 
         expect(
-          repository2.tickets_for(feature_review_path: path2),
+          repository2.tickets_for_path(path2),
         ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
       end
     end
@@ -208,7 +208,7 @@ RSpec.describe Repositories::TicketRepository do
           repository.apply(event)
         end
 
-        expect(repository.tickets_for(feature_review_path: path, at: t[2])).to match_array([
+        expect(repository.tickets_for_path(path, at: t[2])).to match_array([
           Ticket.new(jira_1.merge(status: 'Ready for Deployment', paths: [path], approved_at: t[1])),
         ])
       end

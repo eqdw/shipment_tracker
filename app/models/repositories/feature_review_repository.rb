@@ -82,7 +82,7 @@ module Repositories
     end
 
     def approved?(feature_review, at:)
-      tickets = ticket_repository.tickets_for(feature_review_path: feature_review.path, at: at)
+      tickets = ticket_repository.tickets_for_path(feature_review.path, at: at)
       return false if tickets.empty?
       tickets.all?(&:approved?)
     end

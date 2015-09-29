@@ -10,11 +10,12 @@ module Repositories
       git_repository_location: GitRepositoryLocation)
       @store = store
       @git_repository_location = git_repository_location
+      @feature_review_factory = Factories::FeatureReviewFactory.new
     end
 
     delegate :table_name, to: :store
 
-    def tickets_for(feature_review_path:, at: nil)
+    def tickets_for_path(feature_review_path, at: nil)
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
       store
         .select('DISTINCT ON (key) *')
@@ -33,7 +34,7 @@ module Repositories
 
       last_ticket = (store.where(key: event.key).last.try(:attributes) || {}).except('id')
 
-      feature_reviews = Factories::FeatureReviewFactory.new.create_from_text(event.comment)
+      feature_reviews = feature_review_factory.create_from_text(event.comment)
 
       new_ticket = last_ticket.merge(
         'key' => event.key,
@@ -50,7 +51,7 @@ module Repositories
 
     private
 
-    attr_reader :store, :git_repository_location
+    attr_reader :store, :git_repository_location, :feature_review_factory
 
     def merge_ticket_paths(ticket, feature_reviews)
       old_paths = ticket.fetch('paths', [])
