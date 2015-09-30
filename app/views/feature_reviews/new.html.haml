@@ -9,8 +9,8 @@
 
 = form_for(@feature_review_form, url: feature_reviews_path, html: { class: 'form-horizontal' }) do |f|
   %ul.list-group
-    - @feature_review_form.errors.full_messages.each do |error|
-      %li.list-group-item.list-group-item-danger= error
+    - @feature_review_form.errors.messages.each do |attribute, message|
+      %li.list-group-item.list-group-item-danger= error_message(attribute, message)
 
   .row
     .col-md-6
