@@ -55,16 +55,15 @@ module Repositories
       )
 
       store.create!(new_ticket)
-      # TODO: maybe only do this for comment with FR.
-      update_pull_requests_for(new_ticket) if update_pull_request?(event)
+      update_pull_requests_for(new_ticket) if update_pull_request?(event, feature_reviews)
     end
 
     private
 
     attr_reader :store, :git_repository_location, :feature_review_factory
 
-    def update_pull_request?(event)
-      event.approval? || event.unapproval? || event.comment.present?
+    def update_pull_request?(event, feature_reviews)
+      event.approval? || event.unapproval? || feature_reviews.present?
     end
 
     def merge_ticket_paths(ticket, feature_reviews)
@@ -100,15 +99,14 @@ module Repositories
 
     def update_pull_requests_for(ticket_hash)
       ticket = Ticket.new(ticket_hash)
-      feature_review_factory.create_from_tickets([ticket]).each do |feature_review|
-        feature_review.app_versions.each do |app_name, version|
-          # TODO: only if not already send for same app and version
-          repository_location = git_repository_location.find_by_name(app_name)
-          PullRequestUpdateJob.perform_later(
-            repo_url: repository_location.uri,
-            sha: version,
-          ) if repository_location
-        end
+      array_of_app_versions = feature_review_factory.create_from_tickets([ticket]).map(&:app_versions)
+
+      array_of_app_versions.map(&:invert).reduce({}, :merge).each do |version, app_name|
+        repository_location = git_repository_location.find_by_name(app_name)
+        PullRequestUpdateJob.perform_later(
+          repo_url: repository_location.uri,
+          sha: version,
+        ) if repository_location
       end
     end
   end

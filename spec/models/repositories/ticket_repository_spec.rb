@@ -259,25 +259,50 @@ RSpec.describe Repositories::TicketRepository do
       end
 
       context 'given a comment event' do
-        let(:event) {
-          build(:jira_event,
-            key: 'JIRA-XYZ',
-            comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')} "\
-              "http://foo.com#{feature_review_path(frontend: 'def')}",
-            created_at: approval_time,
-               )
-        }
+        context 'when it contains a link to a feature review' do
+          let(:event) {
+            build(:jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')} "\
+                "http://foo.com#{feature_review_path(frontend: 'def')}",
+                 )
+          }
 
-        it 'schedules an update to the pull request for each version' do
-          expect(PullRequestUpdateJob).to receive(:perform_later).with(
-            repo_url: 'http://github.com/owner/frontend',
-            sha: 'abc',
-          )
-          expect(PullRequestUpdateJob).to receive(:perform_later).with(
-            repo_url: 'http://github.com/owner/frontend',
-            sha: 'def',
-          )
-          repository.apply(event)
+          it 'schedules an update to the pull request for each version' do
+            expect(PullRequestUpdateJob).to receive(:perform_later).with(
+              repo_url: 'http://github.com/owner/frontend',
+              sha: 'abc',
+            )
+            expect(PullRequestUpdateJob).to receive(:perform_later).with(
+              repo_url: 'http://github.com/owner/frontend',
+              sha: 'def',
+            )
+            repository.apply(event)
+          end
+        end
+
+        context 'when it does not contain a link to a feature review' do
+          let(:event) {
+            build(:jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: 'Just some update',
+              created_at: approval_time,
+                 )
+          }
+
+          before do
+            event = build(:jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+              created_at: approval_time - 1.hour,
+                         )
+            repository.apply(event)
+          end
+
+          it 'does not schedule an update to the pull request' do
+            expect(PullRequestUpdateJob).to_not receive(:perform_later)
+            repository.apply(event)
+          end
         end
       end
 
