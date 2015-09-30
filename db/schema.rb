@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150928130626) do
+ActiveRecord::Schema.define(version: 20150930111438) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -64,16 +64,6 @@ ActiveRecord::Schema.define(version: 20150928130626) do
     t.datetime "updated_at", null: false
     t.string   "type"
   end
-
-  create_table "feature_reviews", force: :cascade do |t|
-    t.string   "path"
-    t.string   "versions",         array: true
-    t.datetime "event_created_at"
-    t.datetime "approved_at"
-  end
-
-  add_index "feature_reviews", ["path"], name: "index_feature_reviews_on_path", using: :btree
-  add_index "feature_reviews", ["versions"], name: "index_feature_reviews_on_versions", using: :gin
 
   create_table "git_repository_locations", force: :cascade do |t|
     t.string   "uri"

@@ -9,7 +9,6 @@ class FeatureReview
   values do
     attribute :path, String
     attribute :versions, Array
-    attribute :approved_at, DateTime
   end
 
   def app_versions
@@ -30,18 +29,6 @@ class FeatureReview
 
   def base_path
     Addressable::URI.parse(path).omit(:query).to_s
-  end
-
-  def approved?
-    approved_at.present?
-  end
-
-  def approval_status
-    approved? ? :approved : :not_approved
-  end
-
-  def approved_path
-    "#{base_path}?#{query_hash.merge(time: approved_at.utc).to_query}" if approved?
   end
 
   private

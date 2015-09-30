@@ -2,8 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Release do
   let(:commit) { GitCommit.new(id: 'abc') }
-  let(:feature_review1) { instance_double(FeatureReview) }
-  let(:feature_review2) { instance_double(FeatureReview) }
+  let(:feature_review1) { instance_double(FeatureReviewWithStatuses) }
+  let(:feature_review2) { instance_double(FeatureReviewWithStatuses) }
   let(:feature_reviews) { [feature_review1, feature_review2] }
 
   subject(:release) { described_class.new(commit: commit) }
