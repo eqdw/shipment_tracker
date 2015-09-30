@@ -16,7 +16,7 @@ class FeatureReviewsController < ApplicationController
 
   def show
     @return_to = request.original_fullpath
-    review = Factories::FeatureReviewFactory.new.create_from_url_string(request.original_url)
+    review = factory.create_from_url_string(request.original_url)
 
     @feature_review_with_statuses = Queries::FeatureReviewQuery
                                     .new(review, at: time)
@@ -32,7 +32,9 @@ class FeatureReviewsController < ApplicationController
     return unless @version && @application
 
     versions = VersionResolver.new(git_repository_for(@application)).related_versions(@version)
-    @links = repository.feature_reviews_for_versions(versions).map(&:path)
+    tickets = Repositories::TicketRepository.new.tickets_for_versions(versions)
+
+    @links = factory.create_from_tickets(tickets).map(&:path)
     flash[:error] = 'No Feature Reviews found.' if @links.empty?
   end
 
@@ -45,8 +47,8 @@ class FeatureReviewsController < ApplicationController
     params.fetch(:time, nil).try { |t| Time.zone.parse(t).change(usec: 999_999.999) }
   end
 
-  def repository
-    Repositories::FeatureReviewRepository.new
+  def factory
+    Factories::FeatureReviewFactory.new
   end
 
   def feature_review_form
