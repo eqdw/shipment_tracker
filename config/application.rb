@@ -36,7 +36,8 @@ module ShipmentTracker
     config.ssh_private_key = ENV['SSH_PRIVATE_KEY']
     config.ssh_public_key = ENV['SSH_PUBLIC_KEY']
     config.ssh_user = ENV['SSH_USER']
-    config.approved_statuses = ENV.fetch('APPROVED_STATUSES', 'Done,Ready for Deployment').split(/\s*,\s*/)
+    config.approved_statuses = ENV.fetch('APPROVED_STATUSES', 'Done,Ready for Deployment,Deployed')
+      .split(/\s*,\s*/)
     config.git_repository_cache_dir = Dir.tmpdir
   end
 end
