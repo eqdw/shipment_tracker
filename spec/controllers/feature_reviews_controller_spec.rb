@@ -95,22 +95,26 @@ RSpec.describe FeatureReviewsController do
       instance_double(FeatureReview)
     }
     let(:feature_review_query) { instance_double(Queries::FeatureReviewQuery) }
+    let(:feature_review_factory) { instance_double(Factories::FeatureReviewFactory) }
     let(:feature_review_with_statuses) { instance_double(FeatureReviewWithStatuses) }
+    let(:host) { 'www.example.com' }
 
     before do
-      request.host = 'www.example.com'
+      request.host = host
 
-      allow_any_instance_of(Repositories::FeatureReviewRepository).to receive(:feature_review_for_path)
-        .with(whitelisted_path, at: precise_time)
-        .and_return(feature_review)
       allow(Queries::FeatureReviewQuery).to receive(:new).and_return(feature_review_query)
       allow(feature_review_query).to receive(:feature_review_with_statuses)
         .and_return(feature_review_with_statuses)
+
+      allow(Factories::FeatureReviewFactory).to receive(:new).and_return(feature_review_factory)
+      allow(feature_review_factory)
+        .to receive(:create_from_url_string)
+        .with("http://#{host}#{whitelisted_path}")
+        .and_return(feature_review)
     end
 
     context 'when time is NOT specified' do
       let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
-      let(:precise_time) { nil }
 
       it 'sets up the correct query parameters' do
         expect(Queries::FeatureReviewQuery).to receive(:new)
@@ -124,7 +128,7 @@ RSpec.describe FeatureReviewsController do
     end
 
     context 'when time is specified' do
-      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
+      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url, time) }
       let(:time) { Time.parse('2015-09-09 12:00:00 UTC') }
       let(:precise_time) { time.change(usec: 999_999.999) }
 
