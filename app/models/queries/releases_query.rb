@@ -32,11 +32,7 @@ module Queries
     end
 
     def feature_reviews
-      @feature_reviews ||= tickets
-                           .map(&:paths)
-                           .flatten
-                           .uniq
-                           .map { |path| feature_review_factory.create_from_url_string(path) }
+      @feature_reviews ||= feature_review_factory.create_from_tickets(tickets)
     end
 
     def tickets

@@ -12,7 +12,7 @@ RSpec.describe PullRequestStatus do
       token: token,
     )
   }
-  let(:feature_review_repository) { instance_double(Repositories::FeatureReviewRepository) }
+  let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:sha) { 'abc123' }
   let(:repo_url) { 'ssh://github.com/some/app_name' }
   let(:expected_url) { 'https://api.github.com/repos/some/app_name/statuses/abc123' }
@@ -28,25 +28,32 @@ RSpec.describe PullRequestStatus do
   }
 
   before do
-    allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(feature_review_repository)
-    allow(feature_review_repository).to receive(:feature_reviews_for_versions).and_return([])
+    allow(Repositories::TicketRepository).to receive(:new).and_return(ticket_repository)
+    allow(ticket_repository).to receive(:tickets_for_versions).and_return([])
   end
 
   describe '#update' do
-    context 'when a single feature reviews exists' do
-      let(:feature_review) { instance_double(FeatureReview, approved?: true, path: '/some-path?app=1') }
+    context 'when a single feature review exists' do
+      let(:ticket) {
+        Ticket.new(
+          versions: %w(abc123 xyz),
+          paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz'],
+          status: 'Done',
+          approved_at: Time.current,
+        )
+      }
       let(:root_url) { 'https://shipment-tracker.co.uk/' }
 
       before do
         allow(routes).to receive(:root_url).and_return(root_url)
-        allow(feature_review_repository)
-          .to receive(:feature_reviews_for_versions).with([sha]).and_return([feature_review])
+        allow(ticket_repository)
+          .to receive(:tickets_for_versions).with([sha]).and_return([ticket])
       end
 
       it 'posts status "success" with description and link to feature review' do
         expected_body = {
           context: 'shipment-tracker',
-          target_url: 'https://shipment-tracker.co.uk/some-path?app=1',
+          target_url: 'https://shipment-tracker.co.uk/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
           description: 'There are approved feature reviews for this commit',
           state: 'success',
         }
@@ -56,32 +63,96 @@ RSpec.describe PullRequestStatus do
         expect(stub).to have_been_requested
       end
     end
-
     context 'when multiple feature reviews exist' do
-      let(:review1) { instance_double(FeatureReview, approved?: true, path: '/some-path?app=1') }
-      let(:review2) { instance_double(FeatureReview, approved?: true, path: '/some-path?app=1') }
-      let(:search_url) { 'https://shipment-tracker.co.uk/search' }
-
-      before do
-        allow(feature_review_repository)
-          .to receive(:feature_reviews_for_versions).with([sha]).and_return([review1, review2])
-        allow(routes)
-          .to receive(:search_feature_reviews_url)
-          .with(protocol: 'https', application: 'app_name', versions: sha)
-          .and_return(search_url)
-      end
-
-      it 'posts status "success" with description and link to feature review' do
-        expected_body = {
-          context: 'shipment-tracker',
-          target_url: search_url,
-          description: 'There are approved feature reviews for this commit',
-          state: 'success',
+      context 'when any feature reviews are approved' do
+        let(:approved_ticket) {
+          Ticket.new(
+            versions: %w(abc123 uvw),
+            paths: [
+              '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
+              '/feature_reviews?apps%5Bapp1%5D=abc123',
+            ],
+            status: 'Done',
+            approved_at: Time.current,
+          )
         }
-        stub = stub_request(:post, expected_url).with(body: expected_body)
+        let(:unapproved_ticket) {
+          Ticket.new(
+            versions: %w(abc123 uvw),
+            paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw'],
+            status: 'In Progress',
+            approved_at: nil,
+          )
+        }
 
-        pull_request_status.update(repo_url: repo_url, sha: sha)
-        expect(stub).to have_been_requested
+        let(:search_url) { 'https://shipment-tracker.co.uk/search' }
+
+        before do
+          allow(ticket_repository)
+            .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
+          allow(routes)
+            .to receive(:search_feature_reviews_url)
+            .with(protocol: 'https', application: 'app_name', versions: sha)
+            .and_return(search_url)
+        end
+
+        it 'posts status "success" with description and link to feature review' do
+          expected_body = {
+            context: 'shipment-tracker',
+            target_url: search_url,
+            description: 'There are approved feature reviews for this commit',
+            state: 'success',
+          }
+          stub = stub_request(:post, expected_url).with(body: expected_body)
+
+          pull_request_status.update(repo_url: repo_url, sha: sha)
+          expect(stub).to have_been_requested
+        end
+      end
+      context 'when non feature reviews is approved' do
+        let(:approved_ticket) {
+          Ticket.new(
+            versions: %w(abc123 uvw),
+            paths: [
+              '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
+              '/feature_reviews?apps%5Bapp1%5D=abc123',
+            ],
+            status: 'In Progress',
+            approved_at: Time.current,
+          )
+        }
+        let(:unapproved_ticket) {
+          Ticket.new(
+            versions: %w(abc123 uvw),
+            paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw'],
+            status: 'Done',
+            approved_at: nil,
+          )
+        }
+
+        let(:search_url) { 'https://shipment-tracker.co.uk/search' }
+
+        before do
+          allow(ticket_repository)
+            .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
+          allow(routes)
+            .to receive(:search_feature_reviews_url)
+            .with(protocol: 'https', application: 'app_name', versions: sha)
+            .and_return(search_url)
+        end
+
+        it 'posts status "failure" with description and link to feature review search' do
+          expected_body = {
+            context: 'shipment-tracker',
+            target_url: search_url,
+            description: 'No feature reviews for this commit have been approved',
+            state: 'failure',
+          }
+          stub = stub_request(:post, expected_url).with(body: expected_body)
+
+          pull_request_status.update(repo_url: repo_url, sha: sha)
+          expect(stub).to have_been_requested
+        end
       end
     end
 
@@ -89,11 +160,11 @@ RSpec.describe PullRequestStatus do
       let(:new_feature_review_url) { 'https://shipment-tracker.co.uk/new' }
 
       before do
-        allow(feature_review_repository).to receive(:feature_reviews_for_versions).with([sha]).and_return([])
+        allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
         allow(routes).to receive(:new_feature_reviews_url).and_return(new_feature_review_url)
       end
 
-      it 'passes the results of #status_for and #target_url_for to #publish_status' do
+      it 'posts status "failure" with description and link to prepare a feature review' do
         expected_body = {
           context: 'shipment-tracker',
           target_url: new_feature_review_url,
@@ -109,14 +180,14 @@ RSpec.describe PullRequestStatus do
   end
 
   describe '#reset' do
-    it 'sends a POST request to api.github.com with the correct path' do
+    it 'posts status "pending" with description and no link' do
       expected_body = {
         context: 'shipment-tracker',
         target_url: nil,
         description: 'Checking for feature reviews',
         state: 'pending',
       }
-      stub = stub_request(:post, expected_url).with(body: expected_body)
+      stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
 
       pull_request_status.reset(repo_url: repo_url, sha: sha)
       expect(stub).to have_been_requested
