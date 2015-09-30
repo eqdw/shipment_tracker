@@ -121,7 +121,7 @@ RSpec.describe Repositories::TicketRepository do
   describe '#apply' do
     let(:url) { feature_review_url(app: 'foo') }
     let(:path) { feature_review_path(app: 'foo') }
-    let(:approval_time) { Time.current }
+    let(:approval_time) { Time.current.change(usec: 0) }
     let(:ticket_defaults) { { paths: [path], versions: %w(foo) } }
 
     it 'projects latest associated tickets' do
@@ -218,7 +218,8 @@ RSpec.describe Repositories::TicketRepository do
 
     context 'with at specified' do
       it 'returns the state at that moment' do
-        t = [3.hours.ago, 2.hours.ago, 1.hour.ago, 1.minute.ago]
+        time = Time.current.change(usec: 0)
+        t = [time - 3.hours, time - 2.hours, time - 1.hour, time - 1.minute]
         jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
         jira_2 = { key: 'JIRA-2', summary: 'Ticket 2' }
         ticket_1 = jira_1.merge(ticket_defaults)
