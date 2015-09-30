@@ -25,7 +25,7 @@ module Forms
       apps.each do |repo_name, version|
         begin
           repo = git_repository_loader.load(repo_name.to_s)
-          errors.add(repo_name, "version #{version} does not exist") unless repo.exists?(version)
+          errors.add(repo_name, "#{version} does not exist or is too short") unless repo.exists?(version)
         rescue GitRepositoryLoader::NotFound
           errors.add(repo_name, 'does not exist')
         end

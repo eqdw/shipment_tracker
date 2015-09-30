@@ -63,8 +63,9 @@ RSpec.describe Forms::FeatureReviewForm do
   end
 
   describe '#valid?' do
-    context 'when one of the app versions does not exist' do
-      let(:apps) { { frontend: 'abc', backend: 'def' } }
+    context 'when any of the app versions are invalid' do
+      let(:invalid_sha) { 'd3adb33f' }
+      let(:apps) { { frontend: invalid_sha, backend: 'abc' } }
       let(:frontend_repo) { instance_double(GitRepository) }
       let(:backend_repo) { instance_double(GitRepository) }
 
@@ -72,8 +73,8 @@ RSpec.describe Forms::FeatureReviewForm do
         allow(git_repository_loader).to receive(:load).with('frontend').and_return(frontend_repo)
         allow(git_repository_loader).to receive(:load).with('backend').and_return(backend_repo)
 
-        allow(frontend_repo).to receive(:exists?).with('abc').and_return(false)
-        allow(backend_repo).to receive(:exists?).with('def').and_return(true)
+        allow(frontend_repo).to receive(:exists?).with(invalid_sha).and_return(false)
+        allow(backend_repo).to receive(:exists?).with('abc').and_return(true)
       end
 
       it 'returns false' do
@@ -82,7 +83,8 @@ RSpec.describe Forms::FeatureReviewForm do
 
       it 'adds errors' do
         feature_review_form.valid?
-        expect(feature_review_form.errors[:frontend]).to eq(['version abc does not exist'])
+        expect(feature_review_form.errors[:frontend]).to eq(["#{invalid_sha} does not exist or is too short"])
+        expect(feature_review_form.errors[:backend]).to be_empty
       end
     end
 

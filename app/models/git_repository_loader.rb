@@ -38,14 +38,16 @@ class GitRepositoryLoader
   attr_reader :cache_dir, :ssh_user, :ssh_private_key, :ssh_public_key
 
   def updated_rugged_repository(git_repository_location, options)
+    Rails.logger.info "Updating repository #{git_repository_location.name} (#{git_repository_location.uri})"
     dir = repository_dir_name(git_repository_location)
-    Rugged::Repository.new(dir, options).tap do |r|
+    Rugged::Repository.new(dir, options).tap do |repository|
       instrument('fetch') do
-        r.fetch('origin', options) unless up_to_date?(git_repository_location, r)
+        repository.fetch('origin', options) unless up_to_date?(git_repository_location, repository)
       end
     end
   rescue Rugged::OSError, Rugged::RepositoryError, Rugged::InvalidError, Rugged::ReferenceError => error
-    Rails.logger.warn "Exception while updating rugged repository: #{error.message}"
+    Rails.logger.warn "Exception while updating repository: #{error.message}"
+    Rails.logger.info "Wiping directory #{dir} and re-cloning repository to the same location..."
     FileUtils.rmtree(dir)
     instrument('clone') do
       Rugged::Repository.clone_at(git_repository_location.uri, dir, options)
