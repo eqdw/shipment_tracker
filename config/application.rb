@@ -7,7 +7,6 @@ require 'action_controller/railtie'
 require 'action_mailer/railtie'
 require 'action_view/railtie'
 require 'sprockets/railtie'
-# require "rails/test_unit/railtie"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -36,7 +35,9 @@ module ShipmentTracker
     config.ssh_private_key = ENV['SSH_PRIVATE_KEY']
     config.ssh_public_key = ENV['SSH_PUBLIC_KEY']
     config.ssh_user = ENV['SSH_USER']
-    config.approved_statuses = ENV.fetch('APPROVED_STATUSES', 'Done,Ready for Deployment').split(/\s*,\s*/)
+    config.approved_statuses = ENV.fetch('APPROVED_STATUSES', 'Ready for Deployment, Deployed, Done')
+      .split(/\s*,\s*/)
     config.git_repository_cache_dir = Dir.tmpdir
+    config.github_access_token = ENV['GITHUB_REPO_STATUS_ACCESS_TOKEN']
   end
 end
