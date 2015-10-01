@@ -28,7 +28,6 @@ RSpec.describe ReleasesController do
     let(:app_name) { 'frontend' }
     let(:pending_releases) { double(:pending_releases) }
     let(:deployed_releases) { double(:deployed_releases) }
-    let(:deploy_repo) { Repositories::DeployRepository.new }
     let(:releases_query) {
       instance_double(
         Queries::ReleasesQuery,

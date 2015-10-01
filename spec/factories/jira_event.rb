@@ -40,8 +40,6 @@ FactoryGirl.define do
       details
     end
 
-    created_at Time.current
-
     initialize_with { new(attributes) }
 
     trait :created do

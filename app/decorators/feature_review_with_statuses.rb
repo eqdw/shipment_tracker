@@ -1,7 +1,7 @@
 class FeatureReviewWithStatuses < SimpleDelegator
   attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time
 
-  # rubocop:disable LineLength
+  # rubocop:disable Metrics/LineLength, Metrics/ParameterLists
   def initialize(feature_review, builds: {}, deploys: [], qa_submission: nil, tickets: [], uatest: nil, at: nil)
     super(feature_review)
     @time = at
@@ -11,31 +11,32 @@ class FeatureReviewWithStatuses < SimpleDelegator
     @tickets = tickets
     @uatest = uatest
   end
+  # rubocop:enable Metrics/LineLength, Metrics/ParameterLists
 
   def build_status
-    build_values = builds.values
+    build_results = builds.values
 
-    return nil if build_values.empty?
+    return if build_results.empty?
 
-    if build_values.all? { |b| b.success == true }
+    if build_results.all? { |b| b.success == true }
       :success
-    elsif build_values.any? { |b| b.success == false }
+    elsif build_results.any? { |b| b.success == false }
       :failure
     end
   end
 
   def deploy_status
-    return nil if deploys.empty?
+    return if deploys.empty?
     deploys.all?(&:correct) ? :success : :failure
   end
 
   def qa_status
-    return nil unless qa_submission
+    return unless qa_submission
     qa_submission.accepted ? :success : :failure
   end
 
   def uatest_status
-    return nil unless uatest
+    return unless uatest
     uatest.success ? :success : :failure
   end
 
@@ -50,12 +51,12 @@ class FeatureReviewWithStatuses < SimpleDelegator
   end
 
   def approved_at
-    return nil unless approved?
-    tickets.map(&:approved_at).max
+    return unless approved?
+    @approved_at ||= tickets.map(&:approved_at).max
   end
 
   def approved?
-    tickets.present? && tickets.all?(&:approved?)
+    @approved ||= tickets.present? && tickets.all?(&:approved?)
   end
 
   def approval_status

@@ -10,8 +10,8 @@ module Queries
       @app_name = app_name
 
       @deploy_repository = Repositories::DeployRepository.new
-      @feature_review_factory = Factories::FeatureReviewFactory.new
       @ticket_repository = Repositories::TicketRepository.new
+      @feature_review_factory = Factories::FeatureReviewFactory.new
 
       @pending_releases = []
       @deployed_releases = []
