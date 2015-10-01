@@ -38,5 +38,6 @@ module ShipmentTracker
     config.approved_statuses = ENV.fetch('APPROVED_STATUSES', 'Ready for Deployment, Deployed, Done')
       .split(/\s*,\s*/)
     config.git_repository_cache_dir = Dir.tmpdir
+    config.github_access_token = ENV['GITHUB_REPO_STATUS_ACCESS_TOKEN']
   end
 end
