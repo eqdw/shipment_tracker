@@ -1,15 +1,24 @@
+require 'git_commit'
+
 require 'rugged'
 
 class GitRepository
   class CommitNotFound < RuntimeError; end
   class CommitNotValid < RuntimeError; end
 
+  # Some commits have two parents, the result of merging two branches together.
+  # The first parent is the last commit on the current branch.
+  # The second parent is the last commit on the branch being merged in.
+  PARENT_ON_MERGED_BRANCH = 1
+
   def initialize(rugged_repository)
     @rugged_repository = rugged_repository
   end
 
   def exists?(full_sha)
-    lookup(full_sha).present?
+    full_sha.length == 40 && rugged_repository.exists?(full_sha)
+  rescue Rugged::InvalidError
+    false
   end
 
   def commits_between(from, to)
@@ -120,8 +129,8 @@ class GitRepository
     walker.first.oid == commit_oid
   end
 
-  def merge_commit_for?(merge_commit, commit_oid)
-    merge_commit.parent_ids.second == commit_oid
+  def merge_commit_for?(merge_commit_candidate, commit_oid)
+    merge_commit_candidate.parent_ids[PARENT_ON_MERGED_BRANCH] == commit_oid
   end
 
   def build_commit(commit)

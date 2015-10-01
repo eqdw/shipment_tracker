@@ -1,7 +1,8 @@
-require 'rails_helper'
-require 'git_repository'
+require 'spec_helper'
 require 'support/git_test_repository'
 require 'support/repository_builder'
+
+require 'git_repository'
 
 require 'rugged'
 
@@ -32,7 +33,7 @@ RSpec.describe GitRepository do
     end
 
     context 'when commit id is invalid' do
-      let(:sha) { '1NV4LiD' }
+      let(:sha) { '1NV4LiD COMMIT SHA BUT HAS PROPER LENGTH' }
       it { is_expected.to be(false) }
     end
   end
@@ -40,14 +41,14 @@ RSpec.describe GitRepository do
   describe '#commits_between' do
     let(:git_diagram) { '-A-B-C-o' }
 
-    it 'returns all commits between two commits' do
+    it 'returns all commits between two commits, including the end commit' do
       commits = repo.commits_between(version('A'), version('C')).map(&:id)
 
       expect(commits).to eq([version('B'), version('C')])
     end
 
     it 'returns commit objects with correct author and message' do
-      commit = repo.commits_between(version('A'), version('C')).second
+      commit = repo.commits_between(version('B'), version('C')).first
       expect(commit).to be_a(GitCommit)
       expect(commit.id).to eq(version('C'))
       expect(commit.author_name).to eq('Charly')
@@ -80,7 +81,7 @@ RSpec.describe GitRepository do
       <<-'EOS'
         B--C----E
        /         \
- -X---A-------D---F---G-
+ -o---A-------D---F---G-
         EOS
     end
 
@@ -91,11 +92,11 @@ RSpec.describe GitRepository do
     end
 
     it 'returns commit objects with correct 1st and 2nd Parent IDs' do
-      commit = repo.recent_commits_on_main_branch(2).second
+      commit = repo.recent_commits_on_main_branch(2)[1]
       expect(commit).to be_a(GitCommit)
       expect(commit.id).to eq(version('F'))
-      expect(commit.parent_ids.first).to eq(version('D'))
-      expect(commit.parent_ids.second).to eq(version('E'))
+      expect(commit.parent_ids[0]).to eq(version('D'))
+      expect(commit.parent_ids[1]).to eq(version('E'))
     end
 
     it 'returns commit objects with correct author and message' do
@@ -187,7 +188,7 @@ RSpec.describe GitRepository do
         <<-'EOS'
         B--C----E
        /         \
- -X---A-------D---F---G-
+ -o---A-------D---F---G-
         EOS
       end
 

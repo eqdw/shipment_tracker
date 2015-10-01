@@ -1,9 +1,16 @@
 - title 'Prepare feature for review'
 
+%p
+  Specify the software versions for all the affected applications, then specify the UAT URL if you have or
+  will deploy the changes to a UAT.
+%p
+  When the Feature Review is prepared, offer it to your Product Owner by copying the resulting URL and pasting
+  it as comment in the relevant JIRA ticket(s).
+
 = form_for(@feature_review_form, url: feature_reviews_path, html: { class: 'form-horizontal' }) do |f|
   %ul.list-group
-    - @feature_review_form.errors.full_messages.each do |error|
-      %li.list-group-item.list-group-item-danger= error
+    - @feature_review_form.errors.messages.each do |attribute, message|
+      %li.list-group-item.list-group-item-danger= error_message(attribute, message)
 
   .row
     .col-md-6
@@ -14,7 +21,7 @@
       .form-group.row{class: @feature_review_form.errors[app_name].any? ? 'has-error' : nil }
         = field.label app_name, app_name, class: 'col-md-2 control-label'
         .col-md-4
-          = field.text_field app_name, value: @feature_review_form.apps[app_name], class: 'form-control'
+          = field.text_field app_name, value: @feature_review_form.apps[app_name], placeholder: "Enter a valid 40-character SHA1", class: 'form-control'
           - @feature_review_form.errors[app_name].each do |error|
             %span.help-inline= error
 
@@ -24,7 +31,7 @@
   .form-group.row
     = f.label(:uat_url, "UAT environment", class: 'col-md-2 control-label')
     .col-md-4
-      = f.text_field(:uat_url, placeholder: "URL", class: 'form-control')
+      = f.text_field(:uat_url, placeholder: "Enter URL for the UAT used (optional)", class: 'form-control')
   .row
     .col-md-6
       = f.submit("Submit", class: "btn btn-primary pull-right")

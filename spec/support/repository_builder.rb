@@ -1,6 +1,7 @@
 require 'support/git_test_repository'
 
 require 'securerandom'
+require 'active_support/core_ext/string/strip'
 
 module Support
   class RepositoryBuilder
@@ -24,7 +25,9 @@ module Support
 
     def build(git_ascii_graph)
       self.class.examples.fetch(git_ascii_graph.strip_heredoc) {
+        # :nocov:
         fail "Unrecognised git tree:\n#{git_ascii_graph}"
+        # :nocov:
       }.call(test_git_repo)
       test_git_repo
     end
@@ -104,12 +107,12 @@ Support::RepositoryBuilder.add_example(
   <<-'EOS'.strip_heredoc,
              B--C----E
             /         \
-      -X---A-------D---F---G-
+      -o---A-------D---F---G-
       EOS
   proc do |repo|
     branch_name = "branch-#{SecureRandom.hex(10)}"
 
-    repo.create_commit(pretend_version: 'X')
+    repo.create_commit
     repo.create_commit(pretend_version: 'A')
     repo.create_branch(branch_name)
     repo.checkout_branch(branch_name)
@@ -175,7 +178,6 @@ Support::RepositoryBuilder.add_example(
     repo.create_branch(branch_name)
     repo.checkout_branch(branch_name)
     repo.create_commit(pretend_version: 'A')
-    # repo.create_commit(pretend_version: 'B')
     repo.create_commit(pretend_version: 'B', author_name: 'Berta', message: 'Built by Berta')
     repo.create_commit(pretend_version: 'C')
     repo.create_commit
@@ -227,16 +229,6 @@ Support::RepositoryBuilder.add_example(
   end,
 )
 # :nocov:
-
-Support::RepositoryBuilder.add_example(
-  '-o-A-B-C',
-  proc do |repo|
-    repo.create_commit
-    repo.create_commit(pretend_version: 'A')
-    repo.create_commit(pretend_version: 'B')
-    repo.create_commit(pretend_version: 'C')
-  end,
-)
 
 Support::RepositoryBuilder.add_example(
   <<-'EOS'.strip_heredoc,
