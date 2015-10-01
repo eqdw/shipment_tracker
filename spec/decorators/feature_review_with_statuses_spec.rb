@@ -1,4 +1,5 @@
-require 'rails_helper'
+require 'spec_helper'
+require 'feature_review_with_statuses'
 
 RSpec.describe FeatureReviewWithStatuses do
   let(:tickets) { double(:tickets) }

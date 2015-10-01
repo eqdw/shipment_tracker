@@ -1,3 +1,9 @@
+require 'build'
+require 'deploy'
+require 'qa_submission'
+require 'ticket'
+require 'uatest'
+
 class FeatureReviewWithStatuses < SimpleDelegator
   attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time
 
