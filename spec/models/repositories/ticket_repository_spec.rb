@@ -84,6 +84,7 @@ RSpec.describe Repositories::TicketRepository do
       Snapshots::Ticket.create!(attrs_e1)
       Snapshots::Ticket.create!(attrs_e2)
     end
+
     describe '#tickets_for_path' do
       context 'with unspecified time' do
         subject {
@@ -106,6 +107,7 @@ RSpec.describe Repositories::TicketRepository do
         it { is_expected.to match_array([Ticket.new(attrs_a)]) }
       end
     end
+
     describe '#tickets_for_versions' do
       subject { repository.tickets_for_versions(versions) }
       let(:versions) { %w(abc def) }
@@ -261,11 +263,11 @@ RSpec.describe Repositories::TicketRepository do
       context 'given a comment event' do
         context 'when it contains a link to a feature review' do
           let(:event) {
-            build(:jira_event,
+            build(
+              :jira_event,
               key: 'JIRA-XYZ',
-              comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')} "\
-                "http://foo.com#{feature_review_path(frontend: 'def')}",
-                 )
+              comment_body: "#{feature_review_url(frontend: 'abc')} #{feature_review_url(frontend: 'def')}",
+            )
           }
 
           it 'schedules an update to the pull request for each version' do
@@ -283,19 +285,21 @@ RSpec.describe Repositories::TicketRepository do
 
         context 'when it does not contain a link to a feature review' do
           let(:event) {
-            build(:jira_event,
+            build(
+              :jira_event,
               key: 'JIRA-XYZ',
               comment_body: 'Just some update',
               created_at: approval_time,
-                 )
+            )
           }
 
           before do
-            event = build(:jira_event,
+            event = build(
+              :jira_event,
               key: 'JIRA-XYZ',
               comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
               created_at: approval_time - 1.hour,
-                         )
+            )
             repository.apply(event)
           end
 
@@ -307,16 +311,15 @@ RSpec.describe Repositories::TicketRepository do
       end
 
       context 'given an approval event' do
-        let(:approval_event) {
-          build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: approval_time)
-        }
+        let(:approval_event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: approval_time) }
 
         before do
-          event = build(:jira_event,
+          event = build(
+            :jira_event,
             key: 'JIRA-XYZ',
             comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
             created_at: approval_time - 1.hour,
-                       )
+          )
           repository.apply(event)
         end
 
@@ -330,16 +333,15 @@ RSpec.describe Repositories::TicketRepository do
       end
 
       context 'given an unapproval event' do
-        let(:unapproval_event) {
-          build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: approval_time)
-        }
+        let(:unapproval_event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: approval_time) }
 
         before do
-          event = build(:jira_event,
+          event = build(
+            :jira_event,
             key: 'JIRA-XYZ',
             comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
             created_at: approval_time - 1.hour,
-                       )
+          )
           repository.apply(event)
         end
 
@@ -353,16 +355,15 @@ RSpec.describe Repositories::TicketRepository do
       end
 
       context 'given another event' do
-        let(:event) {
-          build(:jira_event, key: 'JIRA-XYZ', created_at: approval_time)
-        }
+        let(:event) { build(:jira_event, key: 'JIRA-XYZ', created_at: approval_time) }
 
         before do
-          event = build(:jira_event,
+          event = build(
+            :jira_event,
             key: 'JIRA-XYZ',
             comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
             created_at: approval_time - 1.hour,
-                       )
+          )
           repository.apply(event)
         end
 
@@ -374,11 +375,12 @@ RSpec.describe Repositories::TicketRepository do
 
       context 'given repository location can not be found' do
         let(:event) {
-          build(:jira_event,
+          build(
+            :jira_event,
             key: 'JIRA-XYZ',
             comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
             created_at: approval_time,
-               )
+          )
         }
 
         before do

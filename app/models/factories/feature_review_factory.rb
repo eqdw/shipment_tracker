@@ -30,8 +30,7 @@ module Factories
     end
 
     def create_from_tickets(tickets)
-      map_paths(tickets)
-        .map { |path| create_from_url_string(path) }
+      map_paths(tickets).map { |path| create_from_url_string(path) }
     end
 
     private

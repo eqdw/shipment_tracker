@@ -114,46 +114,32 @@ RSpec.describe Factories::FeatureReviewFactory do
   end
 
   describe '#create_from_tickets' do
-    subject(:feature_reviews) { factory.create_from_tickets(tickets) }
-    context 'empty array is passed in' do
+    context 'when no tickets are given' do
       let(:tickets) { [] }
+
       it 'returns empty' do
-        expect(feature_reviews).to be_empty
+        expect(factory.create_from_tickets(tickets)).to be_empty
       end
     end
-    context 'tickest are passed in' do
+
+    context 'when given tickets with paths' do
       let(:ticket1) {
-        Ticket.new(
-          versions: %w(abc123 uvw),
-          paths: [
-            '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
-            '/feature_reviews?apps%5Bapp1%5D=abc123',
-          ],
-          status: 'In Progress',
-          approved_at: Time.current,
-        )
+        Ticket.new(paths: [feature_review_path(app1: 'abc', app2: 'def'), feature_review_path(app1: 'abc')])
       }
-
       let(:ticket2) {
-        Ticket.new(
-          versions: %w(abc123 uvw),
-          paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw'],
-          status: 'Done',
-          approved_at: nil,
-        )
+        Ticket.new(paths: [feature_review_path(app1: 'abc', app2: 'def')])
       }
-
       let(:tickets) { [ticket1, ticket2] }
 
-      it 'returns a collection of feature reviews' do
-        expect(feature_reviews).to match_array([
+      it 'returns a unique collection of feature reviews' do
+        expect(factory.create_from_tickets(tickets)).to match_array([
           FeatureReview.new(
-            path: '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
-            versions: %w(abc123 uvw),
+            path: feature_review_path(app1: 'abc', app2: 'def'),
+            versions: %w(abc def),
           ),
           FeatureReview.new(
-            path: '/feature_reviews?apps%5Bapp1%5D=abc123',
-            versions: %w(abc123),
+            path: feature_review_path(app1: 'abc'),
+            versions: %w(abc),
           ),
         ])
       end
@@ -162,11 +148,14 @@ RSpec.describe Factories::FeatureReviewFactory do
 
   describe '#create' do
     let(:attributes) { { some: 'values' } }
+
     it 'creates a feature review' do
       expect(FeatureReview).to receive(:new).with(attributes)
       factory.create(attributes)
     end
   end
+
+  private
 
   def full_url(query_values)
     Addressable::URI.new(

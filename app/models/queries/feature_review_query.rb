@@ -1,3 +1,4 @@
+require 'feature_review_with_statuses'
 require 'repositories/build_repository'
 require 'repositories/deploy_repository'
 require 'repositories/manual_test_repository'

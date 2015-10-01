@@ -4,14 +4,6 @@ require 'feature_review'
 RSpec.describe FeatureReview do
   let(:base_path) { '/feature_reviews' }
 
-  describe '#path' do
-    let(:path) { "#{base_path}?uat_url=http://uat.com&apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy" }
-
-    subject { FeatureReview.new(path: path, versions: %w(xxx yyy)).path }
-
-    it { is_expected.to eq('/feature_reviews?uat_url=http://uat.com&apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy') }
-  end
-
   describe '#uat_host' do
     let(:path) { "#{base_path}?uat_url=http://uat.com&apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy" }
 

@@ -3,15 +3,11 @@ require 'pull_request_status'
 require 'feature_review_with_statuses'
 
 RSpec.describe PullRequestStatus do
+  subject(:pull_request_status) { described_class.new(routes: routes, token: token) }
+
   let(:token) { 'a-token' }
   let(:routes) { double(:routes) }
 
-  subject(:pull_request_status) {
-    described_class.new(
-      routes: routes,
-      token: token,
-    )
-  }
   let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:sha) { 'abc123' }
   let(:repo_url) { 'ssh://github.com/some/app_name' }
@@ -37,7 +33,7 @@ RSpec.describe PullRequestStatus do
       let(:ticket) {
         Ticket.new(
           versions: %w(abc123 xyz),
-          paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz'],
+          paths: [feature_review_path(app1: 'abc123', app2: 'xyz')],
           status: 'Done',
           approved_at: Time.current,
         )
@@ -46,8 +42,7 @@ RSpec.describe PullRequestStatus do
 
       before do
         allow(routes).to receive(:root_url).and_return(root_url)
-        allow(ticket_repository)
-          .to receive(:tickets_for_versions).with([sha]).and_return([ticket])
+        allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([ticket])
       end
 
       it 'posts status "success" with description and link to feature review' do
@@ -63,14 +58,15 @@ RSpec.describe PullRequestStatus do
         expect(stub).to have_been_requested
       end
     end
+
     context 'when multiple feature reviews exist' do
       context 'when any feature reviews are approved' do
         let(:approved_ticket) {
           Ticket.new(
             versions: %w(abc123 uvw),
             paths: [
-              '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
-              '/feature_reviews?apps%5Bapp1%5D=abc123',
+              feature_review_path(app1: 'abc123', app2: 'uvw'),
+              feature_review_path(app1: 'abc123'),
             ],
             status: 'Done',
             approved_at: Time.current,
@@ -79,7 +75,7 @@ RSpec.describe PullRequestStatus do
         let(:unapproved_ticket) {
           Ticket.new(
             versions: %w(abc123 uvw),
-            paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw'],
+            paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
             status: 'In Progress',
             approved_at: nil,
           )
@@ -109,13 +105,14 @@ RSpec.describe PullRequestStatus do
           expect(stub).to have_been_requested
         end
       end
-      context 'when non feature reviews is approved' do
+
+      context 'when no feature reviews are approved' do
         let(:approved_ticket) {
           Ticket.new(
             versions: %w(abc123 uvw),
             paths: [
-              '/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw',
-              '/feature_reviews?apps%5Bapp1%5D=abc123',
+              feature_review_path(app1: 'abc123', app2: 'uvw'),
+              feature_review_path(app1: 'abc123'),
             ],
             status: 'In Progress',
             approved_at: Time.current,
@@ -124,7 +121,7 @@ RSpec.describe PullRequestStatus do
         let(:unapproved_ticket) {
           Ticket.new(
             versions: %w(abc123 uvw),
-            paths: ['/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=uvw'],
+            paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
             status: 'Done',
             approved_at: nil,
           )
