@@ -8,20 +8,13 @@ RSpec.describe FeatureReviewWithStatuses do
   let(:qa_submission) { double(:qa_submission) }
   let(:uatest) { double(:uatest) }
   let(:apps) { double(:apps) }
+
   let(:uat_url) { 'http://uat.com' }
-
-  let(:feature_review) {
-    instance_double(
-      FeatureReview,
-      uat_url: uat_url,
-      app_versions: apps,
-    )
-  }
-
+  let(:feature_review) { instance_double(FeatureReview, uat_url: uat_url, app_versions: apps) }
   let(:query_time) { Time.parse('2014-08-10 14:40:48 UTC') }
 
-  let(:decorator) {
-    described_class.new(
+  subject(:decorator) {
+    FeatureReviewWithStatuses.new(
       feature_review,
       builds: builds,
       deploys: deploys,
@@ -227,34 +220,30 @@ RSpec.describe FeatureReviewWithStatuses do
   end
 
   describe 'approval' do
-    subject(:decorator) {
-      described_class.new(
-        feature_review,
-        tickets: tickets,
-      )
-    }
-    let(:expected_approval_time) { Time.current }
-    let(:tickets) {
-      [
-        Ticket.new(approved_at: expected_approval_time),
-        Ticket.new(approved_at: expected_approval_time - 1.hour),
-      ]
-    }
+    subject(:decorator) { FeatureReviewWithStatuses.new(feature_review, tickets: tickets) }
 
     describe 'approved_at' do
-      context 'feature review is approved' do
+      let(:approval_time) { Time.current }
+      let(:tickets) {
+        [
+          Ticket.new(approved_at: approval_time),
+          Ticket.new(approved_at: approval_time - 1.hour),
+        ]
+      }
+
+      context 'when feature review is approved' do
         before do
-          allow(decorator).to receive(:approved?).and_return(true)
+          allow_any_instance_of(Ticket).to receive(:approved?).and_return(true)
         end
 
         it 'returns the approval time of the ticket that was approved last' do
-          expect(decorator.approved_at).to eq(expected_approval_time)
+          expect(decorator.approved_at).to eq(approval_time)
         end
       end
 
-      context 'feature review is not approved' do
+      context 'when feature review is not approved' do
         before do
-          allow(decorator).to receive(:approved?).and_return(false)
+          allow_any_instance_of(Ticket).to receive(:approved?).and_return(false)
         end
 
         it 'returns nil' do
@@ -266,82 +255,79 @@ RSpec.describe FeatureReviewWithStatuses do
     describe '#approved?' do
       subject { decorator.approved? }
 
-      context 'when there are tickets' do
-        context 'and all are approved' do
-          let(:tickets) {
-            [
-              instance_double(Ticket, approved?: true),
-              instance_double(Ticket, approved?: true),
-            ]
-          }
+      context 'when all tickets are approved' do
+        let(:tickets) {
+          [
+            instance_double(Ticket, approved?: true),
+            instance_double(Ticket, approved?: true),
+          ]
+        }
+        it { is_expected.to be true }
+      end
 
-          it { is_expected.to eq(true) }
-        end
-
-        context 'and not all are approved' do
-          let(:tickets) {
-            [
-              instance_double(Ticket, approved?: true),
-              instance_double(Ticket, approved?: false),
-            ]
-          }
-          it { is_expected.to eq(false) }
-        end
+      context 'when some tickets are not approved' do
+        let(:tickets) {
+          [
+            instance_double(Ticket, approved?: true),
+            instance_double(Ticket, approved?: false),
+          ]
+        }
+        it { is_expected.to be false }
       end
 
       context 'when there are no tickets' do
         let(:tickets) { [] }
-        it { is_expected.to eq(false) }
+        it { is_expected.to be false }
       end
     end
 
     describe '#approval_status' do
-      context 'feature review is approved' do
-        before do
-          allow(decorator).to receive(:approved?).and_return(true)
-        end
+      context 'when feature review is approved' do
+        let(:tickets) { [instance_double(Ticket, approved?: true)] }
 
         it 'returns :approved' do
-          expect(decorator.approval_status).to eq(:approved)
+          expect(decorator.approval_status).to be :approved
         end
       end
 
-      context 'feature review is not approved' do
-        before do
-          allow(decorator).to receive(:approved?).and_return(false)
-        end
+      context 'when feature review is not approved' do
+        let(:tickets) { [instance_double(Ticket, approved?: false)] }
 
         it 'returns :not_approved' do
-          expect(subject.approval_status).to eq(:not_approved)
+          expect(subject.approval_status).to be :not_approved
         end
       end
     end
 
     describe '#approved_path' do
-      let(:path) { '/something?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&uat_url=http://uat.com' }
-      let(:time) { Time.parse('2013-09-05 14:56:52 UTC') }
-
-      let(:feature_review) { FeatureReview.new(path: path, versions: %w(xxx yyy)) }
-      let(:tickets) { [Ticket.new(approved_at: time)] }
+      let(:feature_review) {
+        instance_double(
+          FeatureReview,
+          base_path: '/something',
+          query_hash: { 'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' }, 'uat_url' => 'http://uat.com' },
+        )
+      }
 
       context 'feature review is approved' do
-        before do
-          allow(decorator).to receive(:approved?).and_return(true)
-        end
+        let(:approval_time) { Time.parse('2013-09-05 14:56:52 UTC') }
+        let(:tickets) {
+          [
+            instance_double(Ticket, approved?: true, approved_at: approval_time),
+            instance_double(Ticket, approved?: true, approved_at: approval_time - 1.hour),
+          ]
+        }
 
-        it 'returns the the path as at the approved_at time' do
+        it 'returns the path as at the latest approval time' do
           expect(decorator.approved_path).to eq(
-            '/something?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&'\
-            'time=2013-09-05T14%3A56%3A52%2B00%3A00&'\
-            'uat_url=http%3A%2F%2Fuat.com',
+            '/something?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy'\
+            '&time=2013-09-05+14%3A56%3A52+UTC'\
+            '&uat_url=http%3A%2F%2Fuat.com',
           )
         end
       end
 
       context 'feature review is not approved' do
-        before do
-          allow(decorator).to receive(:approved?).and_return(false)
-        end
+        let(:tickets) { [instance_double(Ticket, approved?: false)] }
 
         it 'returns nil' do
           expect(subject.approved_path).to be_nil
