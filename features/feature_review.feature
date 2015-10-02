@@ -82,8 +82,8 @@ Scenario: Viewing a feature review
   Then I should see that the Feature Review was approved at "2014-10-05 17:30:10"
 
   And I should only see the ticket
-    | Ticket   | Summary       | Status               |
-    | JIRA-123 | Urgent ticket | Ready for Deployment |
+    | Ticket                                        | Summary       | Status               |
+    | [JIRA-123](https://jira.test/browse/JIRA-123) | Urgent ticket | Ready for Deployment |
 
   And I should see a summary with heading "danger" and content
     | status  | title                 |
@@ -115,8 +115,8 @@ Scenario: Viewing a feature review as at a specified time
   When I visit feature review "FR_123" as at "2014-10-04 14:00:00"
 
   Then I should only see the ticket
-    | Ticket      | Summary       | Status      |
-    | JIRA-123 | Urgent ticket | In Progress |
+    | Ticket                                        | Summary       | Status      |
+    | [JIRA-123](https://jira.test/browse/JIRA-123) | Urgent ticket | In Progress |
 
   And I should see the time "2014-10-04 14:00:00" for the Feature Review
 
@@ -135,14 +135,14 @@ Scenario: Viewing a feature review as at a specified time
     When I visit feature review "FR_123" as at "2014-10-04 15:00:00"
     Then I should see that the Feature Review was not approved
     Then I should only see the ticket
-      | Ticket   | Summary       | Status      |
-      | JIRA-123 | Urgent ticket | In Progress |
+      | Ticket                                        | Summary       | Status      |
+      | [JIRA-123](https://jira.test/browse/JIRA-123) | Urgent ticket | In Progress |
 
     When I visit feature review "FR_123" as at "2014-10-06 10:00:00"
     Then I should see that the Feature Review was approved at "2014-10-05 17:30:10"
     And I should only see the ticket
-      | Ticket   | Summary       | Status               |
-      | JIRA-123 | Urgent ticket | Ready for Deployment |
+      | Ticket                                        | Summary       | Status               |
+      | [JIRA-123](https://jira.test/browse/JIRA-123) | Urgent ticket | Ready for Deployment |
 
 
 Scenario: QA rejects feature

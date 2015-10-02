@@ -34,7 +34,9 @@ module Sections
         icon_element = cell_element.first('.glyphicon')
         return icon_translation_for(icon_element) if icon_element
       end
-      cell_element.text
+      link = find_valid_link(cell_element)
+      return cell_element.text unless link
+      "[#{link.text}](#{link[:href]})"
     end
 
     def use_icon_translations?
@@ -45,6 +47,12 @@ module Sections
       icon_element['class'].split(' ').map {|klass|
         icon_translations[klass]
       }.compact.first
+    end
+
+    def find_valid_link(element)
+      return unless element.has_css?('a')
+      link = element.find('a')
+      link[:href] == '#' ? nil : link
     end
   end
 end
