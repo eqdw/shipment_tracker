@@ -1,7 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe Repositories::TicketRepository do
-  subject(:repository) { Repositories::TicketRepository.new }
+  subject(:repository) { Repositories::TicketRepository.new(git_repository_location: git_repo_location) }
+
+  let(:git_repo_location) { class_double(GitRepositoryLocation) }
 
   describe '#table_name' do
     let(:active_record_class) { class_double(Snapshots::Ticket, table_name: 'the_table_name') }
@@ -13,7 +15,7 @@ RSpec.describe Repositories::TicketRepository do
     end
   end
 
-  describe '#tickets_for' do
+  describe '#tickets_for_* queries' do
     let(:attrs_a) {
       { key: 'JIRA-A',
         summary: 'JIRA-A summary',
@@ -56,7 +58,16 @@ RSpec.describe Repositories::TicketRepository do
         versions: %w(NON3 ghi) }
     }
 
-    let(:attrs_e) {
+    let(:attrs_e1) {
+      { key: 'JIRA-E',
+        summary: 'JIRA-E summary',
+        status: 'Done',
+        paths: [feature_review_path(frontend: 'abc', backend: 'NON1')],
+        event_created_at: 1.day.ago,
+        versions: %w(abc NON1) }
+    }
+
+    let(:attrs_e2) {
       { key: 'JIRA-E',
         summary: 'JIRA-E summary',
         status: 'Done',
@@ -70,48 +81,94 @@ RSpec.describe Repositories::TicketRepository do
       Snapshots::Ticket.create!(attrs_b)
       Snapshots::Ticket.create!(attrs_c)
       Snapshots::Ticket.create!(attrs_d)
-      Snapshots::Ticket.create!(attrs_e)
+      Snapshots::Ticket.create!(attrs_e1)
+      Snapshots::Ticket.create!(attrs_e2)
     end
 
-    context 'with unspecified time' do
-      subject {
-        repository.tickets_for(
-          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
-        )
-      }
+    describe '#tickets_for_path' do
+      context 'with unspecified time' do
+        subject {
+          repository.tickets_for_path(
+            feature_review_path(frontend: 'abc', backend: 'NON1'),
+          )
+        }
 
-      it { is_expected.to match_array([Ticket.new(attrs_a), Ticket.new(attrs_e)]) }
+        it { is_expected.to match_array([Ticket.new(attrs_a), Ticket.new(attrs_e2)]) }
+      end
+
+      context 'with a specified time' do
+        subject {
+          repository.tickets_for_path(
+            feature_review_path(frontend: 'abc', backend: 'NON1'),
+            at: 4.days.ago,
+          )
+        }
+
+        it { is_expected.to match_array([Ticket.new(attrs_a)]) }
+      end
     end
 
-    context 'with a specified time' do
-      subject {
-        repository.tickets_for(
-          feature_review_path: feature_review_path(frontend: 'abc', backend: 'NON1'),
-          at: 4.days.ago,
-        )
-      }
+    describe '#tickets_for_versions' do
+      subject { repository.tickets_for_versions(versions) }
+      let(:versions) { %w(abc def) }
 
-      it { is_expected.to match_array([Ticket.new(attrs_a)]) }
+      it {
+        is_expected.to match_array([
+          Ticket.new(attrs_a),
+          Ticket.new(attrs_b),
+          Ticket.new(attrs_e2),
+        ])
+      }
     end
   end
 
   describe '#apply' do
     let(:url) { feature_review_url(app: 'foo') }
     let(:path) { feature_review_path(app: 'foo') }
+    let(:approval_time) { Time.current.change(usec: 0) }
+    let(:ticket_defaults) { { paths: [path], versions: %w(foo) } }
+    let(:repository_location) {
+      instance_double(GitRepositoryLocation, uri: 'http://github.com/owner/frontend')
+    }
+
+    before do
+      allow(git_repo_location).to receive(:find_by_name)
+        .and_return(repository_location)
+      allow(PullRequestUpdateJob).to receive(:perform_later)
+    end
 
     it 'projects latest associated tickets' do
-      repository.apply(build(:jira_event, :created, key: 'JIRA-1', comment_body: url))
-      results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'To Do', summary: '', paths: [path])])
+      jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
+      ticket_1 = jira_1.merge(ticket_defaults)
 
-      repository.apply(build(:jira_event, :started, key: 'JIRA-1'))
-      results = repository.tickets_for(feature_review_path: path)
-      expect(results).to eq([Ticket.new(key: 'JIRA-1', status: 'In Progress', summary: '', paths: [path])])
+      repository.apply(build(:jira_event, :created, jira_1.merge(comment_body: url)))
+      results = repository.tickets_for_path(path)
+      expect(results).to eq([Ticket.new(ticket_1.merge(status: 'To Do'))])
+
+      repository.apply(build(:jira_event, :started, jira_1))
+      results = repository.tickets_for_path(path)
+      expect(results).to eq([Ticket.new(ticket_1.merge(status: 'In Progress'))])
+
+      repository.apply(build(:jira_event, :approved, jira_1.merge(created_at: approval_time)))
+      results = repository.tickets_for_path(path)
+      expect(results).to eq([
+        Ticket.new(ticket_1.merge(status: 'Ready for Deployment', approved_at: approval_time)),
+      ])
+
+      repository.apply(build(:jira_event, :deployed, jira_1.merge(created_at: approval_time + 1.hour)))
+      results = repository.tickets_for_path(path)
+      expect(results).to eq([Ticket.new(ticket_1.merge(status: 'Done', approved_at: approval_time))])
+
+      repository.apply(build(:jira_event, :rejected, jira_1.merge(created_at: approval_time + 2.hours)))
+      results = repository.tickets_for_path(path)
+      expect(results).to eq([Ticket.new(ticket_1.merge(status: 'In Progress', approved_at: nil))])
     end
 
     it 'projects the tickets referenced in JIRA comments' do
       jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
       jira_4 = { key: 'JIRA-4', summary: 'Ticket 4' }
+      ticket_1 = jira_1.merge(ticket_defaults)
+      ticket_4 = jira_4.merge(ticket_defaults)
 
       [
         build(:jira_event, :created, jira_1),
@@ -129,15 +186,14 @@ RSpec.describe Repositories::TicketRepository do
         build(:jira_event, :created, jira_4),
         build(:jira_event, :started, jira_4),
         build(:jira_event, :development_completed, jira_4.merge(comment_body: "#{url} is ready!")),
-
-        build(:jira_event, :deployed, jira_1),
+        build(:jira_event, :deployed, jira_1.merge(created_at: approval_time)),
       ].each do |event|
         repository.apply(event)
       end
 
-      expect(repository.tickets_for(feature_review_path: path)).to match_array([
-        Ticket.new(key: 'JIRA-1', summary: 'Ticket 1', status: 'Done', paths: [path]),
-        Ticket.new(key: 'JIRA-4', summary: 'Ticket 4', status: 'Ready For Review', paths: [path]),
+      expect(repository.tickets_for_path(path)).to match_array([
+        Ticket.new(ticket_1.merge(status: 'Done', approved_at: approval_time)),
+        Ticket.new(ticket_4.merge(status: 'Ready For Review')),
       ])
     end
 
@@ -164,31 +220,177 @@ RSpec.describe Repositories::TicketRepository do
         end
 
         expect(
-          repository1.tickets_for(feature_review_path: path1),
-        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
+          repository1.tickets_for_path(path1),
+        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2], versions: %w(one two))])
 
         expect(
-          repository2.tickets_for(feature_review_path: path2),
-        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2])])
+          repository2.tickets_for_path(path2),
+        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2], versions: %w(one two))])
       end
     end
 
     context 'with at specified' do
       it 'returns the state at that moment' do
-        t = [3.hours.ago, 2.hours.ago, 1.hour.ago, 1.minute.ago]
+        time = Time.current.change(usec: 0)
+        t = [time - 3.hours, time - 2.hours, time - 1.hour, time - 1.minute]
+        jira_1 = { key: 'JIRA-1', summary: 'Ticket 1' }
+        jira_2 = { key: 'JIRA-2', summary: 'Ticket 2' }
+        ticket_1 = jira_1.merge(ticket_defaults)
 
         [
-          build(:jira_event, :created, key: 'J-1', summary: 'Job', comment_body: url, created_at: t[0]),
-          build(:jira_event, :approved, key: 'J-1', summary: 'Job', created_at: t[1]),
-          build(:jira_event, :created, key: 'J-2', summary: 'Job', created_at: t[2]),
-          build(:jira_event, :created, key: 'J-2', summary: 'Job', comment_body: url, created_at: t[3]),
+          build(:jira_event, :created, jira_1.merge(comment_body: url, created_at: t[0])),
+          build(:jira_event, :approved, jira_1.merge(created_at: t[1])),
+          build(:jira_event, :created, jira_2.merge(created_at: t[2])),
+          build(:jira_event, :created, jira_2.merge(comment_body: url, created_at: t[3])),
         ].each do |event|
           repository.apply(event)
         end
 
-        expect(repository.tickets_for(feature_review_path: path, at: t[2])).to match_array([
-          Ticket.new(key: 'J-1', summary: 'Job', status: 'Ready for Deployment', paths: [path]),
+        expect(repository.tickets_for_path(path, at: t[2])).to match_array([
+          Ticket.new(ticket_1.merge(status: 'Ready for Deployment', approved_at: t[1])),
         ])
+      end
+    end
+
+    describe 'updating Github pull requests' do
+      before do
+        allow(PullRequestUpdateJob).to receive(:perform_later)
+        allow(git_repo_location).to receive(:find_by_name)
+          .with('frontend')
+          .and_return(repository_location)
+      end
+
+      context 'given a comment event' do
+        context 'when it contains a link to a feature review' do
+          let(:event) {
+            build(
+              :jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "#{feature_review_url(frontend: 'abc')} #{feature_review_url(frontend: 'def')}",
+            )
+          }
+
+          it 'schedules an update to the pull request for each version' do
+            expect(PullRequestUpdateJob).to receive(:perform_later).with(
+              repo_url: 'http://github.com/owner/frontend',
+              sha: 'abc',
+            )
+            expect(PullRequestUpdateJob).to receive(:perform_later).with(
+              repo_url: 'http://github.com/owner/frontend',
+              sha: 'def',
+            )
+            repository.apply(event)
+          end
+        end
+
+        context 'when it does not contain a link to a feature review' do
+          let(:event) {
+            build(
+              :jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: 'Just some update',
+              created_at: approval_time,
+            )
+          }
+
+          before do
+            event = build(
+              :jira_event,
+              key: 'JIRA-XYZ',
+              comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+              created_at: approval_time - 1.hour,
+            )
+            repository.apply(event)
+          end
+
+          it 'does not schedule an update to the pull request' do
+            expect(PullRequestUpdateJob).to_not receive(:perform_later)
+            repository.apply(event)
+          end
+        end
+      end
+
+      context 'given an approval event' do
+        let(:approval_event) { build(:jira_event, :approved, key: 'JIRA-XYZ', created_at: approval_time) }
+
+        before do
+          event = build(
+            :jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+            created_at: approval_time - 1.hour,
+          )
+          repository.apply(event)
+        end
+
+        it 'schedules an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'abc',
+          )
+          repository.apply(approval_event)
+        end
+      end
+
+      context 'given an unapproval event' do
+        let(:unapproval_event) { build(:jira_event, :rejected, key: 'JIRA-XYZ', created_at: approval_time) }
+
+        before do
+          event = build(
+            :jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+            created_at: approval_time - 1.hour,
+          )
+          repository.apply(event)
+        end
+
+        it 'schedules an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).to receive(:perform_later).with(
+            repo_url: 'http://github.com/owner/frontend',
+            sha: 'abc',
+          )
+          repository.apply(unapproval_event)
+        end
+      end
+
+      context 'given another event' do
+        let(:event) { build(:jira_event, key: 'JIRA-XYZ', created_at: approval_time) }
+
+        before do
+          event = build(
+            :jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+            created_at: approval_time - 1.hour,
+          )
+          repository.apply(event)
+        end
+
+        it 'does not schedule an update to the pull request for each version' do
+          expect(PullRequestUpdateJob).not_to receive(:perform_later)
+          repository.apply(event)
+        end
+      end
+
+      context 'given repository location can not be found' do
+        let(:event) {
+          build(
+            :jira_event,
+            key: 'JIRA-XYZ',
+            comment_body: "Reviews: http://foo.com#{feature_review_path(frontend: 'abc')}",
+            created_at: approval_time,
+          )
+        }
+
+        before do
+          allow(git_repo_location).to receive(:find_by_name).with('frontend').and_return(nil)
+        end
+
+        it 'does not schedule an update to the pull request' do
+          expect(PullRequestUpdateJob).to_not receive(:perform_later)
+          repository.apply(event)
+        end
       end
     end
   end

@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'addressable/uri'
+require 'ticket'
 
 RSpec.describe Factories::FeatureReviewFactory do
   subject(:factory) { described_class.new }
@@ -69,7 +70,7 @@ RSpec.describe Factories::FeatureReviewFactory do
     end
   end
 
-  context '#create_from_url_string' do
+  describe '#create_from_url_string' do
     it 'returns a FeatureReview with the attributes from the url' do
       actual_url = full_url(
         'apps[a]' => '123',
@@ -111,6 +112,50 @@ RSpec.describe Factories::FeatureReviewFactory do
       expect(feature_review.path).to eq(expected_path)
     end
   end
+
+  describe '#create_from_tickets' do
+    context 'when no tickets are given' do
+      let(:tickets) { [] }
+
+      it 'returns empty' do
+        expect(factory.create_from_tickets(tickets)).to be_empty
+      end
+    end
+
+    context 'when given tickets with paths' do
+      let(:ticket1) {
+        Ticket.new(paths: [feature_review_path(app1: 'abc', app2: 'def'), feature_review_path(app1: 'abc')])
+      }
+      let(:ticket2) {
+        Ticket.new(paths: [feature_review_path(app1: 'abc', app2: 'def')])
+      }
+      let(:tickets) { [ticket1, ticket2] }
+
+      it 'returns a unique collection of feature reviews' do
+        expect(factory.create_from_tickets(tickets)).to match_array([
+          FeatureReview.new(
+            path: feature_review_path(app1: 'abc', app2: 'def'),
+            versions: %w(abc def),
+          ),
+          FeatureReview.new(
+            path: feature_review_path(app1: 'abc'),
+            versions: %w(abc),
+          ),
+        ])
+      end
+    end
+  end
+
+  describe '#create' do
+    let(:attributes) { { some: 'values' } }
+
+    it 'creates a feature review' do
+      expect(FeatureReview).to receive(:new).with(attributes)
+      factory.create(attributes)
+    end
+  end
+
+  private
 
   def full_url(query_values)
     Addressable::URI.new(

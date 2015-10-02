@@ -18,21 +18,11 @@ class ReleasesController < ApplicationController
     Queries::ReleasesQuery.new(
       per_page: 50,
       git_repo: git_repository,
-      deploy_repo: deploy_repository,
-      feature_review_repo: feature_review_repository,
       app_name: app_name)
   end
 
   def app_name
     params[:id]
-  end
-
-  def deploy_repository
-    Repositories::DeployRepository.new
-  end
-
-  def feature_review_repository
-    Repositories::FeatureReviewRepository.new
   end
 
   def git_repository

@@ -53,6 +53,5 @@ group :test do
   gem 'rack-test', require: 'rack/test'
   gem 'shoulda-matchers'
   gem 'simplecov', require: false
-  gem 'timecop'
   gem 'webmock', require: false
 end

@@ -8,12 +8,19 @@ RSpec.describe Queries::FeatureReviewQuery do
   let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:uatest_repository) { instance_double(Repositories::UatestRepository) }
 
+  let(:expected_builds) { double('expected builds') }
+  let(:expected_deploys) { double('expected deploys') }
+  let(:expected_qa_submission) { double('expected qa submission') }
+  let(:expected_tickets) { double('expected tickets') }
+  let(:expected_uatest) { double('uatest') }
+
   let(:expected_apps) { { 'app1' => '123' } }
   let(:expected_uat_host) { 'uat.example.com' }
   let(:expected_uat_url) { "http://#{expected_uat_host}" }
 
   let(:time) { Time.current }
   let(:feature_review) { new_feature_review(expected_apps, expected_uat_url) }
+  let(:feature_review_with_statuses) { instance_double(FeatureReviewWithStatuses) }
 
   subject(:query) { Queries::FeatureReviewQuery.new(feature_review, at: time) }
 
@@ -23,83 +30,39 @@ RSpec.describe Queries::FeatureReviewQuery do
     allow(Repositories::ManualTestRepository).to receive(:new).and_return(manual_test_repository)
     allow(Repositories::TicketRepository).to receive(:new).and_return(ticket_repository)
     allow(Repositories::UatestRepository).to receive(:new).and_return(uatest_repository)
+
+    allow(build_repository).to receive(:builds_for)
+      .with(apps: expected_apps, at: time)
+      .and_return(expected_builds)
+    allow(deploy_repository).to receive(:deploys_for)
+      .with(apps: expected_apps, server: expected_uat_host, at: time)
+      .and_return(expected_deploys)
+    allow(manual_test_repository).to receive(:qa_submission_for)
+      .with(versions: expected_apps.values, at: time)
+      .and_return(expected_qa_submission)
+    allow(ticket_repository).to receive(:tickets_for_path)
+      .with(feature_review.path, at: time)
+      .and_return(expected_tickets)
+    allow(uatest_repository).to receive(:uatest_for)
+      .with(versions: expected_apps.values, server: expected_uat_host, at: time)
+      .and_return(expected_uatest)
   end
 
-  describe '#builds' do
-    let(:expected_builds) { double('expected builds') }
+  describe '#feature_review_with_statuses' do
+    it 'returns a feature review with statuses' do
+      expect(FeatureReviewWithStatuses).to receive(:new)
+        .with(
+          feature_review,
+          builds: expected_builds,
+          deploys: expected_deploys,
+          qa_submission: expected_qa_submission,
+          tickets: expected_tickets,
+          uatest: expected_uatest,
+          at: time,
+        )
+        .and_return(feature_review_with_statuses)
 
-    before do
-      allow(build_repository).to receive(:builds_for)
-        .with(apps: expected_apps, at: time)
-        .and_return(expected_builds)
-    end
-
-    it 'delegates to the build repository' do
-      expect(query.builds).to eq(expected_builds)
-    end
-  end
-
-  describe '#deploys' do
-    let(:expected_deploys) { double('expected deploys') }
-
-    before do
-      allow(deploy_repository).to receive(:deploys_for)
-        .with(apps: expected_apps, server: expected_uat_host, at: time)
-        .and_return(expected_deploys)
-    end
-
-    it 'delegates to the deploy repository' do
-      expect(query.deploys).to eq(expected_deploys)
-    end
-  end
-
-  describe '#qa_submission' do
-    let(:expected_qa_submission) { double('expected qa submission') }
-    let(:expected_versions) { expected_apps.values }
-
-    before do
-      allow(manual_test_repository).to receive(:qa_submission_for)
-        .with(versions: expected_versions, at: time)
-        .and_return(expected_qa_submission)
-    end
-
-    it 'delegates to the manual test repository' do
-      expect(query.qa_submission).to eq(expected_qa_submission)
-    end
-  end
-
-  describe '#tickets' do
-    let(:expected_tickets) { double('expected tickets') }
-
-    before do
-      allow(ticket_repository).to receive(:tickets_for)
-        .with(feature_review_path: feature_review.path, at: time)
-        .and_return(expected_tickets)
-    end
-
-    it 'delegates to the ticket repository' do
-      expect(query.tickets).to eq(expected_tickets)
-    end
-  end
-
-  describe '#time' do
-    it 'returns the time that the Feature Review Query is for' do
-      expect(query.time).to eq(time)
-    end
-  end
-
-  describe '#uatest' do
-    let(:expected_uatest) { double('uatest') }
-    let(:expected_versions) { expected_apps.values }
-
-    before do
-      allow(uatest_repository).to receive(:uatest_for)
-        .with(versions: expected_versions, server: expected_uat_host, at: time)
-        .and_return(expected_uatest)
-    end
-
-    it 'delegates to the uatest repository' do
-      expect(query.uatest).to eq(expected_uatest)
+      expect(query.feature_review_with_statuses).to eq(feature_review_with_statuses)
     end
   end
 end

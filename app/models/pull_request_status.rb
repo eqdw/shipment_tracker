@@ -1,18 +1,21 @@
 require 'octokit'
 require 'active_support/json'
 require 'feature_review_with_statuses'
-require 'repositories/feature_review_repository'
+require 'repositories/ticket_repository'
+require 'factories/feature_review_factory'
 
 class PullRequestStatus
   def initialize(token: Rails.application.config.github_access_token,
                  routes: Rails.application.routes.url_helpers)
     @token = token
     @routes = routes
+    @ticket_repository = Repositories::TicketRepository.new
+    @feature_review_factory = Factories::FeatureReviewFactory.new
   end
 
   def update(repo_url:, sha:)
     repo_url = repo_url.sub(/\.git$/, '')
-    feature_reviews = feature_reviews([sha])
+    feature_reviews = decorated_feature_reviews(sha)
     status, description = *status_for(feature_reviews).values_at(:status, :description)
     target_url = target_url_for(
       repo_url: repo_url,
@@ -34,8 +37,19 @@ class PullRequestStatus
       description: reset_status[:description])
   end
 
-  def feature_reviews(commits)
-    Repositories::FeatureReviewRepository.new.feature_reviews_for_versions(commits)
+  private
+
+  attr_reader :token, :routes, :ticket_repository, :feature_review_factory
+
+  def decorated_feature_reviews(commit)
+    tickets = ticket_repository.tickets_for_versions([commit])
+    feature_reviews = feature_review_factory.create_from_tickets(tickets)
+    feature_reviews.map do |feature_review|
+      FeatureReviewWithStatuses.new(
+        feature_review,
+        tickets: tickets.select { |t| t.paths.include?(feature_review.path) },
+      )
+    end
   end
 
   def publish_status(repo_url:, sha:, status:, description:, target_url: nil)
@@ -68,10 +82,6 @@ class PullRequestStatus
       unapproved_status
     end
   end
-
-  private
-
-  attr_reader :token, :routes
 
   def not_reviewed_status
     {

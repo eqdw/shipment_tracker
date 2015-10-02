@@ -89,45 +89,57 @@ RSpec.describe FeatureReviewsController do
   end
 
   describe 'GET #show', :logged_in do
-    let(:events) { [Events::BaseEvent.new, Events::BaseEvent.new, Events::BaseEvent.new] }
     let(:uat_url) { 'http://uat.fundingcircle.com' }
     let(:apps_with_versions) { { 'frontend' => 'abc', 'backend' => 'def' } }
     let(:feature_review) {
-      instance_double(FeatureReview, app_versions: apps_with_versions, uat_url: uat_url)
+      instance_double(FeatureReview)
     }
+    let(:feature_review_query) { instance_double(Queries::FeatureReviewQuery) }
+    let(:feature_review_factory) { instance_double(Factories::FeatureReviewFactory) }
+    let(:feature_review_with_statuses) { instance_double(FeatureReviewWithStatuses) }
+    let(:host) { 'www.example.com' }
 
     before do
-      request.host = 'www.example.com'
+      request.host = host
 
-      allow_any_instance_of(Repositories::FeatureReviewRepository).to receive(:feature_review_for_path)
-        .with(whitelisted_path, at: precise_time)
+      allow(Queries::FeatureReviewQuery).to receive(:new).and_return(feature_review_query)
+      allow(feature_review_query).to receive(:feature_review_with_statuses)
+        .and_return(feature_review_with_statuses)
+
+      allow(Factories::FeatureReviewFactory).to receive(:new).and_return(feature_review_factory)
+      allow(feature_review_factory)
+        .to receive(:create_from_url_string)
+        .with("http://#{host}#{whitelisted_path}")
         .and_return(feature_review)
     end
 
     context 'when time is NOT specified' do
       let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
-      let(:precise_time) { nil }
 
       it 'sets up the correct query parameters' do
+        expect(Queries::FeatureReviewQuery).to receive(:new)
+          .with(feature_review, at: nil)
+          .and_return(feature_review_query)
+
         get :show, apps: apps_with_versions, uat_url: uat_url
 
-        expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
-        expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(nil)
+        expect(assigns(:feature_review_with_statuses)).to eq(feature_review_with_statuses)
       end
     end
 
     context 'when time is specified' do
-      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url) }
+      let(:whitelisted_path) { feature_review_path(apps_with_versions, uat_url, time) }
       let(:time) { Time.parse('2015-09-09 12:00:00 UTC') }
       let(:precise_time) { time.change(usec: 999_999.999) }
 
       it 'sets up the correct query parameters' do
+        expect(Queries::FeatureReviewQuery).to receive(:new)
+          .with(feature_review, at: precise_time)
+          .and_return(feature_review_query)
+
         get :show, apps: apps_with_versions, uat_url: uat_url, time: time
 
-        expect(assigns(:feature_review_with_statuses).app_versions).to eq(apps_with_versions)
-        expect(assigns(:feature_review_with_statuses).uat_url).to eq(uat_url)
-        expect(assigns(:feature_review_with_statuses).time).to eq(precise_time)
+        expect(assigns(:feature_review_with_statuses)).to eq(feature_review_with_statuses)
       end
     end
   end
@@ -136,12 +148,12 @@ RSpec.describe FeatureReviewsController do
     let(:applications) { %w(frontend backend mobile) }
 
     let(:version_resolver) { instance_double(VersionResolver) }
-    let(:repository) { instance_double(Repositories::FeatureReviewRepository) }
+    let(:repository) { instance_double(Repositories::TicketRepository) }
     let(:git_repository_loader) { instance_double(GitRepositoryLoader) }
     let(:repo) { instance_double(GitRepository) }
     let(:related_versions) { %w(abc def ghi) }
-    let(:expected_links) { ['/somelink'] }
-    let(:expected_feature_reviews) { [instance_double(FeatureReview, path: '/somelink')] }
+    let(:expected_links) { ['/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b'] }
+    let(:expected_tickets) { [instance_double(Ticket, paths: expected_links)] }
     let(:version) { 'abc123' }
 
     before do
@@ -149,10 +161,10 @@ RSpec.describe FeatureReviewsController do
       allow(version_resolver).to receive(:related_versions).with(version).and_return(related_versions)
       allow(GitRepositoryLocation).to receive(:app_names).and_return(applications)
       allow(GitRepositoryLoader).to receive(:new).and_return(git_repository_loader)
-      allow(Repositories::FeatureReviewRepository).to receive(:new).and_return(repository)
-      allow(repository).to receive(:feature_reviews_for_versions)
+      allow(Repositories::TicketRepository).to receive(:new).and_return(repository)
+      allow(repository).to receive(:tickets_for_versions)
         .with(related_versions)
-        .and_return(expected_feature_reviews)
+        .and_return(expected_tickets)
 
       allow(git_repository_loader).to receive(:load).with('frontend').and_return(repo)
     end

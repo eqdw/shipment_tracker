@@ -29,10 +29,18 @@ module Factories
       FeatureReview.new(attrs)
     end
 
+    def create_from_tickets(tickets)
+      map_paths(tickets).map { |path| create_from_url_string(path) }
+    end
+
     private
 
     def whitelisted_path(uri, query_hash)
       "#{uri.path}?#{query_hash.extract!(*QUERY_PARAM_WHITELIST).to_query}"
+    end
+
+    def map_paths(tickets)
+      tickets.map(&:paths).flatten.uniq
     end
 
     def parse_uri(uri)
