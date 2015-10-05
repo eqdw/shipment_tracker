@@ -146,15 +146,6 @@ RSpec.describe Factories::FeatureReviewFactory do
     end
   end
 
-  describe '#create' do
-    let(:attributes) { { some: 'values' } }
-
-    it 'creates a feature review' do
-      expect(FeatureReview).to receive(:new).with(attributes)
-      factory.create(attributes)
-    end
-  end
-
   private
 
   def full_url(query_values)
