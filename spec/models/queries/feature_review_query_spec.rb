@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'queries/feature_review_query'
 
 RSpec.describe Queries::FeatureReviewQuery do
@@ -13,6 +13,7 @@ RSpec.describe Queries::FeatureReviewQuery do
   let(:expected_qa_submission) { double('expected qa submission') }
   let(:expected_tickets) { double('expected tickets') }
   let(:expected_uatest) { double('uatest') }
+  let(:expected_repository_locations) { double('repository locations') }
 
   let(:expected_apps) { { 'app1' => '123' } }
   let(:expected_uat_host) { 'uat.example.com' }
@@ -30,6 +31,10 @@ RSpec.describe Queries::FeatureReviewQuery do
     allow(Repositories::ManualTestRepository).to receive(:new).and_return(manual_test_repository)
     allow(Repositories::TicketRepository).to receive(:new).and_return(ticket_repository)
     allow(Repositories::UatestRepository).to receive(:new).and_return(uatest_repository)
+
+    allow(GitRepositoryLocation).to receive(:where)
+      .with(name: expected_apps.keys)
+      .and_return(expected_repository_locations)
 
     allow(build_repository).to receive(:builds_for)
       .with(apps: expected_apps, at: time)
@@ -58,6 +63,7 @@ RSpec.describe Queries::FeatureReviewQuery do
           qa_submission: expected_qa_submission,
           tickets: expected_tickets,
           uatest: expected_uatest,
+          repository_locations: expected_repository_locations,
           at: time,
         )
         .and_return(feature_review_with_statuses)

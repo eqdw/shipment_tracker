@@ -44,8 +44,8 @@ Scenario: Searching for a Feature Review
     | frontend | #commit2 | http://uat.fundingcircle.com |
   And I select link to feature review "2"
   Then I should see the feature review page with the applications:
-    | app_name | version  |
-    | frontend | #commit2 |
+    | app_name | version                            |
+    | frontend | [#commit2](https://github.com/...) |
 
 Scenario: Searching for a commit with no associated Feature Reviews
   When I look up feature reviews for "#master1" on "frontend"

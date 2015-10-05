@@ -1,14 +1,17 @@
 require 'build'
 require 'deploy'
+require 'git_repository_location'
 require 'qa_submission'
 require 'ticket'
 require 'uatest'
 
+require 'octokit'
+
 class FeatureReviewWithStatuses < SimpleDelegator
-  attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time
+  attr_reader :builds, :deploys, :qa_submission, :tickets, :uatest, :time, :github_links
 
   # rubocop:disable Metrics/LineLength, Metrics/ParameterLists
-  def initialize(feature_review, builds: {}, deploys: [], qa_submission: nil, tickets: [], uatest: nil, at: nil)
+  def initialize(feature_review, builds: {}, deploys: [], qa_submission: nil, tickets: [], repository_locations: [], uatest: nil, at: nil)
     super(feature_review)
     @time = at
     @builds = builds
@@ -16,6 +19,9 @@ class FeatureReviewWithStatuses < SimpleDelegator
     @qa_submission = qa_submission
     @tickets = tickets
     @uatest = uatest
+    @github_links = {}
+
+    generate_github_links(feature_review, repository_locations)
   end
   # rubocop:enable Metrics/LineLength, Metrics/ParameterLists
 
@@ -71,5 +77,16 @@ class FeatureReviewWithStatuses < SimpleDelegator
 
   def approved_path
     "#{base_path}?#{query_hash.merge(time: approved_at.utc).to_query}" if approved?
+  end
+
+  private
+
+  def generate_github_links(feature_review, repository_locations)
+    feature_review.app_versions.each_key { |app_name|
+      repo_location = repository_locations.detect { |r| r.name == app_name }
+      if repo_location
+        @github_links[app_name] = Octokit::Repository.from_url(repo_location.uri).url.chomp('.git')
+      end
+    }
   end
 end

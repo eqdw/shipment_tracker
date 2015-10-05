@@ -1,4 +1,5 @@
 require 'feature_review_with_statuses'
+require 'git_repository_location'
 require 'repositories/build_repository'
 require 'repositories/deploy_repository'
 require 'repositories/manual_test_repository'
@@ -34,8 +35,13 @@ module Queries
         qa_submission: qa_submission,
         tickets: tickets,
         uatest: uatest,
+        repository_locations: repository_locations,
         at: time,
       )
+    end
+
+    def repository_locations
+      GitRepositoryLocation.where(name: feature_review.app_versions.keys)
     end
 
     def builds

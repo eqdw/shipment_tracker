@@ -50,7 +50,9 @@ module Sections
       if icon
         icon_translation_for(icon)
       else
-        cell_element.text
+        link = find_valid_link(cell_element)
+        return cell_element.text unless link
+        "[#{link.text}](#{link[:href]})"
       end
     end
 
@@ -76,6 +78,12 @@ module Sections
 
     def panel_body
       panel_element.first('.panel-heading ~ *')
+    end
+
+    def find_valid_link(element)
+      return unless element.has_css?('a')
+      link = element.find('a')
+      link[:href] == '#' ? nil : link
     end
   end
 end

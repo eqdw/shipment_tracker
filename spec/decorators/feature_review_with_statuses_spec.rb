@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'feature_review_with_statuses'
 
 RSpec.describe FeatureReviewWithStatuses do
@@ -7,7 +7,7 @@ RSpec.describe FeatureReviewWithStatuses do
   let(:deploys) { double(:deploys) }
   let(:qa_submission) { double(:qa_submission) }
   let(:uatest) { double(:uatest) }
-  let(:apps) { double(:apps) }
+  let(:apps) { { 'app1' => 'xxx', 'app2' => 'yyy' } }
 
   let(:uat_url) { 'http://uat.com' }
   let(:feature_review) { instance_double(FeatureReview, uat_url: uat_url, app_versions: apps) }
@@ -49,6 +49,45 @@ RSpec.describe FeatureReviewWithStatuses do
 
   it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
+  end
+
+  describe 'generation of github links' do
+    context 'when no repository location is given' do
+      subject(:decorator) { FeatureReviewWithStatuses.new(feature_review) }
+
+      it 'does not generate github links' do
+        expect(decorator.github_links).to eq({})
+      end
+    end
+
+    context 'when repository locations are given' do
+      subject(:decorator) { FeatureReviewWithStatuses.new(feature_review, repository_locations: locations) }
+
+      let(:repo_uri1) { 'ssh://github.com/app1.git' }
+      let(:repo_uri2) { 'ssh://github.com/app2.git' }
+      let(:repo_url1) { 'https://github.com/app1' }
+      let(:repo_url2) { 'https://github.com/app2' }
+
+      let(:locations) {
+        [
+          instance_double(GitRepositoryLocation, name: 'app1', uri: repo_uri1),
+          instance_double(GitRepositoryLocation, name: 'app2', uri: repo_uri2),
+          instance_double(GitRepositoryLocation, name: 'app3'),
+        ]
+      }
+
+      let(:octokit_repo1) { instance_double(Octokit::Repository, url: repo_url1) }
+      let(:octokit_repo2) { instance_double(Octokit::Repository, url: repo_url2) }
+
+      before do
+        allow(Octokit::Repository).to receive(:from_url).with(repo_uri1).and_return(octokit_repo1)
+        allow(Octokit::Repository).to receive(:from_url).with(repo_uri2).and_return(octokit_repo2)
+      end
+
+      it 'generates github links' do
+        expect(decorator.github_links).to eq('app1' => repo_url1, 'app2' => repo_url2)
+      end
+    end
   end
 
   describe '#build_status' do
@@ -304,7 +343,8 @@ RSpec.describe FeatureReviewWithStatuses do
         instance_double(
           FeatureReview,
           base_path: '/something',
-          query_hash: { 'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' }, 'uat_url' => 'http://uat.com' },
+          query_hash: { 'apps' => apps, 'uat_url' => 'http://uat.com' },
+          app_versions: apps,
         )
       }
 
