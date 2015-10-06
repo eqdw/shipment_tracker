@@ -19,7 +19,7 @@ module Repositories
       query = at ? store.arel_table['event_created_at'].lteq(at) : nil
       store
         .select('DISTINCT ON (key) *')
-        .where('paths @> ARRAY[?]', prepare_path(feature_review_path))
+        .where('paths @> ARRAY[?]', feature_review_path)
         .where(query)
         .order('key, id DESC')
         .map { |t| Ticket.new(t.attributes) }
@@ -68,7 +68,7 @@ module Repositories
 
     def merge_ticket_paths(ticket, feature_reviews)
       old_paths = ticket.fetch('paths', [])
-      new_paths = feature_review_paths(feature_reviews)
+      new_paths = feature_reviews.map(&:path)
       old_paths.concat(new_paths).uniq
     end
 
@@ -81,16 +81,6 @@ module Repositories
     def merge_approved_at(last_ticket, event)
       return nil unless Ticket.new(status: event.status).approved?
       last_ticket['approved_at'] || event.created_at
-    end
-
-    def prepare_path(path)
-      Addressable::URI.parse(path).normalize.to_s
-    end
-
-    def feature_review_paths(feature_reviews)
-      feature_reviews.map { |feature_review|
-        prepare_path(feature_review.path)
-      }
     end
 
     def feature_review_versions(feature_reviews)

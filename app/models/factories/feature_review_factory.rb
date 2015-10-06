@@ -15,8 +15,12 @@ module Factories
         .map { |url| create_from_url_string(url) }
     end
 
+    def create_from_tickets(tickets)
+      map_paths(tickets).map { |path| create_from_url_string(path) }
+    end
+
     def create_from_url_string(url)
-      uri = Addressable::URI.parse(url)
+      uri = Addressable::URI.parse(url).normalize
       query_hash = Rack::Utils.parse_nested_query(uri.query)
       versions = query_hash.fetch('apps', {}).values.reject(&:blank?)
       create(
@@ -25,15 +29,11 @@ module Factories
       )
     end
 
+    private
+
     def create(attrs)
       FeatureReview.new(attrs)
     end
-
-    def create_from_tickets(tickets)
-      map_paths(tickets).map { |path| create_from_url_string(path) }
-    end
-
-    private
 
     def whitelisted_path(uri, query_hash)
       "#{uri.path}?#{query_hash.extract!(*QUERY_PARAM_WHITELIST).to_query}"
