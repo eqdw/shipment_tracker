@@ -70,4 +70,12 @@ module FeatureReviewsHelper
     status << " at #{feature_review.approved_at}" if feature_review.approved? && feature_review.approved_at
     status
   end
+
+  def jira_link(jira_key)
+    link_to(
+      jira_key,
+      "https://#{Rails.application.config.jira_host_name}/browse/#{jira_key}",
+      target: '_blank',
+    )
+  end
 end

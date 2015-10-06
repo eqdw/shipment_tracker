@@ -11,7 +11,7 @@
         - table(headers: %w(Ticket Summary Status)) do
           - @feature_review_with_statuses.tickets.each do |ticket|
             %tr.ticket
-              %td= ticket.key
+              %td= jira_link(ticket.key)
               %td= ticket.summary
               %td
                 - icon(item_status_icon_class(ticket.approved?))
