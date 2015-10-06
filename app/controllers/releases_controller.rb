@@ -1,3 +1,5 @@
+require 'octokit'
+
 class ReleasesController < ApplicationController
   def index
     @app_names = GitRepositoryLocation.app_names
@@ -8,6 +10,7 @@ class ReleasesController < ApplicationController
     @pending_releases = projection.pending_releases
     @deployed_releases = projection.deployed_releases
     @app_name = app_name
+    @github_link = Octokit::Repository.from_url(git_repository.remote_url).url.chomp('.git')
   rescue GitRepositoryLoader::NotFound
     render text: 'Repository not found', status: :not_found
   end

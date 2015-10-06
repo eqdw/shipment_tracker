@@ -11,7 +11,7 @@
   %tbody
   - @pending_releases.each do |release|
     %tr.pending-release{class: ('danger' unless release.approved?)}
-      %td.monospace= short_sha(release.version)
+      %td.monospace= commit_link(release.version, @github_link)
       %td= release.subject
       %td
         - release.feature_reviews.each do |feature_review|
@@ -29,7 +29,7 @@
   %tbody
   - @deployed_releases.each do |release|
     %tr.deployed-release{class: ('danger' unless release.approved?)}
-      %td.monospace= short_sha(release.version)
+      %td.monospace= commit_link(release.version, @github_link)
       %td= release.subject
       %td
         - release.feature_reviews.each do |feature_review|

@@ -16,7 +16,7 @@ module Pages
         values = release_line.all('td').to_a
         {
           'approved' => !release_line['class'].split.include?('danger'),
-          'version' => values.fetch(0).text,
+          'version' => commit_link(values.fetch(0)),
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
           'feature_review_paths' => extract_href(values.fetch(2)),
@@ -30,7 +30,7 @@ module Pages
         values = release_line.all('td').to_a
         {
           'approved' => !release_line['class'].split.include?('danger'),
-          'version' => values.fetch(0).text,
+          'version' => commit_link(values.fetch(0)),
           'subject' => values.fetch(1).text,
           'feature_reviews' => values.fetch(2).text,
           'feature_review_paths' => extract_href(values.fetch(2)),
@@ -40,6 +40,18 @@ module Pages
     end
 
     private
+
+    def commit_link(cell_element)
+      link = find_valid_link(cell_element)
+      return cell_element.text unless link
+      "[#{link.text}](#{link[:href]})"
+    end
+
+    def find_valid_link(element)
+      return unless element.has_css?('a')
+      link = element.find('a')
+      link[:href] == '#' ? nil : link
+    end
 
     def extract_time(element)
       Time.zone.parse(element.text) unless element.text.empty?

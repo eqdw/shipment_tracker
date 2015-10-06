@@ -4,9 +4,13 @@ end
 
 Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_table|
   expected_releases = releases_table.hashes.map { |release_line|
+    version, link = release_line.fetch('version').match(/\A\[(.*)\]\((.*)\)\z/).try(:captures)
+    real_version = scenario_context.resolve_version(version)
+    link = link.sub('...', "private/var/commit/#{real_version}")
+
     release = {
       'approved' => release_line.fetch('approved') == 'yes',
-      'version' => scenario_context.resolve_version(release_line.fetch('version')).slice(0..6),
+      'version' => "[#{real_version.slice(0..6)}](#{link})",
       'subject' => release_line.fetch('subject'),
       'feature_reviews' => release_line.fetch('review statuses'),
       'feature_review_paths' => nil,

@@ -103,6 +103,10 @@ class GitRepository
     @rugged_repository.path
   end
 
+  def remote_url
+    @rugged_repository.remotes['origin'].try(:url)
+  end
+
   private
 
   attr_reader :rugged_repository

@@ -74,12 +74,12 @@ Scenario: Viewing releases for an app
   When I view the releases for "frontend"
 
   Then I should see the "pending" releases
-    | version  | subject                         | feature reviews | review statuses        | review times          | approved |
-    | #merge2  | Merged `feature2` into `master` | FR_123b, FR_456 | Not approved Approved  | , 2014-10-04 15:24:34 | yes      |
+    | version                           | subject                         | feature reviews | review statuses        | review times          | approved |
+    | [#merge2](https://github.com/...) | Merged `feature2` into `master` | FR_123b, FR_456 | Not approved Approved  | , 2014-10-04 15:24:34 | yes      |
 
   And I should see the "deployed" releases
-    | version  | subject                         | feature reviews | review statuses       | review times          | approved | last deployed at |
-    | #master3 | sneaky commit                   | FR_789          | Approved              | 2014-10-05 11:03:45   | yes      | 2014-10-05 11:54 |
-    | #merge1  | Merged `feature1` into `master` | FR_ONE          | Not approved          |                       | no       | 2014-10-01 17:34 |
-    | #master2 | historic commit                 |                 |                       |                       | no       |                  |
-    | #master1 | initial commit                  |                 |                       |                       | no       | 2014-09-28 11:37 |
+    | version                            | subject                         | feature reviews | review statuses       | review times          | approved | last deployed at |
+    | [#master3](https://github.com/...) | sneaky commit                   | FR_789          | Approved              | 2014-10-05 11:03:45   | yes      | 2014-10-05 11:54 |
+    | [#merge1](https://github.com/...)  | Merged `feature1` into `master` | FR_ONE          | Not approved          |                       | no       | 2014-10-01 17:34 |
+    | [#master2](https://github.com/...) | historic commit                 |                 |                       |                       | no       |                  |
+    | [#master1](https://github.com/...) | initial commit                  |                 |                       |                       | no       | 2014-09-28 11:37 |
