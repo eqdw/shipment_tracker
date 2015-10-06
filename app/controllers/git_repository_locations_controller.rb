@@ -1,7 +1,7 @@
 class GitRepositoryLocationsController < ApplicationController
   def index
     @new_git_repository_location = GitRepositoryLocation.new
-    @git_repository_locations = GitRepositoryLocation.all
+    @git_repository_locations = GitRepositoryLocation.all.order(:name)
   end
 
   def create
