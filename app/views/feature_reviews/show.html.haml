@@ -44,7 +44,7 @@
         - @feature_review_with_statuses.app_versions.each do |app_name, version|
           %li.list-group-item.app
             %strong.name= app_name
-            %span.version.monospace= commit_link(version, @feature_review_with_statuses.github_links[app_name])
+            %span.version.monospace= commit_link(version, @feature_review_with_statuses.github_repo_urls[app_name])
         %li.list-group-item
           - if @feature_review_with_statuses.uat_url
             Deployed to UAT
