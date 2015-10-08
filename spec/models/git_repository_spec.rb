@@ -414,26 +414,27 @@ RSpec.describe GitRepository do
     end
   end
 
-  describe '#remote_url' do
+  describe '#origin_remote_url' do
+    before do
+      rugged_repo.remotes.each do |remote|
+        rugged_repo.remotes.delete(remote)
+      end
+    end
+
     context 'when there are remotes' do
       before do
-        rugged_repo.remotes.create('another', 'git://github.com/libgit2/rugged.git')
+        rugged_repo.remotes.create('random', 'ssh://git@github.com/random/repo.git')
+        rugged_repo.remotes.create('origin', 'ssh://git@github.com/organization/repo.git')
       end
 
-      it 'returns the url for the "origin" remote' do
-        expect(repo.remote_url).to eq(rugged_repo.remotes['origin'].url)
+      it 'returns the URL for the "origin" remote' do
+        expect(repo.origin_remote_url).to eq('ssh://git@github.com/organization/repo.git')
       end
     end
 
     context 'when there are no remotes' do
-      before do
-        rugged_repo.remotes.each do |remote|
-          rugged_repo.remotes.delete(remote)
-        end
-      end
-
       it 'returns nil' do
-        expect(repo.remote_url).to be nil
+        expect(repo.origin_remote_url).to be nil
       end
     end
   end
