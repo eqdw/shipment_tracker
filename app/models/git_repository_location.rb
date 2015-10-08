@@ -1,3 +1,5 @@
+require 'octokit'
+
 class GitRepositoryLocation < ActiveRecord::Base
   validate :must_have_valid_uri
 
@@ -15,6 +17,20 @@ class GitRepositoryLocation < ActiveRecord::Base
 
   def self.uris
     all.pluck(:uri)
+  end
+
+  def self.github_url_for_app(app_name)
+    repo_location = find { |r| r.name == app_name }
+    return unless repo_location
+    Octokit::Repository.from_url(repo_location.uri).url.chomp('.git')
+  end
+
+  def self.github_urls_for_apps(app_names)
+    github_urls = {}
+    app_names.each do |app_name|
+      github_urls[app_name] = github_url_for_app(app_name)
+    end
+    github_urls
   end
 
   def self.update_from_github_notification(payload)

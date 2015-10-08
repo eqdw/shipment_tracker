@@ -26,6 +26,7 @@ RSpec.describe ReleasesController do
     let(:repository_loader) { instance_double(GitRepositoryLoader) }
     let(:events) { double(:events) }
     let(:app_name) { 'frontend' }
+    let(:github_url) { 'https://github.com/user/repo' }
     let(:pending_releases) { double(:pending_releases) }
     let(:deployed_releases) { double(:deployed_releases) }
     let(:releases_query) {
@@ -39,7 +40,7 @@ RSpec.describe ReleasesController do
     before do
       allow(GitRepositoryLoader).to receive(:from_rails_config).and_return(repository_loader)
       allow(repository_loader).to receive(:load).with('frontend').and_return(repository)
-      allow(repository).to receive(:remote_url).and_return('ssh://github.com/user/repo.git')
+      allow(GitRepositoryLocation).to receive(:github_url_for_app).with(app_name).and_return(github_url)
       allow(Queries::ReleasesQuery).to receive(:new).with(
         per_page: 50,
         git_repo: repository,
@@ -55,7 +56,7 @@ RSpec.describe ReleasesController do
       expect(assigns(:app_name)).to eq(app_name)
       expect(assigns(:pending_releases)).to eq(pending_releases)
       expect(assigns(:deployed_releases)).to eq(deployed_releases)
-      expect(assigns(:github_link)).to eq('https://github.com/user/repo')
+      expect(assigns(:github_repo_url)).to eq(github_url)
     end
 
     context 'when app id does not exist' do

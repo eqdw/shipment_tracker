@@ -51,42 +51,17 @@ RSpec.describe FeatureReviewWithStatuses do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
   end
 
-  describe 'generation of github links' do
-    context 'when no repository location is given' do
-      subject(:decorator) { FeatureReviewWithStatuses.new(feature_review) }
+  describe '#github_repo_urls' do
+    let(:app_names) { %w(app1 app2) }
+    let(:feature_review) { instance_double(FeatureReview, app_names: app_names) }
+    let(:github_urls) { { 'app1' => 'url1', 'app2' => 'url2' } }
 
-      it 'does not generate github links' do
-        expect(decorator.github_links).to eq({})
-      end
+    before do
+      allow(GitRepositoryLocation).to receive(:github_urls_for_apps).with(app_names).and_return(github_urls)
     end
 
-    context 'when repository locations are given' do
-      subject(:decorator) { FeatureReviewWithStatuses.new(feature_review, repository_locations: locations) }
-
-      let(:repo_uri1) { 'ssh://github.com/app1.git' }
-      let(:repo_uri2) { 'ssh://github.com/app2.git' }
-      let(:repo_url1) { 'https://github.com/app1' }
-      let(:repo_url2) { 'https://github.com/app2' }
-
-      let(:locations) {
-        [
-          instance_double(GitRepositoryLocation, name: 'app1', uri: repo_uri1),
-          instance_double(GitRepositoryLocation, name: 'app2', uri: repo_uri2),
-          instance_double(GitRepositoryLocation, name: 'app3'),
-        ]
-      }
-
-      let(:octokit_repo1) { instance_double(Octokit::Repository, url: repo_url1) }
-      let(:octokit_repo2) { instance_double(Octokit::Repository, url: repo_url2) }
-
-      before do
-        allow(Octokit::Repository).to receive(:from_url).with(repo_uri1).and_return(octokit_repo1)
-        allow(Octokit::Repository).to receive(:from_url).with(repo_uri2).and_return(octokit_repo2)
-      end
-
-      it 'generates github links' do
-        expect(decorator.github_links).to eq('app1' => repo_url1, 'app2' => repo_url2)
-      end
+    it 'returs the repo URLs for the apps under review' do
+      expect(decorator.github_repo_urls).to eq(github_urls)
     end
   end
 
