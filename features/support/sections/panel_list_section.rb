@@ -45,15 +45,13 @@ module Sections
     attr_reader :panel_element, :item_config, :status_classes, :icon_translations
 
     def cell_text(cell_element)
-      return nil unless cell_element
+      return unless cell_element
+
       icon = icon_element(cell_element)
-      if icon
-        icon_translation_for(icon)
-      else
-        link = find_valid_link(cell_element)
-        return cell_element.text unless link
-        "[#{link.text}](#{link[:href]})"
-      end
+      return icon_translation_for(icon) if icon
+
+      link = find_valid_link(cell_element)
+      link ? "[#{link.text}](#{link[:href]})" : cell_element.text
     end
 
     def icon_element(cell_element)

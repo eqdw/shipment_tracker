@@ -6,9 +6,7 @@ module Sections
     end
 
     def items
-      @items ||= rows_cells_text.map { |cells_text|
-        headers.zip(cells_text).to_h
-      }
+      @items ||= rows_cells_text.map { |cells_text| headers.zip(cells_text).to_h }
     end
 
     private
@@ -24,23 +22,17 @@ module Sections
     end
 
     def rows_cells_text
-      row_elements.map { |row_element|
-        row_element.all('td').map(&method(:cell_text))
-      }
+      row_elements.map { |row_element| row_element.all('td').map(&method(:cell_text)) }
     end
 
     def cell_text(cell_element)
-      if use_icon_translations?
-        icon_element = cell_element.first('.glyphicon')
-        return icon_translation_for(icon_element) if icon_element
+      if icon_translations.present?
+        icon = cell_element.first('.glyphicon')
+        return icon_translation_for(icon) if icon
       end
-      link = find_valid_link(cell_element)
-      return cell_element.text unless link
-      "[#{link.text}](#{link[:href]})"
-    end
 
-    def use_icon_translations?
-      !icon_translations.empty?
+      link = find_valid_link(cell_element)
+      link ? "[#{link.text}](#{link[:href]})" : cell_element.text
     end
 
     def icon_translation_for(icon_element)

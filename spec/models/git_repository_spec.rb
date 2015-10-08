@@ -79,9 +79,9 @@ RSpec.describe GitRepository do
   describe '#recent_commits_on_main_branch' do
     let(:git_diagram) do
       <<-'EOS'
-        B--C----E
-       /         \
- -o---A-------D---F---G-
+            B--C----E
+           /         \
+     -o---A-------D---F---G-
         EOS
     end
 
@@ -162,9 +162,9 @@ RSpec.describe GitRepository do
     context "when given commit is part of a branch that's merged into master" do
       let(:git_diagram) do
         <<-'EOS'
-        o-A-B---
-       /        \
-     -o-------o--C---o
+          o-A-B---
+         /        \
+       -o-------o--C---o
         EOS
       end
 
@@ -186,9 +186,9 @@ RSpec.describe GitRepository do
     context 'when given commit is a fork' do
       let(:git_diagram) do
         <<-'EOS'
-        B--C----E
-       /         \
- -o---A-------D---F---G-
+              B--C----E
+             /         \
+       -o---A-------D---F---G-
         EOS
       end
 
@@ -237,6 +237,7 @@ RSpec.describe GitRepository do
           -o-----o
         EOS
       end
+
       it 'returns empty' do
         expect(repo.get_descendant_commits_of_branch('InvalidSha')).to be_empty
       end
@@ -246,9 +247,9 @@ RSpec.describe GitRepository do
   describe '#merge?' do
     let(:git_diagram) do
       <<-'EOS'
-      o-A-B---
-     /        \
-   -o-------o--C---o
+        o-A-B---
+       /        \
+     -o-------o--C---o
       EOS
     end
 
@@ -256,12 +257,12 @@ RSpec.describe GitRepository do
 
     context 'when on a merge commit' do
       let(:sha) { version('C') }
-      it { is_expected.to be(true) }
+      it { is_expected.to be true }
     end
 
     context 'when on a non merge commit' do
       let(:sha) { version('B') }
-      it { is_expected.to be(false) }
+      it { is_expected.to be false }
     end
 
     context 'when not a real commit id' do
@@ -278,9 +279,9 @@ RSpec.describe GitRepository do
   describe '#branch_parent' do
     let(:git_diagram) do
       <<-'EOS'
-      o-A-B---
-     /        \
-   -o-------o--C---o
+        o-A-B---
+       /        \
+     -o-------o--C---o
       EOS
     end
 
@@ -295,9 +296,9 @@ RSpec.describe GitRepository do
       context 'branch_parent was committed AFTER parent on master' do
         let(:git_diagram) do
           <<-'EOS'
-          o-A----B
-         /        \
-        -o-----o----C---o
+            o-A----B
+           /        \
+          -o-----o----C---o
           EOS
         end
 
@@ -331,9 +332,10 @@ RSpec.describe GitRepository do
       EOS
     end
 
+    let(:sha) { version('C') }
+
     subject { repo.get_dependent_commits(sha).map(&:id) }
 
-    let(:sha) { version('C') }
     it 'returns the ancestors of a commit up to the merge base' do
       is_expected.to contain_exactly(version('B'), version('A'))
     end
@@ -356,6 +358,7 @@ RSpec.describe GitRepository do
       end
 
       let(:sha) { version('B') }
+
       it 'includes the merge commit in the result' do
         is_expected.to contain_exactly(version('A'), version('C'))
       end
@@ -371,6 +374,7 @@ RSpec.describe GitRepository do
       end
 
       let(:sha) { version('C') }
+
       it 'returns the feature branch ancestors of the merge commit but not the merge commit itself' do
         is_expected.to contain_exactly(version('A'), version('B'))
       end
@@ -384,6 +388,7 @@ RSpec.describe GitRepository do
           -o-----o
         EOS
       end
+
       it 'is empty' do
         expect(repo.get_dependent_commits('InvalidSha')).to be_empty
       end
@@ -426,8 +431,9 @@ RSpec.describe GitRepository do
           rugged_repo.remotes.delete(remote)
         end
       end
+
       it 'returns nil' do
-        expect(repo.remote_url).to eq(nil)
+        expect(repo.remote_url).to be nil
       end
     end
   end
