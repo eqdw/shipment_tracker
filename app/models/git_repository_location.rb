@@ -1,6 +1,10 @@
 require 'octokit'
 
 class GitRepositoryLocation < ActiveRecord::Base
+  before_validation on: :create do
+    self.uri = convert_remote_uri(uri)
+  end
+
   validate :must_have_valid_uri
 
   def must_have_valid_uri
@@ -45,4 +49,14 @@ class GitRepositoryLocation < ActiveRecord::Base
     find_by('uri LIKE ?', "%#{path}")
   end
   private_class_method :find_by_github_ssh_url
+
+  private
+
+  def convert_remote_uri(remote_url)
+    return remote_url unless remote_url.start_with?('git@')
+    domain, path = remote_url.match(/git@(.*):(.*)/).captures
+    "ssh://git@#{domain}/#{path}"
+  rescue NoMethodError
+    remote_url
+  end
 end

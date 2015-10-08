@@ -35,7 +35,7 @@ RSpec.describe GitRepositoryLocationsController do
 
       context 'when the GitRepositoryLocation is invalid' do
         let(:params) {
-          { git_repository_location: { name: 'test', uri: 'git@github.com:some/other-repo.git' } }
+          { git_repository_location: { name: 'test', uri: 'github.com:invalid\uri' } }
         }
 
         it { is_expected.to render_template(:index) }
@@ -48,7 +48,7 @@ RSpec.describe GitRepositoryLocationsController do
 
       context 'when the GitRepositoryLocation is valid' do
         let(:params) {
-          { git_repository_location: { name: 'test', uri: 'ssh://git@github.com/some/other-repo.git' } }
+          { git_repository_location: { name: 'test', uri: 'ssh://git@github.com/some/repo.git' } }
         }
 
         it { is_expected.to redirect_to(git_repository_locations_path) }

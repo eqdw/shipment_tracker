@@ -1,13 +1,30 @@
 require 'rails_helper'
 
 RSpec.describe GitRepositoryLocation do
+  describe 'before validations' do
+    it 'converts SSH clone URIs to SSH URIs' do
+      location = GitRepositoryLocation.create(name: 'repo', uri: 'git@github.com:user/repo.git')
+      expect(location.uri).to eq('ssh://git@github.com/user/repo.git')
+    end
+
+    it 'returns the original URI if it can not convert it' do
+      incorrect_uri = 'git@github.com/user/repo.git'
+      location = GitRepositoryLocation.create(name: 'repo', uri: incorrect_uri)
+      expect(location.uri).to eq(incorrect_uri)
+    end
+  end
+
   describe 'validations' do
     it 'must have a valid uri' do
-      valid = GitRepositoryLocation.new(name: 'some_repo', uri: 'ssh://git@github.com/some/other-repo.git')
-      invalid = GitRepositoryLocation.new(name: 'some_repo', uri: 'git@github.com:some/other-repo.git')
+      ssh_url = GitRepositoryLocation.new(name: 'repo', uri: 'ssh://git@github.com/user/repo.git')
+      https_url = GitRepositoryLocation.new(name: 'repo', uri: 'https://github.com/FundingCircle/shipment_tracker.git')
+      ssh_clone_url = GitRepositoryLocation.new(name: 'repo', uri: 'git@github.com:user/repo.git')
+      invalid_url = GitRepositoryLocation.new(name: 'repo', uri: 'github.com\user\repo.git')
 
-      expect(valid).to be_valid
-      expect(invalid).not_to be_valid
+      expect(ssh_url).to be_valid
+      expect(https_url).to be_valid
+      expect(ssh_clone_url).to be_valid
+      expect(invalid_url).not_to be_valid
     end
   end
 
