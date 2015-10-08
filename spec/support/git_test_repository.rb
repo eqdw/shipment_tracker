@@ -12,7 +12,6 @@ module Support
     def initialize(dir = Dir.mktmpdir)
       @dir = File.realpath(dir)
       @repo = Rugged::Repository.init_at(dir)
-      @repo.remotes.create('origin', 'ssh://git@github.com/organization/repo.git')
       @repo.config['user.name'] = 'Unconfigured'
       @repo.config['user.email'] = 'unconfigured@example.com'
       @now = Time.at(0)
