@@ -6,7 +6,8 @@ Then 'I should see the "$deploy_status" releases' do |deploy_status, releases_ta
   expected_releases = releases_table.hashes.map { |release_line|
     version, link = release_line.fetch('version').match(/\A\[(.*)\]\((.*)\)\z/).try(:captures)
     real_version = scenario_context.resolve_version(version)
-    link = link.sub('...', "private/var/commit/#{real_version}")
+    mock_path = scenario_context.last_repository.mock_remote_path
+    link = link.sub('...', "#{mock_path}/commit/#{real_version}")
 
     release = {
       'approved' => release_line.fetch('approved') == 'yes',

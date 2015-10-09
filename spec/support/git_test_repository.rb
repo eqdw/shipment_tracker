@@ -76,6 +76,10 @@ module Support
       "file://#{dir}"
     end
 
+    def mock_remote_path
+      dir.match(%r{\A/(\w*/[\w-]*)}).captures.first
+    end
+
     private
 
     attr_reader :repo, :commits
