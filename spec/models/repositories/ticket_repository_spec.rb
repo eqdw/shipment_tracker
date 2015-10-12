@@ -255,9 +255,23 @@ RSpec.describe Repositories::TicketRepository do
     describe 'updating Github pull requests' do
       before do
         allow(PullRequestUpdateJob).to receive(:perform_later)
+        allow(Rails.configuration).to receive(:data_maintenance_mode).and_return(false)
         allow(git_repo_location).to receive(:find_by_name)
           .with('frontend')
           .and_return(repository_location)
+      end
+
+      context 'when in maintenance mode' do
+        before do
+          allow(Rails.configuration).to receive(:data_maintenance_mode).and_return(true)
+        end
+
+        it 'does not schedule pull request updates' do
+          expect(PullRequestUpdateJob).to_not receive(:perform_later)
+
+          event = build(:jira_event, comment_body: feature_review_url(frontend: 'abc'))
+          repository.apply(event)
+        end
       end
 
       context 'given a comment event' do

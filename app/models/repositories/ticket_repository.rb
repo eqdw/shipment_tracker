@@ -63,6 +63,7 @@ module Repositories
     attr_reader :store, :git_repository_location, :feature_review_factory
 
     def update_pull_request?(event, feature_reviews)
+      return false if Rails.configuration.data_maintenance_mode
       event.approval? || event.unapproval? || feature_reviews.present?
     end
 
