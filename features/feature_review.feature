@@ -20,9 +20,9 @@ Scenario: Preparing a Feature Review
     | backend         | #def                |
     | UAT environment | http://www.some.url |
   Then I should see the feature review page with the applications:
-    | app_name | version |
-    | frontend | #abc    |
-    | backend  | #def    |
+    | app_name | version                        |
+    | frontend | [#abc](https://github.com/...) |
+    | backend  | [#def](https://github.com/...) |
   And I can see the UAT environment "http://www.some.url"
 
 @logged_in

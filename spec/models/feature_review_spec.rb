@@ -43,9 +43,17 @@ RSpec.describe FeatureReview do
   describe '#app_versions' do
     let(:path) { "#{base_path}?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&apps%5Bapp3%5D" }
 
-    subject { FeatureReview.new(path: path, versions: %w(xxx yyy)).app_versions }
+    subject { FeatureReview.new(path: path).app_versions }
 
     it { is_expected.to eq('app1' => 'xxx', 'app2' => 'yyy') }
+  end
+
+  describe '#app_names' do
+    let(:path) { "#{base_path}?apps%5Bapp1%5D=xxx&apps%5Bapp2%5D=yyy&apps%5Bapp3%5D" }
+
+    subject { FeatureReview.new(path: path).app_names }
+
+    it { is_expected.to eq(%w(app1 app2)) }
   end
 
   describe '#base_path' do

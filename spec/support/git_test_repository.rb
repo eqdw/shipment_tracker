@@ -56,7 +56,7 @@ module Support
 
       create_rugged_commit(
         tree_oid: merge_index.write_tree(repo),
-        message: "Merged `#{branch_name}` into `master`",
+        message: "Merge #{branch_name} into master",
         author_name: author_name,
         time: time,
         parents: [master_tip_oid, branch_tip_oid],
@@ -74,6 +74,10 @@ module Support
 
     def uri
       "file://#{dir}"
+    end
+
+    def mock_remote_path
+      dir.match(%r{\A/(\w*/[\w-]*)}).captures.first
     end
 
     private

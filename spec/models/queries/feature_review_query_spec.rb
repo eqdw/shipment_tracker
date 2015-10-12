@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'queries/feature_review_query'
 
 RSpec.describe Queries::FeatureReviewQuery do

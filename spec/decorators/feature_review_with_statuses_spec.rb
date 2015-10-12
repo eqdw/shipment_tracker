@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'feature_review_with_statuses'
 
 RSpec.describe FeatureReviewWithStatuses do
@@ -7,7 +7,7 @@ RSpec.describe FeatureReviewWithStatuses do
   let(:deploys) { double(:deploys) }
   let(:qa_submission) { double(:qa_submission) }
   let(:uatest) { double(:uatest) }
-  let(:apps) { double(:apps) }
+  let(:apps) { { 'app1' => 'xxx', 'app2' => 'yyy' } }
 
   let(:uat_url) { 'http://uat.com' }
   let(:feature_review) { instance_double(FeatureReview, uat_url: uat_url, app_versions: apps) }
@@ -49,6 +49,20 @@ RSpec.describe FeatureReviewWithStatuses do
 
   it 'delegates unknown messages to the feature_review' do
     expect(decorator.uat_url).to eq(feature_review.uat_url)
+  end
+
+  describe '#github_repo_urls' do
+    let(:app_names) { %w(app1 app2) }
+    let(:feature_review) { instance_double(FeatureReview, app_names: app_names) }
+    let(:github_urls) { { 'app1' => 'url1', 'app2' => 'url2' } }
+
+    before do
+      allow(GitRepositoryLocation).to receive(:github_urls_for_apps).with(app_names).and_return(github_urls)
+    end
+
+    it 'returs the repo URLs for the apps under review' do
+      expect(decorator.github_repo_urls).to eq(github_urls)
+    end
   end
 
   describe '#build_status' do
@@ -304,7 +318,8 @@ RSpec.describe FeatureReviewWithStatuses do
         instance_double(
           FeatureReview,
           base_path: '/something',
-          query_hash: { 'apps' => { 'app1' => 'xxx', 'app2' => 'yyy' }, 'uat_url' => 'http://uat.com' },
+          query_hash: { 'apps' => apps, 'uat_url' => 'http://uat.com' },
+          app_versions: apps,
         )
       }
 

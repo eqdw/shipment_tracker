@@ -1,5 +1,6 @@
 require 'build'
 require 'deploy'
+require 'git_repository_location'
 require 'qa_submission'
 require 'ticket'
 require 'uatest'
@@ -10,6 +11,7 @@ class FeatureReviewWithStatuses < SimpleDelegator
   # rubocop:disable Metrics/LineLength, Metrics/ParameterLists
   def initialize(feature_review, builds: {}, deploys: [], qa_submission: nil, tickets: [], uatest: nil, at: nil)
     super(feature_review)
+    @feature_review = feature_review
     @time = at
     @builds = builds
     @deploys = deploys
@@ -18,6 +20,10 @@ class FeatureReviewWithStatuses < SimpleDelegator
     @uatest = uatest
   end
   # rubocop:enable Metrics/LineLength, Metrics/ParameterLists
+
+  def github_repo_urls
+    @github_repo_urls ||= GitRepositoryLocation.github_urls_for_apps(@feature_review.app_names)
+  end
 
   def build_status
     build_results = builds.values

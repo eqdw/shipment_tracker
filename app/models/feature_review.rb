@@ -15,6 +15,10 @@ class FeatureReview
     query_hash.fetch('apps', {}).select { |_name, version| version.present? }
   end
 
+  def app_names
+    app_versions.keys
+  end
+
   def uat_url
     uat_uri.try(:to_s)
   end
