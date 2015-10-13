@@ -39,6 +39,6 @@ module ShipmentTracker
       .split(/\s*,\s*/)
     config.git_repository_cache_dir = Dir.tmpdir
     config.github_access_token = ENV['GITHUB_REPO_STATUS_ACCESS_TOKEN']
-    config.data_maintenance_mode = ENV.fetch('DATA_MAINTENANCE', File.exist?(Rails.root.join('.maintenance')))
+    config.data_maintenance_mode = ENV['DATA_MAINTENANCE'] == 'true'
   end
 end

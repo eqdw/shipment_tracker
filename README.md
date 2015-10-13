@@ -111,8 +111,8 @@ You'll also need a [GitHub Access Token][access tokens] for authentication with 
 When recreating snapshots, you may want to put the application in maintenance mode.
 This is to disable GitHub status notifications and to tell the user that some data may appear out of date.
 
-To set maintenance mode either set an environment variable called `DATA_MAINTENANCE` or create a file called
-`.maintenance` in the Rails root. Both options will require an application reboot before taking effect.
+To enable maintenance mode, set an environment variable called `DATA_MAINTENANCE=true`.
+The application will require a reboot before taking effect.
 
 ## License
 
