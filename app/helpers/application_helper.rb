@@ -1,6 +1,11 @@
 module ApplicationHelper
-  def title(title_text = nil, &block)
-    haml_tag('h1.title', title_text, &block)
+  def title(title_text = nil, options = {})
+    haml_tag('h1.title') do
+      haml_concat title_text
+
+      help_url = options.delete(:help_url)
+      help_link_icon(help_url) if help_url
+    end
   end
 
   def short_sha(full_sha)
@@ -24,9 +29,40 @@ module ApplicationHelper
     end
   end
 
+  def help_link_icon(url)
+    haml_tag(
+      'a.glyphicon.glyphicon-question-sign.pull-right',
+      href: url, target: '_blank', title: 'Help'
+    )
+  end
+
   # Convenience method for working with ActiveModel::Errors.
   def error_message(attribute, message)
     return message.to_sentence if attribute == :base
     "#{attribute}: #{message.to_sentence}"
+  end
+
+  def panel(heading:, klass: nil, **options, &block)
+    status_panel = options.key?(:status)
+    status = options.delete(:status)
+    help_url = options.delete(:help_url)
+    classes = status_panel ? panel_class(status) : 'panel-info'
+
+    haml_tag('.panel', class: [klass, classes]) do
+      haml_tag('.panel-heading') do
+        haml_tag('h2') do
+          icon(icon_class(status)) if status_panel
+          haml_concat heading
+          help_link_icon(help_url) if help_url
+        end
+      end
+      block.call
+    end
+  end
+
+  def icon(classes)
+    return unless classes
+    attributes = { class: classes, aria: { hidden: true } }
+    haml_tag('span.glyphicon', '', attributes)
   end
 end

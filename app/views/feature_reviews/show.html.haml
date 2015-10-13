@@ -1,10 +1,13 @@
-- title "Feature Review"
+
 - if @feature_review_with_statuses.time
-  .lead.time= "Projecting events up to #{@feature_review_with_statuses.time}"
+  .alert.alert-warning.time= "Feature review as of #{@feature_review_with_statuses.time}"
+
+- title 'Feature Review', help_url: 'https://github.com/FundingCircle/shipment_tracker/wiki/2.-PREPARE-A-FEATURE-FOR-REVIEW'
+%p Use the Feature Review page to ensure that the feature is in a ready state to be reviewed and signed off.
 
 .row
   .col-lg-12
-    - panel(heading: feature_status(@feature_review_with_statuses), status: @feature_review_with_statuses.approval_status, klass: 'feature-status') do
+    - panel(heading: feature_status(@feature_review_with_statuses), status: @feature_review_with_statuses.approval_status, klass: 'feature-status', help_url: 'https://github.com/FundingCircle/shipment_tracker/wiki/4.-PRODUCT-OWNER-REVIEWS-FEATURE') do
       - if @feature_review_with_statuses.tickets.empty?
         .panel-body No tickets found
       - else
@@ -81,7 +84,7 @@
 
 .row
   .col-lg-6
-    - panel(heading: 'QA Acceptance', klass: 'qa-submission', status: @feature_review_with_statuses.qa_status) do
+    - panel(heading: 'QA Acceptance', klass: 'qa-submission', status: @feature_review_with_statuses.qa_status, help_url: 'https://github.com/FundingCircle/shipment_tracker/wiki/3.-QA-REVIEWS-FEATURE') do
       .panel-body
         - if @feature_review_with_statuses.qa_submission
           %p
