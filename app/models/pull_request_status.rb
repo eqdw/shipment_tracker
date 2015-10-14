@@ -86,28 +86,28 @@ class PullRequestStatus
   def not_reviewed_status
     {
       status: 'failure',
-      description: 'There are no feature reviews for this commit',
+      description: 'No Feature Review found',
     }
   end
 
   def approved_status
     {
       status: 'success',
-      description: 'There are approved feature reviews for this commit',
+      description: 'Approved Feature Review found',
     }
   end
 
   def unapproved_status
     {
-      status: 'failure',
-      description: 'No feature reviews for this commit have been approved',
+      status: 'pending',
+      description: 'Awaiting approval for Feature Review',
     }
   end
 
   def reset_status
     {
       status: 'pending',
-      description: 'Checking for feature reviews',
+      description: 'Searching for Feature Review',
     }
   end
 end

@@ -49,7 +49,7 @@ RSpec.describe PullRequestStatus do
         expected_body = {
           context: 'shipment-tracker',
           target_url: 'https://shipment-tracker.co.uk/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
-          description: 'There are approved feature reviews for this commit',
+          description: 'Approved Feature Review found',
           state: 'success',
         }
         stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
@@ -96,7 +96,7 @@ RSpec.describe PullRequestStatus do
           expected_body = {
             context: 'shipment-tracker',
             target_url: search_url,
-            description: 'There are approved feature reviews for this commit',
+            description: 'Approved Feature Review found',
             state: 'success',
           }
           stub = stub_request(:post, expected_url).with(body: expected_body)
@@ -138,12 +138,12 @@ RSpec.describe PullRequestStatus do
             .and_return(search_url)
         end
 
-        it 'posts status "failure" with description and link to feature review search' do
+        it 'posts status "pending" with description and link to feature review search' do
           expected_body = {
             context: 'shipment-tracker',
             target_url: search_url,
-            description: 'No feature reviews for this commit have been approved',
-            state: 'failure',
+            description: 'Awaiting approval for Feature Review',
+            state: 'pending',
           }
           stub = stub_request(:post, expected_url).with(body: expected_body)
 
@@ -165,7 +165,7 @@ RSpec.describe PullRequestStatus do
         expected_body = {
           context: 'shipment-tracker',
           target_url: new_feature_review_url,
-          description: 'There are no feature reviews for this commit',
+          description: 'No Feature Review found',
           state: 'failure',
         }
         stub = stub_request(:post, expected_url).with(body: expected_body)
@@ -181,7 +181,7 @@ RSpec.describe PullRequestStatus do
       expected_body = {
         context: 'shipment-tracker',
         target_url: nil,
-        description: 'Checking for feature reviews',
+        description: 'Searching for Feature Review',
         state: 'pending',
       }
       stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
