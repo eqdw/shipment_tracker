@@ -57,9 +57,35 @@ RSpec.describe PullRequestStatus do
         pull_request_status.update(repo_url: repo_url, sha: sha)
         expect(stub).to have_been_requested
       end
+
+      context 'when the ticket references multiple feature reviews, but only one is for the commit' do
+        let(:ticket) {
+          Ticket.new(
+            versions: %w(abc123 def456 uvw),
+            paths: [
+              feature_review_path(app1: 'abc123', app2: 'xyz'),
+              feature_review_path(app1: 'def456'),
+            ],
+            status: 'Done',
+            approved_at: Time.current,
+          )
+        }
+        it 'posts status "success" with description and link to feature review' do
+          expected_body = {
+            context: 'shipment-tracker',
+            target_url: 'https://shipment-tracker.co.uk/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
+            description: 'Approved Feature Review found',
+            state: 'success',
+          }
+          stub = stub_request(:post, expected_url).with(body: expected_body)
+
+          pull_request_status.update(repo_url: repo_url, sha: sha)
+          expect(stub).to have_been_requested
+        end
+      end
     end
 
-    context 'when multiple feature reviews exist' do
+    context 'when multiple feature reviews exist for the same commit' do
       context 'when any feature reviews are approved' do
         let(:approved_ticket) {
           Ticket.new(
@@ -92,7 +118,7 @@ RSpec.describe PullRequestStatus do
             .and_return(search_url)
         end
 
-        it 'posts status "success" with description and link to feature review' do
+        it 'posts status "success" with description and to feature review search' do
           expected_body = {
             context: 'shipment-tracker',
             target_url: search_url,

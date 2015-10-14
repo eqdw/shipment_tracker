@@ -41,9 +41,11 @@ class PullRequestStatus
 
   attr_reader :token, :routes, :ticket_repository, :feature_review_factory
 
-  def decorated_feature_reviews(commit)
-    tickets = ticket_repository.tickets_for_versions([commit])
-    feature_reviews = feature_review_factory.create_from_tickets(tickets)
+  def decorated_feature_reviews(sha)
+    tickets = ticket_repository.tickets_for_versions([sha])
+    feature_reviews = feature_review_factory
+                      .create_from_tickets(tickets)
+                      .select { |fr| fr.versions.include?(sha) }
     feature_reviews.map do |feature_review|
       FeatureReviewWithStatuses.new(
         feature_review,
