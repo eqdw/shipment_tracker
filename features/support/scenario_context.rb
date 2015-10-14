@@ -85,8 +85,8 @@ module Support
         comment_body: "Here you go: #{url}",
         updated: time,
       )
-      @stubbed_requests['failure'] = stub_request(:post, %r{https://api.github.com/.*})
-                                     .with(body: /"state":"failure"/)
+      @stubbed_requests['pending'] = stub_request(:post, %r{https://api.github.com/.*})
+                                     .with(body: /"state":"pending"/)
                                      .and_return(status: 201)
       event = build(:jira_event, ticket_details)
       travel_to Time.zone.parse(time) do

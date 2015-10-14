@@ -41,9 +41,11 @@ class PullRequestStatus
 
   attr_reader :token, :routes, :ticket_repository, :feature_review_factory
 
-  def decorated_feature_reviews(commit)
-    tickets = ticket_repository.tickets_for_versions([commit])
-    feature_reviews = feature_review_factory.create_from_tickets(tickets)
+  def decorated_feature_reviews(sha)
+    tickets = ticket_repository.tickets_for_versions([sha])
+    feature_reviews = feature_review_factory
+                      .create_from_tickets(tickets)
+                      .select { |fr| fr.versions.include?(sha) }
     feature_reviews.map do |feature_review|
       FeatureReviewWithStatuses.new(
         feature_review,
@@ -86,28 +88,28 @@ class PullRequestStatus
   def not_reviewed_status
     {
       status: 'failure',
-      description: 'There are no feature reviews for this commit',
+      description: 'No Feature Review found',
     }
   end
 
   def approved_status
     {
       status: 'success',
-      description: 'There are approved feature reviews for this commit',
+      description: 'Approved Feature Review found',
     }
   end
 
   def unapproved_status
     {
-      status: 'failure',
-      description: 'No feature reviews for this commit have been approved',
+      status: 'pending',
+      description: 'Awaiting approval for Feature Review',
     }
   end
 
   def reset_status
     {
       status: 'pending',
-      description: 'Checking for feature reviews',
+      description: 'Searching for Feature Review',
     }
   end
 end
