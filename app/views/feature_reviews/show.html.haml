@@ -1,6 +1,8 @@
 
 - if @feature_review_with_statuses.time
-  .alert.alert-warning.time= "Feature review as of #{@feature_review_with_statuses.time}"
+  .alert.alert-warning.time
+    %span.glyphicon.glyphicon-time
+    As viewed at #{@feature_review_with_statuses.time}
 
 - title 'Feature Review', help_url: 'https://github.com/FundingCircle/shipment_tracker/wiki/2.-PREPARE-A-FEATURE-FOR-REVIEW'
 %p Use the Feature Review page to ensure that the feature is in a ready state to be reviewed and signed off.
