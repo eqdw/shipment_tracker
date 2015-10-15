@@ -8,22 +8,24 @@
     = csrf_meta_tags
   %body
 
-    .navbar.navbar-default
+    %nav.navbar.navbar-default
       .container
         .navbar-header
           %a.navbar-brand{href: '/'}
             Shipment Tracker
+          %a.navbar-brand{href: wiki_links(:home), target: '_blank', title: 'Help'}
+            %span.glyphicon.glyphicon-question-sign{aria: { hidden: true }}
         %ul.navbar-nav.nav
           %li
-            = link_to 'Prepare review', new_feature_reviews_path
+            = link_to 'Prepare', new_feature_reviews_path
           %li
-            = link_to 'Search reviews', search_feature_reviews_path
+            = link_to 'Search', search_feature_reviews_path
           %li
-            = link_to 'Repository locations', git_repository_locations_path
+            = link_to 'Repositories', git_repository_locations_path
           %li
             = link_to 'Releases', releases_path
           %li
-            = link_to 'API Tokens', tokens_path
+            = link_to 'Tokens', tokens_path
         %ul.nav.navbar-nav.navbar-right
           - if current_user.logged_in?
             %li

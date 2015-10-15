@@ -11,9 +11,17 @@ h1.title {
   margin-bottom: 32px;
 }
 
-.time {
-  margin-top: -10px;
-  font-size: 16px;
+a.glyphicon {
+  text-decoration: none;
+  color: buttonface;
+  &:hover {
+    color: #777;
+  }
+}
+
+h1 a.glyphicon {
+  padding-top: 5px;
+  font-size: 23px;
 }
 
 .panel {
@@ -24,10 +32,35 @@ h1.title {
     margin-bottom: 2px;
     margin-top: 2px;
     height: 26px;
+
+    a.glyphicon {
+      padding-top: 3px;
+    }
   }
 
   .glyphicon {
     padding-right: 8px;
+  }
+
+  .glyphicon.pull-right {
+    padding-right: 0px;
+  }
+}
+
+.time {
+  .glyphicon-time {
+    font-size: 12px;
+    padding-right: 8px;
+  }
+}
+
+.glyphicon {
+  font-size: 0.8em;
+}
+
+.navbar-brand {
+  .glyphicon-question-sign {
+    margin-left: -4px;
   }
 }
 
@@ -36,10 +69,6 @@ h1.title {
   .qa-reject {
     margin-bottom: 12px;
   }
-}
-
-.glyphicon {
-  font-size: 0.8em;
 }
 
 .icon-success {
