@@ -4,7 +4,8 @@ module ApplicationHelper
       haml_concat title_text
 
       help_url = options.delete(:help_url)
-      help_link_icon(help_url) if help_url
+      align_right = options.delete(:align_right)
+      help_link_icon(help_url, align_right) if help_url
     end
   end
 
@@ -29,9 +30,11 @@ module ApplicationHelper
     end
   end
 
-  def help_link_icon(url)
+  def help_link_icon(url, align_right)
+    classes = 'a.glyphicon.glyphicon-question-sign'
+    classes << '.pull-right' if align_right
     haml_tag(
-      'a.glyphicon.glyphicon-question-sign.pull-right',
+      classes,
       href: url, target: '_blank', title: 'Help'
     )
   end
@@ -46,6 +49,7 @@ module ApplicationHelper
     status_panel = options.key?(:status)
     status = options.delete(:status)
     help_url = options.delete(:help_url)
+    align_right = options.delete(:align_right)
     classes = status_panel ? panel_class(status) : 'panel-info'
 
     haml_tag('.panel', class: [klass, classes]) do
@@ -53,7 +57,7 @@ module ApplicationHelper
         haml_tag('h2') do
           icon(icon_class(status)) if status_panel
           haml_concat heading
-          help_link_icon(help_url) if help_url
+          help_link_icon(help_url, align_right) if help_url
         end
       end
       block.call

@@ -3,9 +3,6 @@
 %p
   Specify the software versions for all the affected applications, then specify the UAT URL if you have or
   will deploy the changes to a UAT.
-%p
-  When the Feature Review is prepared, offer it to your Product Owner by copying the resulting URL and pasting
-  it as comment in the relevant JIRA ticket(s).
 
 = form_for(@feature_review_form, url: feature_reviews_path, html: { class: 'form-horizontal' }) do |f|
   %ul.list-group
