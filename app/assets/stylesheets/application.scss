@@ -54,15 +54,21 @@ h1 a.glyphicon {
   }
 }
 
+.glyphicon {
+  font-size: 0.8em;
+}
+
+.navbar-brand {
+  .glyphicon-question-sign {
+    margin-left: -4px;
+  }
+}
+
 .qa-submission {
   .qa-accept,
   .qa-reject {
     margin-bottom: 12px;
   }
-}
-
-.glyphicon {
-  font-size: 0.8em;
 }
 
 .icon-success {

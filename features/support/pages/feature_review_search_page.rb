@@ -9,7 +9,7 @@ module Pages
       page.visit url_helpers.search_feature_reviews_path
       page.select app, from: 'Application'
       page.fill_in('version', with: version)
-      page.click_link_or_button('Search')
+      page.click_button('Search')
     end
 
     def links
