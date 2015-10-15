@@ -60,8 +60,10 @@
 .row
   .col-lg-6
     - panel(heading: 'UAT Environment', klass: 'deploys', status: @feature_review_with_statuses.deploy_status) do
-      - if @feature_review_with_statuses.deploys.empty?
-        .panel-body No deploys found
+      - if @feature_review_with_statuses.uat_url.blank?
+        .panel-body Please specify a UAT Environment
+      - elsif @feature_review_with_statuses.deploys.empty?
+        .panel-body Could not find any deploys to #{@feature_review_with_statuses.uat_url}
       - else
         - table(headers: %w(Correct App Version)) do
           - @feature_review_with_statuses.deploys.each do |deploy|
