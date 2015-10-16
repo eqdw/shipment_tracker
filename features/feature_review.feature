@@ -3,16 +3,13 @@ Feature: Feature Review
   I want to create a Feature Review
   In order for a Product Owner to review the feature I worked on
 
-Background:
-  Given an application called "frontend"
-  And an application called "backend"
-  And an application called "mobile"
-  And an application called "irrelevant"
-
 @logged_in
 Scenario: Preparing a Feature Review
+  Given an application called "frontend"
+  And an application called "backend"
+
   # 2014-10-04
-  Given a commit "#abc" by "Alice" is created at "2014-10-04 11:00:00" for app "frontend"
+  And a commit "#abc" by "Alice" is created at "2014-10-04 11:00:00" for app "frontend"
   And a commit "#def" by "Bob" is created at "2014-10-04 12:30:00" for app "backend"
 
   # Today
@@ -29,8 +26,11 @@ Scenario: Preparing a Feature Review
 
 @logged_in
 Scenario: Viewing User Acceptance Tests results on a Feature review
+  Given an application called "frontend"
+  And an application called "backend"
+
   # 2014-10-04
-  Given a commit "#abc" by "Alice" is created at "2014-10-04 09:00:00" for app "frontend"
+  And a commit "#abc" by "Alice" is created at "2014-10-04 09:00:00" for app "frontend"
   And commit "#abc" of "frontend" is deployed by "Alice" to server "uat.fundingcircle.com" at "2014-10-04 12:00:00"
 
   # 2014-10-05
@@ -53,9 +53,14 @@ Scenario: Viewing User Acceptance Tests results on a Feature review
   And I should see the results of the User Acceptance Tests with heading "success" and version "abc123"
 
 @logged_in
-Scenario: Viewing a feature review
+Scenario: Viewing a Feature Review
+  Given an application called "frontend"
+  And an application called "backend"
+  And an application called "mobile"
+  And an application called "irrelevant"
+
   # 2014-10-04
-  Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:01:17"
+  And a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:01:17"
 
   # 2014-10-05
   And a commit "#abc" by "Alice" is created at "2014-10-05 11:01:00" for app "frontend"
@@ -106,8 +111,10 @@ Scenario: Viewing a feature review
     | backend  | #old    | no      |
 
 @logged_in
-Scenario: Viewing a feature review as at a specified time
-  Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
+Scenario: Viewing a Feature Review as at a specified time
+  Given an application called "frontend"
+
+  And a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
   And a commit "#abc" by "Alice" is created at "2014-10-04 13:05:00" for app "frontend"
   And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
     | app_name | version |
@@ -123,8 +130,10 @@ Scenario: Viewing a feature review as at a specified time
   And I should see the time "2014-10-04 14:00:00" for the Feature Review
 
   @logged_in
-  Scenario: Viewing an approved feature review after regenerating snapshots
-    Given a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
+  Scenario: Viewing an approved Feature Review after regenerating snapshots
+    Given an application called "frontend"
+
+    And a ticket "JIRA-123" with summary "Urgent ticket" is started at "2014-10-04 13:00:00"
     And a commit "#abc" by "Alice" is created at "2014-10-04 13:05:00" for app "frontend"
     And developer prepares review known as "FR_123" for UAT "uat.fundingcircle.com" with apps
       | app_name | version |
@@ -148,7 +157,10 @@ Scenario: Viewing a feature review as at a specified time
 
 
 Scenario: QA rejects feature
-  Given I am logged in as "foo@bar.com"
+  Given an application called "frontend"
+  And an application called "backend"
+
+  And I am logged in as "foo@bar.com"
   And developer prepares review known as "FR_qa_rejects" for UAT "uat.fundingcircle.com" with apps
     | app_name | version |
     | frontend | abc     |
