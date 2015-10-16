@@ -1,5 +1,7 @@
-Feature:
-  Developer prepares a Feature Review so that it can be attached to a ticket for a PO to use in acceptance.
+Feature: Feature Review
+  As a Developer
+  I want to create a Feature Review
+  In order for a Product Owner to review the feature I worked on
 
 Background:
   Given an application called "frontend"
