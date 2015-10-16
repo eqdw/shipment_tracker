@@ -44,15 +44,7 @@ module Repositories
 
       feature_reviews = feature_review_factory.create_from_text(event.comment)
 
-      new_ticket = last_ticket.merge(
-        'key' => event.key,
-        'summary' => event.summary,
-        'status' => event.status,
-        'paths' => merge_ticket_paths(last_ticket, feature_reviews),
-        'event_created_at' => event.created_at,
-        'versions' => merge_ticket_versions(last_ticket, feature_reviews),
-        'approved_at' => merge_approved_at(last_ticket, event),
-      )
+      new_ticket = build_ticket(last_ticket, event, feature_reviews)
 
       store.create!(new_ticket)
       update_pull_requests_for(new_ticket) if update_pull_request?(event, feature_reviews)
@@ -65,6 +57,18 @@ module Repositories
     def update_pull_request?(event, feature_reviews)
       return false if Rails.configuration.data_maintenance_mode
       event.approval? || event.unapproval? || feature_reviews.present?
+    end
+
+    def build_ticket(last_ticket, event, feature_reviews)
+      last_ticket.merge(
+        'key' => event.key,
+        'summary' => event.summary,
+        'status' => event.status,
+        'paths' => merge_ticket_paths(last_ticket, feature_reviews),
+        'event_created_at' => event.created_at,
+        'versions' => merge_ticket_versions(last_ticket, feature_reviews),
+        'approved_at' => merge_approved_at(last_ticket, event),
+      )
     end
 
     def merge_ticket_paths(ticket, feature_reviews)
