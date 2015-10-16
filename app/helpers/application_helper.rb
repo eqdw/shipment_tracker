@@ -7,7 +7,7 @@ module ApplicationHelper
       qa: 'https://github.com/FundingCircle/shipment_tracker/wiki/3.-QA-REVIEWS-FEATURE',
       releases: 'https://github.com/FundingCircle/shipment_tracker/wiki/5.-MERGING-AND-DEPLOYING-A-FEATURE',
       approve: 'https://github.com/FundingCircle/shipment_tracker/wiki/4.-PRODUCT-OWNER-REVIEWS-FEATURE',
-
+      adding_tickets: 'https://github.com/FundingCircle/shipment_tracker/wiki/1.-CREATING-A-FEATURE-REVIEW#adding-jira-tickets-to-the-feature-review',
     }[key.to_sym]
   end
 
