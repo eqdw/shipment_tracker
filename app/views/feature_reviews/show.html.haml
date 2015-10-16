@@ -11,7 +11,9 @@
   .col-lg-12
     - panel(heading: feature_status(@feature_review_with_statuses), status: @feature_review_with_statuses.approval_status, klass: 'feature-status', help_url: wiki_links(:approve), align_right: true) do
       - if @feature_review_with_statuses.tickets.empty?
-        .panel-body No tickets found
+        .panel-body
+          No tickets found
+          - help_link_icon(wiki_links(:adding_tickets), false)
       - else
         - table(headers: %w(Ticket Summary Status)) do
           - @feature_review_with_statuses.tickets.each do |ticket|
