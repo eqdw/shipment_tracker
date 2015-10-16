@@ -44,9 +44,13 @@ module Factories
     end
 
     def parse_uri(uri)
-      URI.parse(uri)
+      URI.parse(clean_uri(uri))
     rescue URI::InvalidURIError
       nil
+    end
+
+    def clean_uri(uri)
+      uri.chomp(']') # when parsing text with Jira markup we sometimes find a trailing ']'
     end
   end
 end

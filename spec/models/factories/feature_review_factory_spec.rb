@@ -16,19 +16,32 @@ RSpec.describe Factories::FeatureReviewFactory do
       EOS
     }
 
+    let(:feature_review1) {
+      FeatureReview.new(
+        path: '/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b',
+        versions: %w(a b),
+      )
+    }
+
+    let(:feature_review2) {
+      FeatureReview.new(
+        path: '/feature_reviews?apps%5Bapp1%5D=a',
+        versions: %w(a),
+      )
+    }
+
     subject(:feature_reviews) { factory.create_from_text(text) }
 
     it 'returns an array of Feature Reviews for each URL in the given text' do
-      expect(feature_reviews).to match_array([
-        FeatureReview.new(
-          path: '/feature_reviews?apps%5Bapp1%5D=a&apps%5Bapp2%5D=b',
-          versions: %w(a b),
-        ),
-        FeatureReview.new(
-          path: '/feature_reviews?apps%5Bapp1%5D=a',
-          versions: %w(a),
-        ),
-      ])
+      expect(feature_reviews).to match_array([feature_review1, feature_review2])
+    end
+
+    context 'when the URL has a link with Jira markup' do
+      let(:text) { "please review [here|#{url1}]" }
+
+      it 'parses the markup and returns a Feature Review' do
+        expect(feature_reviews).to match_array([feature_review1])
+      end
     end
 
     context 'when a Feature Review URL contains a non-whitelisted query param' do
@@ -54,7 +67,7 @@ RSpec.describe Factories::FeatureReviewFactory do
     end
 
     context 'when a URL is unparseable' do
-      let(:text) { 'unparseable http://foo.io/feature_reviews#bad]' }
+      let(:text) { 'unparseable http://foo.io/feature_reviews#bad[' }
 
       it 'ignores it' do
         expect(feature_reviews).to be_empty
