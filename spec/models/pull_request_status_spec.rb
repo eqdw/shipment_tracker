@@ -3,7 +3,7 @@ require 'pull_request_status'
 require 'feature_review_with_statuses'
 
 RSpec.describe PullRequestStatus do
-  subject(:pull_request_status) { described_class.new(routes: routes, token: token) }
+  subject(:pull_request_status) { described_class.new(token: token) }
 
   let(:token) { 'a-token' }
   let(:routes) { double(:routes) }
@@ -41,14 +41,13 @@ RSpec.describe PullRequestStatus do
       let(:root_url) { 'https://shipment-tracker.co.uk/' }
 
       before do
-        allow(routes).to receive(:root_url).and_return(root_url)
         allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([ticket])
       end
 
       it 'posts status "success" with description and link to feature review' do
         expected_body = {
           context: 'shipment-tracker',
-          target_url: 'https://shipment-tracker.co.uk/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
+          target_url: 'https://localhost/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
           description: 'Approved Feature Review found',
           state: 'success',
         }
@@ -73,7 +72,7 @@ RSpec.describe PullRequestStatus do
         it 'posts status "success" with description and link to feature review' do
           expected_body = {
             context: 'shipment-tracker',
-            target_url: 'https://shipment-tracker.co.uk/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
+            target_url: 'https://localhost/feature_reviews?apps%5Bapp1%5D=abc123&apps%5Bapp2%5D=xyz',
             description: 'Approved Feature Review found',
             state: 'success',
           }
@@ -107,15 +106,11 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://shipment-tracker.co.uk/search' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
 
         before do
           allow(ticket_repository)
             .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
-          allow(routes)
-            .to receive(:search_feature_reviews_url)
-            .with(protocol: 'https', application: 'app_name', versions: sha)
-            .and_return(search_url)
         end
 
         it 'posts status "success" with description and to feature review search' do
@@ -153,15 +148,11 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://shipment-tracker.co.uk/search' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
 
         before do
           allow(ticket_repository)
             .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
-          allow(routes)
-            .to receive(:search_feature_reviews_url)
-            .with(protocol: 'https', application: 'app_name', versions: sha)
-            .and_return(search_url)
         end
 
         it 'posts status "pending" with description and link to feature review search' do
@@ -180,17 +171,16 @@ RSpec.describe PullRequestStatus do
     end
 
     context 'when no feature review exists' do
-      let(:new_feature_review_url) { 'https://shipment-tracker.co.uk/new' }
+      let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123' }
 
       before do
         allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
-        allow(routes).to receive(:new_feature_reviews_url).and_return(new_feature_review_url)
       end
 
-      it 'posts status "failure" with description and link to prepare a feature review' do
+      it 'posts status "failure" with description and link to view a feature review' do
         expected_body = {
           context: 'shipment-tracker',
-          target_url: new_feature_review_url,
+          target_url: feature_review_url,
           description: 'No Feature Review found',
           state: 'failure',
         }
