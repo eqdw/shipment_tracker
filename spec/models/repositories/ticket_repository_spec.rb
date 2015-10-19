@@ -208,23 +208,17 @@ RSpec.describe Repositories::TicketRepository do
       let(:path2) { feature_review_path(app2: 'two') }
 
       subject(:repository1) { Repositories::TicketRepository.new }
-      subject(:repository2) { Repositories::TicketRepository.new }
 
       it 'projects the ticket referenced in the JIRA comments for each repository' do
         [
           build(:jira_event, key: 'JIRA-1', comment_body: "Review #{url1}"),
-          build(:jira_event, key: 'JIRA-1', comment_body: "Review again #{url2}"),
+          build(:jira_event, key: 'JIRA-1', comment_body: "Review again [FR link|#{url2}] please."),
         ].each do |event|
           repository1.apply(event)
-          repository2.apply(event)
         end
 
         expect(
           repository1.tickets_for_path(path1),
-        ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2], versions: %w(one two))])
-
-        expect(
-          repository2.tickets_for_path(path2),
         ).to eq([Ticket.new(key: 'JIRA-1', paths: [path1, path2], versions: %w(one two))])
       end
     end
