@@ -181,7 +181,7 @@ RSpec.describe PullRequestStatus do
         expected_body = {
           context: 'shipment-tracker',
           target_url: feature_review_url,
-          description: 'No Feature Review found',
+          description: "No Feature Review found. Click 'Details' to create one.",
           state: 'failure',
         }
         stub = stub_request(:post, expected_url).with(body: expected_body)

@@ -87,7 +87,7 @@ class PullRequestStatus
   def not_reviewed_status
     {
       status: 'failure',
-      description: 'No Feature Review found',
+      description: "No Feature Review found. Click 'Details' to create one.",
     }
   end
 
