@@ -9,8 +9,7 @@ module Pages
       page.visit url_helpers.git_repository_locations_path
     end
 
-    def fill_in(name:, uri:)
-      page.fill_in 'Name', with: name
+    def fill_in(uri:)
       page.fill_in 'URI', with: uri
       page.click_link_or_button('Create Git repository location')
       self

@@ -2,10 +2,6 @@
 
 = form_for(@new_git_repository_location, class: 'form-horizontal') do |form|
   .form-group.row
-    = form.label(:name, class: 'col-md-1 control-label')
-    .col-md-4
-      = form.text_field(:name, class: 'form-control')
-  .form-group.row
     = form.label(:uri, 'URI', class: 'col-md-1 control-label')
     .col-md-4
       = form.text_field(:uri, class: 'form-control')

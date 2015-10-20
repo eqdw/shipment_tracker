@@ -18,6 +18,6 @@ class GitRepositoryLocationsController < ApplicationController
   private
 
   def git_repository_location_params
-    params.require(:git_repository_location).permit(:name, :uri)
+    params.require(:git_repository_location).permit(:uri)
   end
 end

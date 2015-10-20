@@ -5,10 +5,9 @@ require 'repositories/ticket_repository'
 require 'factories/feature_review_factory'
 
 class PullRequestStatus
-  def initialize(token: Rails.application.config.github_access_token,
-                 routes: Rails.application.routes.url_helpers)
+  def initialize(token: Rails.application.config.github_access_token)
     @token = token
-    @routes = routes
+    @routes = Rails.application.routes.url_helpers
     @ticket_repository = Repositories::TicketRepository.new
     @feature_review_factory = Factories::FeatureReviewFactory.new
   end
@@ -65,13 +64,13 @@ class PullRequestStatus
 
   def target_url_for(repo_url:, sha:, feature_reviews:)
     url_opts = { protocol: 'https' }
+    repo_name = repo_url.split('/').last
     if feature_reviews.empty?
-      routes.new_feature_reviews_url(url_opts)
+      routes.feature_reviews_url(url_opts.merge(apps: { repo_name => sha }))
     elsif feature_reviews.length == 1
       routes.root_url(url_opts).chomp('/') + feature_reviews.first.path
     else
-      repo_name = repo_url.split('/').last
-      routes.search_feature_reviews_url(url_opts.merge(application: repo_name, versions: sha))
+      routes.search_feature_reviews_url(url_opts.merge(application: repo_name, version: sha))
     end
   end
 
@@ -88,7 +87,7 @@ class PullRequestStatus
   def not_reviewed_status
     {
       status: 'failure',
-      description: 'No Feature Review found',
+      description: "No Feature Review found. Click 'Details' to create one.",
     }
   end
 
