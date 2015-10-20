@@ -1,8 +1,9 @@
-require 'octokit'
 require 'active_support/json'
+require 'octokit'
+
+require 'factories/feature_review_factory'
 require 'feature_review_with_statuses'
 require 'repositories/ticket_repository'
-require 'factories/feature_review_factory'
 
 class PullRequestStatus
   def initialize(token: Rails.application.config.github_access_token)
@@ -15,25 +16,30 @@ class PullRequestStatus
   def update(repo_url:, sha:)
     repo_url = repo_url.chomp('.git')
     feature_reviews = decorated_feature_reviews(sha)
-    status, description = *status_for(feature_reviews).values_at(:status, :description)
+    status, description = status_for(feature_reviews).values_at(:status, :description)
+
     target_url = target_url_for(
       repo_url: repo_url,
       sha: sha,
-      feature_reviews: feature_reviews)
+      feature_reviews: feature_reviews,
+    )
+
     publish_status(
       repo_url: repo_url,
       sha: sha,
       status: status,
       description: description,
-      target_url: target_url)
+      target_url: target_url,
+    )
   end
 
   def reset(repo_url:, sha:)
     publish_status(
       repo_url: repo_url,
       sha: sha,
-      status: reset_status[:status],
-      description: reset_status[:description])
+      status: searching_status[:status],
+      description: searching_status[:description],
+    )
   end
 
   private
@@ -76,15 +82,15 @@ class PullRequestStatus
 
   def status_for(feature_reviews)
     if feature_reviews.empty?
-      not_reviewed_status
+      not_found_status
     elsif feature_reviews.any?(&:approved?)
       approved_status
     else
-      unapproved_status
+      not_approved_status
     end
   end
 
-  def not_reviewed_status
+  def not_found_status
     {
       status: 'failure',
       description: "No Feature Review found. Click 'Details' to create one.",
@@ -98,14 +104,14 @@ class PullRequestStatus
     }
   end
 
-  def unapproved_status
+  def not_approved_status
     {
       status: 'pending',
       description: 'Awaiting approval for Feature Review',
     }
   end
 
-  def reset_status
+  def searching_status
     {
       status: 'pending',
       description: 'Searching for Feature Review',

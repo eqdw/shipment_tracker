@@ -10,8 +10,8 @@ RSpec.describe PullRequestStatus do
 
   let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:sha) { 'abc123' }
-  let(:repo_url) { 'ssh://github.com/some/app_name' }
-  let(:expected_url) { 'https://api.github.com/repos/some/app_name/statuses/abc123' }
+  let(:repo_url) { 'ssh://github.com/some/repo.git' }
+  let(:expected_url) { 'https://api.github.com/repos/some/repo/statuses/abc123' }
 
   let(:expected_headers) {
     {
@@ -106,7 +106,7 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=repo&version=abc123' }
 
         before do
           allow(ticket_repository)
@@ -148,7 +148,7 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=repo&version=abc123' }
 
         before do
           allow(ticket_repository)
@@ -171,7 +171,7 @@ RSpec.describe PullRequestStatus do
     end
 
     context 'when no feature review exists' do
-      let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123' }
+      let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Brepo%5D=abc123' }
 
       before do
         allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
