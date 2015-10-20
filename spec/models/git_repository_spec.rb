@@ -116,21 +116,7 @@ RSpec.describe GitRepository do
 
       subject { repo.recent_commits_on_main_branch(3).map(&:id) }
 
-      context 'when there is a remote production branch' do
-        let(:branches) {
-          {
-            'origin/production' => double('branch', target_id: version('A')),
-            'origin/master' => double('branch'),
-            'master' => double('branch'),
-          }
-        }
-
-        it 'returns commits from origin/production' do
-          is_expected.to eq([version('A')])
-        end
-      end
-
-      context 'when there is a remote master branch, but no remote production' do
+      context 'when there is a remote master branch' do
         let(:branches) {
           {
             'origin/master' => double('branch', target_id: version('A')),
@@ -143,7 +129,7 @@ RSpec.describe GitRepository do
         end
       end
 
-      context 'when there are no remote branches called production or master' do
+      context 'when there is no remote master branch' do
         let(:branches) {
           {
             'origin/other' => double('branch'),

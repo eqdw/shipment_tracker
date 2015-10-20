@@ -157,9 +157,7 @@ class GitRepository
   end
 
   def main_branch
-    rugged_repository.branches['origin/production'] ||
-      rugged_repository.branches['origin/master'] ||
-      rugged_repository.branches['master']
+    rugged_repository.branches['origin/master'] || rugged_repository.branches['master']
   end
 
   def lookup(sha)
