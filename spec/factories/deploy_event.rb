@@ -1,3 +1,5 @@
+require 'events/deploy_event'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :deploy_event, class: Events::DeployEvent do

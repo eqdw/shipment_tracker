@@ -1,3 +1,5 @@
+require 'events/uat_event'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :uat_event, class: Events::UatEvent do

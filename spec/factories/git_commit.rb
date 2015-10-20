@@ -1,3 +1,5 @@
+require 'git_commit'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :git_commit do

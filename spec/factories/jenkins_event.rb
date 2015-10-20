@@ -1,3 +1,5 @@
+require 'events/jenkins_event'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :jenkins_event, class: Events::JenkinsEvent do
