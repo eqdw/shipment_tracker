@@ -2,8 +2,8 @@ Given 'I am on the new repository location form' do
   git_repository_location_page.visit
 end
 
-When 'I enter "$name" and "$uri"' do |name, uri|
-  git_repository_location_page.fill_in(name: name, uri: uri)
+When 'I enter a valid uri "$uri"' do |uri|
+  git_repository_location_page.fill_in(uri: uri)
 end
 
 Then 'I should see the repository locations:' do |table|

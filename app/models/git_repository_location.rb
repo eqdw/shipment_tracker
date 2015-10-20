@@ -3,8 +3,10 @@ require 'octokit'
 class GitRepositoryLocation < ActiveRecord::Base
   before_validation on: :create do
     self.uri = convert_remote_uri(uri)
+    self.name = extract_name(uri)
   end
 
+  validates :name, uniqueness: true
   validate :must_have_valid_uri
 
   def must_have_valid_uri
@@ -58,5 +60,9 @@ class GitRepositoryLocation < ActiveRecord::Base
     "ssh://git@#{domain}/#{path}"
   rescue NoMethodError
     remote_url
+  end
+
+  def extract_name(uri)
+    uri.chomp('.git').split('/').last
   end
 end

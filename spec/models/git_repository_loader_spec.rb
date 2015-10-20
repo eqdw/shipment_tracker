@@ -10,7 +10,8 @@ RSpec.describe GitRepositoryLoader do
   describe '#load' do
     let(:test_git_repo) { Support::GitTestRepository.new }
     let(:repo_uri) { "file://#{test_git_repo.dir}" }
-    let!(:git_repository_location) { GitRepositoryLocation.create(name: 'some_repo', uri: repo_uri) }
+    let(:repo_name) { test_git_repo.dir.split('/').last }
+    let!(:git_repository_location) { GitRepositoryLocation.create(uri: repo_uri) }
 
     before do
       test_git_repo.create_commit
@@ -18,7 +19,7 @@ RSpec.describe GitRepositoryLoader do
     end
 
     it 'returns a GitRepository' do
-      expect(git_repository_loader.load('some_repo')).to be_a(GitRepository)
+      expect(git_repository_loader.load(repo_name)).to be_a(GitRepository)
     end
 
     context 'when the repository location does not exist' do
@@ -33,13 +34,13 @@ RSpec.describe GitRepositoryLoader do
       it 'should clone it' do
         expect(Rugged::Repository).to receive(:clone_at).once
 
-        git_repository_loader.load('some_repo')
+        git_repository_loader.load(repo_name)
       end
     end
 
     context 'when the repository has already been cloned' do
       before do
-        git_repository_loader.load('some_repo')
+        git_repository_loader.load(repo_name)
       end
 
       context 'when the local copy is up-to-date' do
@@ -47,7 +48,7 @@ RSpec.describe GitRepositoryLoader do
           expect(Rugged::Repository).to_not receive(:clone_at)
           expect_any_instance_of(Rugged::Repository).to_not receive(:fetch)
 
-          git_repository_loader.load('some_repo')
+          git_repository_loader.load(repo_name)
         end
       end
 
@@ -60,7 +61,7 @@ RSpec.describe GitRepositoryLoader do
           expect(Rugged::Repository).to_not receive(:clone_at)
           expect_any_instance_of(Rugged::Repository).to receive(:fetch).once
 
-          git_repository_loader.load('some_repo')
+          git_repository_loader.load(repo_name)
         end
       end
 
@@ -72,14 +73,14 @@ RSpec.describe GitRepositoryLoader do
         it 'clones the repo instead of fetching it to continue the update' do
           expect(Rugged::Repository).to receive(:clone_at).once
 
-          git_repository_loader.load('some_repo')
+          git_repository_loader.load(repo_name)
         end
       end
     end
 
     context 'when the destination directory is not empty and is not a git repo' do
       it 'removes the destination directory before cloning' do
-        git_repository = git_repository_loader.load('some_repo')
+        git_repository = git_repository_loader.load(repo_name)
 
         # Screw up the git repository
         path = git_repository.path
@@ -88,12 +89,12 @@ RSpec.describe GitRepositoryLoader do
         File.open(File.join(path, 'foo.txt'), 'w') do |f| f.write('foo') end
 
         # Reload the git repository
-        expect { git_repository_loader.load('some_repo') }.not_to raise_error
+        expect { git_repository_loader.load(repo_name) }.not_to raise_error
       end
     end
 
     context 'with an HTTP URI' do
-      let(:repo_uri) { 'http://example.com/foo.git' }
+      let(:repo_uri) { 'http://example.com/some_repo.git' }
 
       it 'should not use credentials' do
         expect(Rugged::Repository).to receive(:clone_at) do |_uri, _dir, options|

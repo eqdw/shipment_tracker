@@ -3,33 +3,40 @@ require 'rails_helper'
 RSpec.describe GitRepositoryLocation do
   describe 'before validations' do
     it 'converts SSH clone URIs to SSH URIs' do
-      location = GitRepositoryLocation.create(name: 'repo', uri: 'git@github.com:user/repo.git')
+      location = GitRepositoryLocation.create(uri: 'git@github.com:user/repo.git')
       expect(location.uri).to eq('ssh://git@github.com/user/repo.git')
     end
 
     it 'returns the original URI if it can not convert it' do
       incorrect_uri = 'git@github.com/user/repo.git'
-      location = GitRepositoryLocation.create(name: 'repo', uri: incorrect_uri)
+      location = GitRepositoryLocation.create(uri: incorrect_uri)
       expect(location.uri).to eq(incorrect_uri)
     end
   end
 
   describe 'validations' do
     it 'must have a valid uri' do
-      ssh_url = GitRepositoryLocation.new(name: 'repo', uri: 'ssh://git@github.com/user/repo.git')
-      https_url = GitRepositoryLocation.new(name: 'repo', uri: 'https://github.com/FundingCircle/shipment_tracker.git')
-      ssh_clone_url = GitRepositoryLocation.new(name: 'repo', uri: 'git@github.com:user/repo.git')
-      invalid_url = GitRepositoryLocation.new(name: 'repo', uri: 'github.com\user\repo.git')
+      ssh_url = GitRepositoryLocation.new(uri: 'ssh://git@github.com/user/repo.git')
+      https_url = GitRepositoryLocation.new(uri: 'https://github.com/FundingCircle/shipment_tracker.git')
+      ssh_clone_url = GitRepositoryLocation.new(uri: 'git@github.com:user/repo.git')
+      invalid_url = GitRepositoryLocation.new(uri: 'github.com\user\repo.git')
 
       expect(ssh_url).to be_valid
       expect(https_url).to be_valid
       expect(ssh_clone_url).to be_valid
       expect(invalid_url).not_to be_valid
     end
+
+    it 'must have a unique name' do
+      GitRepositoryLocation.create(uri: 'https://github.com/FundingCircle/shipment_tracker.git')
+      not_valid = GitRepositoryLocation.new(uri: 'https://github.com/OtherOrg/shipment_tracker.git')
+      expect(not_valid).to_not be_valid
+      expect(not_valid.errors[:name]).to eq(['has already been taken'])
+    end
   end
 
   describe '.uris' do
-    let(:uris) { %w(ssh://git@github.com/some/some-repo.git ssh://git@github.com/some/some-repo.git) }
+    let(:uris) { %w(ssh://git@github.com/some/some-repo.git ssh://git@github.com/some/other-repo.git) }
     it 'returns an array of uris' do
       uris.each do |uri|
         GitRepositoryLocation.create(uri: uri)
@@ -45,7 +52,7 @@ RSpec.describe GitRepositoryLocation do
 
     context 'when a repository location exists with the app name' do
       before do
-        GitRepositoryLocation.create(name: 'repo', uri: uri)
+        GitRepositoryLocation.create(uri: uri)
       end
 
       [
@@ -105,22 +112,22 @@ RSpec.describe GitRepositoryLocation do
           "after": "def456",
           "repository": {
             "name": "repo",
-            "full_name": "some/repo",
-            "git_url": "git://github.com/some/repo.git",
-            "ssh_url": "git@github.com:some/repo.git",
-            "clone_url": "https://github.com/some/repo.git"
+            "full_name": "some/some_repo",
+            "git_url": "git://github.com/some/some_repo.git",
+            "ssh_url": "git@github.com:some/some_repo.git",
+            "clone_url": "https://github.com/some/some_repo.git"
           }
         }
       END
     }
 
     before do
-      GitRepositoryLocation.create(name: 'some_other_repo', uri: 'ssh://git@github.com/some/other-repo.git')
+      GitRepositoryLocation.create(uri: 'ssh://git@github.com/some/some_other_repo.git')
     end
 
     context 'when the GitRepositoryLocation has a regular URI' do
       before do
-        GitRepositoryLocation.create(name: 'some_repo', uri: 'ssh://git@github.com/some/repo.git')
+        GitRepositoryLocation.create(uri: 'ssh://git@github.com/some/some_repo.git')
       end
 
       it 'updates remote_head for the correct GitRepositoryLocation' do
