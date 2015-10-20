@@ -193,6 +193,8 @@ RSpec.describe PullRequestStatus do
   end
 
   describe '#reset' do
+    let(:html_url) { 'http://github.com/some/repo' }
+
     it 'posts status "pending" with description and no link' do
       expected_body = {
         context: 'shipment-tracker',
@@ -202,7 +204,7 @@ RSpec.describe PullRequestStatus do
       }
       stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
 
-      pull_request_status.reset(repo_url: repo_url, sha: sha)
+      pull_request_status.reset(repo_url: html_url, sha: sha)
       expect(stub).to have_been_requested
     end
   end
