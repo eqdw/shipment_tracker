@@ -8,6 +8,7 @@ class Release
     attribute :production_deploy_time, Time
     attribute :subject, String
     attribute :feature_reviews, Array
+    attribute :deployed_by, String
   end
 
   def version

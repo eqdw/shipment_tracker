@@ -30,7 +30,9 @@ RSpec.describe Queries::ReleasesQuery do
   let(:deploy_time) { time - 1.hour }
   let(:approval_time) { time - 2.hours }
 
-  let(:deploys) { [Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time)] }
+  let(:deploys) { [
+    Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time, deployed_by: 'auser'),
+  ] }
   let(:approved_ticket) {
     Ticket.new(
       versions: %w(xyz uvw),
@@ -68,6 +70,7 @@ RSpec.describe Queries::ReleasesQuery do
       expect(pending_releases.map(&:version)).to eq(['abc'])
       expect(pending_releases.map(&:subject)).to eq(['new commit on master'])
       expect(pending_releases.map(&:production_deploy_time)).to eq([nil])
+      expect(pending_releases.map(&:deployed_by)).to eq([nil])
       expect(pending_releases.map(&:approved?)).to eq([false])
       expect(pending_releases.map(&:feature_reviews)).to eq([[not_approved_feature_review]])
       expect(pending_releases.map(&:feature_reviews).flatten.first.approved?).to eq(false)
@@ -85,6 +88,7 @@ RSpec.describe Queries::ReleasesQuery do
       expect(deployed_releases.map(&:version)).to eq(%w(def ghi))
       expect(deployed_releases.map(&:subject)).to eq(['merge commit', 'first commit on master branch'])
       expect(deployed_releases.map(&:production_deploy_time)).to eq([deploy_time, nil])
+      expect(deployed_releases.map(&:deployed_by)).to eq(['auser', nil])
       expect(deployed_releases.map(&:approved?)).to eq([true, false])
       expect(deployed_releases.map(&:feature_reviews)).to eq([[approved_feature_review], []])
       expect(deployed_releases.map(&:feature_reviews).flatten.first.approved_at).to eq(approval_time)

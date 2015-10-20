@@ -76,6 +76,7 @@ module Queries
         production_deploy_time: deploy.try(:event_created_at),
         subject: commit.subject_line,
         feature_reviews: decorated_feature_reviews,
+        deployed_by: deploy.try(:deployed_by),
       )
     end
 
