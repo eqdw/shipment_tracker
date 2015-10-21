@@ -30,9 +30,11 @@ RSpec.describe Queries::ReleasesQuery do
   let(:deploy_time) { time - 1.hour }
   let(:approval_time) { time - 2.hours }
 
-  let(:deploys) { [
-    Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time, deployed_by: 'auser'),
-  ] }
+  let(:deploys) {
+    [
+      Deploy.new(version: 'def', app_name: app_name, event_created_at: deploy_time, deployed_by: 'auser'),
+    ]
+  }
   let(:approved_ticket) {
     Ticket.new(
       versions: %w(xyz uvw),
