@@ -1,6 +1,4 @@
 require 'rails_helper'
-require 'pull_request_status'
-require 'feature_review_with_statuses'
 
 RSpec.describe PullRequestStatus do
   subject(:pull_request_status) { described_class.new(token: token) }
@@ -10,8 +8,8 @@ RSpec.describe PullRequestStatus do
 
   let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:sha) { 'abc123' }
-  let(:repo_url) { 'ssh://github.com/some/repo.git' }
-  let(:expected_url) { 'https://api.github.com/repos/some/repo/statuses/abc123' }
+  let(:repo_url) { 'ssh://github.com/some/app_name' }
+  let(:expected_url) { 'https://api.github.com/repos/some/app_name/statuses/abc123' }
 
   let(:expected_headers) {
     {
@@ -29,6 +27,14 @@ RSpec.describe PullRequestStatus do
   end
 
   describe '#update' do
+    let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
+    let(:deploy) { nil }
+
+    before do
+      allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
+      allow(deploy_repository).to receive(:last_staging_deploy_for_version).with(sha).and_return(deploy)
+   end
+
     context 'when a single feature review exists' do
       let(:ticket) {
         Ticket.new(
@@ -106,7 +112,7 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://localhost/feature_reviews/search?application=repo&version=abc123' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
 
         before do
           allow(ticket_repository)
@@ -148,7 +154,7 @@ RSpec.describe PullRequestStatus do
           )
         }
 
-        let(:search_url) { 'https://localhost/feature_reviews/search?application=repo&version=abc123' }
+        let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
 
         before do
           allow(ticket_repository)
@@ -171,7 +177,7 @@ RSpec.describe PullRequestStatus do
     end
 
     context 'when no feature review exists' do
-      let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Brepo%5D=abc123' }
+      let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123' }
 
       before do
         allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
@@ -189,12 +195,47 @@ RSpec.describe PullRequestStatus do
         pull_request_status.update(repo_url: repo_url, sha: sha)
         expect(stub).to have_been_requested
       end
+
+      context 'when there are deploys for the app version under review' do
+        context 'when the deploy is a staging deploy' do
+          let(:deploy) { instance_double(Deploy, server: 'uat.com') }
+          let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123&uat_url=uat.com' }
+
+          it 'includes the UAT URL in the link' do
+            expected_body = {
+              context: 'shipment-tracker',
+              target_url: feature_review_url,
+              description: "No Feature Review found. Click 'Details' to create one.",
+              state: 'failure',
+            }
+            stub = stub_request(:post, expected_url).with(body: expected_body)
+
+            pull_request_status.update(repo_url: repo_url, sha: sha)
+            expect(stub).to have_been_requested
+          end
+        end
+
+        context 'when the deploy is a production deploy' do
+          let(:deploy) { nil }
+
+          it 'does not include the UAT URL in the link' do
+            expected_body = {
+              context: 'shipment-tracker',
+              target_url: feature_review_url,
+              description: "No Feature Review found. Click 'Details' to create one.",
+              state: 'failure',
+            }
+            stub = stub_request(:post, expected_url).with(body: expected_body)
+
+            pull_request_status.update(repo_url: repo_url, sha: sha)
+            expect(stub).to have_been_requested
+          end
+        end
+      end
     end
   end
 
   describe '#reset' do
-    let(:html_url) { 'http://github.com/some/repo' }
-
     it 'posts status "pending" with description and no link' do
       expected_body = {
         context: 'shipment-tracker',
@@ -204,7 +245,7 @@ RSpec.describe PullRequestStatus do
       }
       stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
 
-      pull_request_status.reset(repo_url: html_url, sha: sha)
+      pull_request_status.reset(repo_url: repo_url, sha: sha)
       expect(stub).to have_been_requested
     end
   end
