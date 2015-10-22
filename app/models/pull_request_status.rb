@@ -4,13 +4,12 @@ require 'octokit'
 require 'factories/feature_review_factory'
 require 'feature_review_with_statuses'
 require 'repositories/ticket_repository'
+require 'repositories/deploy_repository'
 
 class PullRequestStatus
   def initialize(token: Rails.application.config.github_access_token)
     @token = token
     @routes = Rails.application.routes.url_helpers
-    @ticket_repository = Repositories::TicketRepository.new
-    @feature_review_factory = Factories::FeatureReviewFactory.new
   end
 
   def update(repo_url:, sha:)
@@ -44,11 +43,11 @@ class PullRequestStatus
 
   private
 
-  attr_reader :token, :routes, :ticket_repository, :feature_review_factory
+  attr_reader :token, :routes
 
   def decorated_feature_reviews(sha)
-    tickets = ticket_repository.tickets_for_versions([sha])
-    feature_reviews = feature_review_factory
+    tickets = Repositories::TicketRepository.new.tickets_for_versions([sha])
+    feature_reviews = Factories::FeatureReviewFactory.new
                       .create_from_tickets(tickets)
                       .select { |fr| fr.versions.include?(sha) }
     feature_reviews.map do |feature_review|
@@ -71,7 +70,10 @@ class PullRequestStatus
   def target_url_for(repo_url:, sha:, feature_reviews:)
     url_opts = { protocol: 'https' }
     repo_name = repo_url.split('/').last
+    last_staging_deploy = Repositories::DeployRepository.new.last_staging_deploy_for_version(sha)
+
     if feature_reviews.empty?
+      url_opts.merge!(uat_url: last_staging_deploy.server) if last_staging_deploy
       routes.feature_reviews_url(url_opts.merge(apps: { repo_name => sha }))
     elsif feature_reviews.length == 1
       routes.root_url(url_opts).chomp('/') + feature_reviews.first.path
