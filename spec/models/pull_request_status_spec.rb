@@ -27,14 +27,6 @@ RSpec.describe PullRequestStatus do
   end
 
   describe '#update' do
-    let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
-    let(:deploy) { nil }
-
-    before do
-      allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
-      allow(deploy_repository).to receive(:last_staging_deploy_for_version).with(sha).and_return(deploy)
-   end
-
     context 'when a single feature review exists' do
       let(:ticket) {
         Ticket.new(
@@ -178,8 +170,12 @@ RSpec.describe PullRequestStatus do
 
     context 'when no feature review exists' do
       let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123' }
+      let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
+      let(:deploy) { nil }
 
       before do
+        allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
+        allow(deploy_repository).to receive(:last_staging_deploy_for_version).with(sha).and_return(deploy)
         allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
       end
 
@@ -199,7 +195,9 @@ RSpec.describe PullRequestStatus do
       context 'when there are deploys for the app version under review' do
         context 'when the deploy is a staging deploy' do
           let(:deploy) { instance_double(Deploy, server: 'uat.com') }
-          let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123&uat_url=uat.com' }
+          let(:feature_review_url) {
+            'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123&uat_url=uat.com'
+          }
 
           it 'includes the UAT URL in the link' do
             expected_body = {

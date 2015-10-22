@@ -70,16 +70,28 @@ class PullRequestStatus
   def target_url_for(repo_url:, sha:, feature_reviews:)
     url_opts = { protocol: 'https' }
     repo_name = repo_url.split('/').last
-    last_staging_deploy = Repositories::DeployRepository.new.last_staging_deploy_for_version(sha)
 
     if feature_reviews.empty?
-      url_opts.merge!(uat_url: last_staging_deploy.server) if last_staging_deploy
-      routes.feature_reviews_url(url_opts.merge(apps: { repo_name => sha }))
+      url_to_autoprepared_feature_review(url_opts.merge(apps: { repo_name => sha }), sha)
     elsif feature_reviews.length == 1
-      routes.root_url(url_opts).chomp('/') + feature_reviews.first.path
+      url_to_feature_review(url_opts, feature_reviews.first.path)
     else
-      routes.search_feature_reviews_url(url_opts.merge(application: repo_name, version: sha))
+      url_to_search_feature_reviews(url_opts.merge(application: repo_name, version: sha))
     end
+  end
+
+  def url_to_autoprepared_feature_review(url_opts, sha)
+    last_staging_deploy = Repositories::DeployRepository.new.last_staging_deploy_for_version(sha)
+    url_opts.merge!(uat_url: last_staging_deploy.server) if last_staging_deploy
+    routes.feature_reviews_url(url_opts)
+  end
+
+  def url_to_feature_review(url_opts, feature_review_path)
+    routes.root_url(url_opts).chomp('/') + feature_review_path
+  end
+
+  def url_to_search_feature_reviews(url_opts)
+    routes.search_feature_reviews_url(url_opts)
   end
 
   def status_for(feature_reviews)
