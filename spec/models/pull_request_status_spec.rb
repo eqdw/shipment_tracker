@@ -6,7 +6,6 @@ RSpec.describe PullRequestStatus do
   let(:token) { 'a-token' }
   let(:routes) { double(:routes) }
 
-  let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
   let(:sha) { 'abc123' }
   let(:repo_url) { 'ssh://github.com/some/app_name' }
   let(:expected_url) { 'https://api.github.com/repos/some/app_name/statuses/abc123' }
@@ -21,26 +20,26 @@ RSpec.describe PullRequestStatus do
     }
   }
 
-  before do
-    allow(Repositories::TicketRepository).to receive(:new).and_return(ticket_repository)
-    allow(ticket_repository).to receive(:tickets_for_versions).and_return([])
-  end
 
   describe '#update' do
-    context 'when a single feature review exists' do
-      let(:ticket) {
-        Ticket.new(
-          versions: %w(abc123 xyz),
-          paths: [feature_review_path(app1: 'abc123', app2: 'xyz')],
-          status: 'Done',
-          approved_at: Time.current,
-        )
-      }
-      let(:root_url) { 'https://shipment-tracker.co.uk/' }
+    let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
 
-      before do
-        allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([ticket])
-      end
+    before do
+      allow(Repositories::TicketRepository).to receive(:new).and_return(ticket_repository)
+      allow(ticket_repository).to receive(:tickets_for_versions).and_return(tickets)
+    end
+
+    context 'when a single feature review exists' do
+      let(:tickets) {
+        [
+          Ticket.new(
+            versions: %w(abc123 xyz),
+            paths: [feature_review_path(app1: 'abc123', app2: 'xyz')],
+            status: 'Done',
+            approved_at: Time.current,
+          )
+        ]
+      }
 
       it 'posts status "success" with description and link to feature review' do
         expected_body = {
@@ -56,17 +55,20 @@ RSpec.describe PullRequestStatus do
       end
 
       context 'when the ticket references multiple feature reviews, but only one is for the commit' do
-        let(:ticket) {
-          Ticket.new(
-            versions: %w(abc123 def456 uvw),
-            paths: [
-              feature_review_path(app1: 'abc123', app2: 'xyz'),
-              feature_review_path(app1: 'def456'),
-            ],
-            status: 'Done',
-            approved_at: Time.current,
-          )
+        let(:tickets) {
+          [
+            Ticket.new(
+              versions: %w(abc123 def456 uvw),
+              paths: [
+                feature_review_path(app1: 'abc123', app2: 'xyz'),
+                feature_review_path(app1: 'def456'),
+              ],
+              status: 'Done',
+              approved_at: Time.current,
+            )
+          ]
         }
+
         it 'posts status "success" with description and link to feature review' do
           expected_body = {
             context: 'shipment-tracker',
@@ -84,32 +86,27 @@ RSpec.describe PullRequestStatus do
 
     context 'when multiple feature reviews exist for the same commit' do
       context 'when any feature reviews are approved' do
-        let(:approved_ticket) {
-          Ticket.new(
-            versions: %w(abc123 uvw),
-            paths: [
-              feature_review_path(app1: 'abc123', app2: 'uvw'),
-              feature_review_path(app1: 'abc123'),
-            ],
-            status: 'Done',
-            approved_at: Time.current,
-          )
-        }
-        let(:unapproved_ticket) {
-          Ticket.new(
-            versions: %w(abc123 uvw),
-            paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
-            status: 'In Progress',
-            approved_at: nil,
-          )
+        let(:tickets) {
+          [
+            Ticket.new(
+              versions: %w(abc123 uvw),
+              paths: [
+                feature_review_path(app1: 'abc123', app2: 'uvw'),
+                feature_review_path(app1: 'abc123'),
+              ],
+              status: 'Done',
+              approved_at: Time.current,
+            ),
+            Ticket.new(
+              versions: %w(abc123 uvw),
+              paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
+              status: 'In Progress',
+              approved_at: nil,
+            ),
+          ]
         }
 
         let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
-
-        before do
-          allow(ticket_repository)
-            .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
-        end
 
         it 'posts status "success" with description and to feature review search' do
           expected_body = {
@@ -126,32 +123,27 @@ RSpec.describe PullRequestStatus do
       end
 
       context 'when no feature reviews are approved' do
-        let(:approved_ticket) {
-          Ticket.new(
-            versions: %w(abc123 uvw),
-            paths: [
-              feature_review_path(app1: 'abc123', app2: 'uvw'),
-              feature_review_path(app1: 'abc123'),
-            ],
-            status: 'In Progress',
-            approved_at: Time.current,
-          )
-        }
-        let(:unapproved_ticket) {
-          Ticket.new(
-            versions: %w(abc123 uvw),
-            paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
-            status: 'Done',
-            approved_at: nil,
-          )
+        let(:tickets) {
+          [
+            Ticket.new(
+              versions: %w(abc123 uvw),
+              paths: [
+                feature_review_path(app1: 'abc123', app2: 'uvw'),
+                feature_review_path(app1: 'abc123'),
+              ],
+              status: 'In Progress',
+              approved_at: Time.current,
+            ),
+            Ticket.new(
+              versions: %w(abc123 uvw),
+              paths: [feature_review_path(app1: 'abc123', app2: 'uvw')],
+              status: 'Done',
+              approved_at: nil,
+            ),
+          ]
         }
 
         let(:search_url) { 'https://localhost/feature_reviews/search?application=app_name&version=abc123' }
-
-        before do
-          allow(ticket_repository)
-            .to receive(:tickets_for_versions).with([sha]).and_return([approved_ticket, unapproved_ticket])
-        end
 
         it 'posts status "pending" with description and link to feature review search' do
           expected_body = {
@@ -172,11 +164,11 @@ RSpec.describe PullRequestStatus do
       let(:feature_review_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc123' }
       let(:deploy_repository) { instance_double(Repositories::DeployRepository) }
       let(:deploy) { nil }
+      let(:tickets) { [] }
 
       before do
         allow(Repositories::DeployRepository).to receive(:new).and_return(deploy_repository)
         allow(deploy_repository).to receive(:last_staging_deploy_for_version).with(sha).and_return(deploy)
-        allow(ticket_repository).to receive(:tickets_for_versions).with([sha]).and_return([])
       end
 
       it 'posts status "failure" with description and link to view a feature review' do
