@@ -63,7 +63,7 @@
   .col-lg-6
     - panel(heading: 'UAT Environment', klass: 'deploys', status: @feature_review_with_statuses.deploy_status) do
       - if @feature_review_with_statuses.uat_url.blank?
-        .panel-body Please specify a UAT Environment
+        .panel-body No UAT Environment specified
       - elsif @feature_review_with_statuses.deploys.empty?
         .panel-body Could not find any deploys to #{@feature_review_with_statuses.uat_url}
       - else
