@@ -38,19 +38,21 @@ RSpec.describe PullRequestStatus do
       allow(ticket_repository).to receive(:tickets_for_versions).and_return(tickets)
     end
 
-    context 'when a single feature review exists' do
+    context 'when a single feature review exists for the relevant commit' do
       let(:tickets) {
         [
           Ticket.new(
-            versions: %w(abc xyz),
-            paths: [feature_review_path(app1: 'abc', app2: 'xyz')],
+            versions: %w(abc def unrelated),
+            paths: [
+              feature_review_path(app1: 'abc', app2: 'def'),
+              feature_review_path(app1: 'unrelated'),
+            ],
             status: 'Done',
-            approved_at: Time.current,
           ),
         ]
       }
 
-      let(:target_url) { 'https://localhost/feature_reviews?apps%5Bapp1%5D=abc&apps%5Bapp2%5D=xyz' }
+      let(:target_url) { 'https://localhost/feature_reviews?apps%5Bapp1%5D=abc&apps%5Bapp2%5D=def' }
       let(:description) { 'Approved Feature Review found' }
       let(:state) { 'success' }
 
@@ -58,47 +60,21 @@ RSpec.describe PullRequestStatus do
         pull_request_status.update(repo_url: repo_url, sha: sha)
         expect(stub).to have_been_requested
       end
-
-      context 'when the ticket references multiple feature reviews, but only one is for the commit' do
-        let(:tickets) {
-          [
-            Ticket.new(
-              versions: %w(abc def456 uvw),
-              paths: [
-                feature_review_path(app1: 'abc', app2: 'xyz'),
-                feature_review_path(app1: 'def456'),
-              ],
-              status: 'Done',
-              approved_at: Time.current,
-            ),
-          ]
-        }
-
-        it 'posts status "success" with description and link to feature review' do
-          pull_request_status.update(repo_url: repo_url, sha: sha)
-          expect(stub).to have_been_requested
-        end
-      end
     end
 
-    context 'when multiple feature reviews exist for the same commit' do
-      context 'when any feature reviews are approved' do
+    context 'when multiple feature reviews exist for the relevant commit' do
+      context 'when one of the feature reviews are approved' do
         let(:tickets) {
           [
             Ticket.new(
-              versions: %w(abc uvw),
-              paths: [
-                feature_review_path(app1: 'abc', app2: 'uvw'),
-                feature_review_path(app1: 'abc'),
-              ],
-              status: 'Done',
-              approved_at: Time.current,
+              versions: %w(abc def),
+              paths: [feature_review_path(app1: 'abc', app2: 'def')],
+              status: 'In Progress',
             ),
             Ticket.new(
-              versions: %w(abc uvw),
-              paths: [feature_review_path(app1: 'abc', app2: 'uvw')],
-              status: 'In Progress',
-              approved_at: nil,
+              versions: %w(abc def),
+              paths: [feature_review_path(app1: 'abc')],
+              status: 'Done',
             ),
           ]
         }
@@ -117,19 +93,14 @@ RSpec.describe PullRequestStatus do
         let(:tickets) {
           [
             Ticket.new(
-              versions: %w(abc uvw),
-              paths: [
-                feature_review_path(app1: 'abc', app2: 'uvw'),
-                feature_review_path(app1: 'abc'),
-              ],
+              versions: %w(abc def),
+              paths: [feature_review_path(app1: 'abc', app2: 'def')],
               status: 'In Progress',
-              approved_at: Time.current,
             ),
             Ticket.new(
-              versions: %w(abc uvw),
-              paths: [feature_review_path(app1: 'abc', app2: 'uvw')],
-              status: 'Done',
-              approved_at: nil,
+              versions: %w(abc def),
+              paths: [feature_review_path(app1: 'abc')],
+              status: 'In Progress',
             ),
           ]
         }
