@@ -28,6 +28,8 @@ RSpec.describe PullRequestStatus do
     }
   }
 
+  let!(:stub) { stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers) }
+
   describe '#update' do
     let(:ticket_repository) { instance_double(Repositories::TicketRepository) }
 
@@ -53,8 +55,6 @@ RSpec.describe PullRequestStatus do
       let(:state) { 'success' }
 
       it 'posts status "success" with description and link to feature review' do
-        stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
-
         pull_request_status.update(repo_url: repo_url, sha: sha)
         expect(stub).to have_been_requested
       end
@@ -75,8 +75,6 @@ RSpec.describe PullRequestStatus do
         }
 
         it 'posts status "success" with description and link to feature review' do
-          stub = stub_request(:post, expected_url).with(body: expected_body)
-
           pull_request_status.update(repo_url: repo_url, sha: sha)
           expect(stub).to have_been_requested
         end
@@ -110,8 +108,6 @@ RSpec.describe PullRequestStatus do
         let(:state) { 'success' }
 
         it 'posts status "success" with description and to feature review search' do
-          stub = stub_request(:post, expected_url).with(body: expected_body)
-
           pull_request_status.update(repo_url: repo_url, sha: sha)
           expect(stub).to have_been_requested
         end
@@ -143,8 +139,6 @@ RSpec.describe PullRequestStatus do
         let(:state) { 'pending' }
 
         it 'posts status "pending" with description and link to feature review search' do
-          stub = stub_request(:post, expected_url).with(body: expected_body)
-
           pull_request_status.update(repo_url: repo_url, sha: sha)
           expect(stub).to have_been_requested
         end
@@ -165,8 +159,6 @@ RSpec.describe PullRequestStatus do
       end
 
       it 'posts status "failure" with description and link to view a feature review' do
-        stub = stub_request(:post, expected_url).with(body: expected_body)
-
         pull_request_status.update(repo_url: repo_url, sha: sha)
         expect(stub).to have_been_requested
       end
@@ -177,8 +169,6 @@ RSpec.describe PullRequestStatus do
           let(:target_url) { 'https://localhost/feature_reviews?apps%5Bapp_name%5D=abc&uat_url=uat.com' }
 
           it 'includes the UAT URL in the link' do
-            stub = stub_request(:post, expected_url).with(body: expected_body)
-
             pull_request_status.update(repo_url: repo_url, sha: sha)
             expect(stub).to have_been_requested
           end
@@ -188,8 +178,6 @@ RSpec.describe PullRequestStatus do
           let(:deploy) { nil }
 
           it 'does not include the UAT URL in the link' do
-            stub = stub_request(:post, expected_url).with(body: expected_body)
-
             pull_request_status.update(repo_url: repo_url, sha: sha)
             expect(stub).to have_been_requested
           end
@@ -204,8 +192,6 @@ RSpec.describe PullRequestStatus do
     let(:state) { 'pending' }
 
     it 'posts status "pending" with description and no link' do
-      stub = stub_request(:post, expected_url).with(body: expected_body, headers: expected_headers)
-
       pull_request_status.reset(repo_url: repo_url, sha: sha)
       expect(stub).to have_been_requested
     end
