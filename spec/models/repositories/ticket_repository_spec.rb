@@ -128,7 +128,7 @@ RSpec.describe Repositories::TicketRepository do
     let(:approval_time) { Time.current.change(usec: 0) }
     let(:ticket_defaults) { { paths: [path], versions: %w(foo) } }
     let(:repository_location) {
-      instance_double(GitRepositoryLocation, uri: 'http://github.com/owner/frontend')
+      instance_double(GitRepositoryLocation, uri: 'ssh://git@github.com/owner/frontend.git')
     }
 
     before do
@@ -280,11 +280,11 @@ RSpec.describe Repositories::TicketRepository do
 
           it 'schedules an update to the pull request for each version' do
             expect(PullRequestUpdateJob).to receive(:perform_later).with(
-              repo_url: 'http://github.com/owner/frontend',
+              repo_url: 'ssh://git@github.com/owner/frontend',
               sha: 'abc',
             )
             expect(PullRequestUpdateJob).to receive(:perform_later).with(
-              repo_url: 'http://github.com/owner/frontend',
+              repo_url: 'ssh://git@github.com/owner/frontend',
               sha: 'def',
             )
             repository.apply(event)
@@ -333,7 +333,7 @@ RSpec.describe Repositories::TicketRepository do
 
         it 'schedules an update to the pull request for each version' do
           expect(PullRequestUpdateJob).to receive(:perform_later).with(
-            repo_url: 'http://github.com/owner/frontend',
+            repo_url: 'ssh://git@github.com/owner/frontend',
             sha: 'abc',
           )
           repository.apply(approval_event)
@@ -355,7 +355,7 @@ RSpec.describe Repositories::TicketRepository do
 
         it 'schedules an update to the pull request for each version' do
           expect(PullRequestUpdateJob).to receive(:perform_later).with(
-            repo_url: 'http://github.com/owner/frontend',
+            repo_url: 'ssh://git@github.com/owner/frontend',
             sha: 'abc',
           )
           repository.apply(unapproval_event)

@@ -13,7 +13,6 @@ class PullRequestStatus
   end
 
   def update(repo_url:, sha:)
-    repo_url = repo_url.chomp('.git')
     feature_reviews = decorated_feature_reviews(sha)
     status, description = status_for(feature_reviews).values_at(:status, :description)
 
