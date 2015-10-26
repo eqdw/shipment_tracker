@@ -60,17 +60,14 @@ module ApplicationHelper
   def panel(heading:, klass: nil, **options, &block)
     status_panel = options.key?(:status)
     status = options.delete(:status)
-    help_url = options.delete(:help_url)
-    align_right = options.delete(:align_right)
     classes = status_panel ? panel_class(status) : 'panel-info'
 
     haml_tag('.panel', class: [klass, classes]) do
-      haml_tag('.panel-heading') do
-        haml_tag('h2') do
-          icon(icon_class(status)) if status_panel
-          haml_concat heading
-          help_link_icon(help_url, align_right) if help_url
+      haml_tag(:div, class: 'panel-heading clearfix') do
+        haml_tag(:div, class: 'panel-title pull-left') do
+          heading_tag(heading, status, options[:help_url], options[:align_right], status_panel)
         end
+        panel_heading_button(options[:button_link])
       end
       block.call
     end
@@ -80,5 +77,24 @@ module ApplicationHelper
     return unless classes
     attributes = { class: classes, aria: { hidden: true } }
     haml_tag('span.glyphicon', '', attributes)
+  end
+
+  private
+
+  def panel_heading_button(button_hash)
+    return unless button_hash
+    haml_tag(:div, class: 'btn-group pull-right') do
+      haml_tag(:a, class: 'btn btn-default btn-sm', href: button_hash.fetch(:url)) do
+        haml_concat(button_hash.fetch(:text))
+      end
+    end
+  end
+
+  def heading_tag(heading, status, help_url, align_right, status_panel)
+    haml_tag(:h2) do
+      icon(icon_class(status)) if status_panel
+      haml_concat(heading)
+      help_link_icon(help_url, align_right) if help_url
+    end
   end
 end

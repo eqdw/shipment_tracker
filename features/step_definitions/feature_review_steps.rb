@@ -1,6 +1,9 @@
 Given 'I prepare a feature review for:' do |table|
   prepare_feature_review_page.visit
+  step 'I fill in the data for a feature review:', table
+end
 
+Given 'I fill in the data for a feature review:' do |table|
   table.hashes.each do |row|
     prepare_feature_review_page.add(
       field_name: row.fetch('field name'),
@@ -119,4 +122,8 @@ end
 When 'I reload the page after a while' do
   Repositories::Updater.from_rails_config.run
   page.visit(page.current_url)
+end
+
+When 'I click modify button on review panel' do
+  page.click_link_or_button('Modify')
 end
