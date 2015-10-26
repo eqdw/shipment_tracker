@@ -1,3 +1,5 @@
+require 'events/circle_ci_manual_webhook_event'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :circle_ci_manual_webhook_event, class: Events::CircleCiManualWebhookEvent do

@@ -1,3 +1,5 @@
+require 'events/jira_event'
+
 # rubocop:disable Style/BlockDelimiters
 FactoryGirl.define do
   factory :jira_event, class: Events::JiraEvent do

@@ -152,4 +152,60 @@ RSpec.describe Repositories::DeployRepository do
       end
     end
   end
+
+  describe '#last_staging_deploy_for_version' do
+    let(:version) { 'abc' }
+    let(:defaults) { { app_name: 'frontend', deployed_by: 'Bob' } }
+
+    context 'when no deploy exist' do
+      it 'returns nil' do
+        expect(repository.last_staging_deploy_for_version(version)).to be nil
+      end
+    end
+
+    context 'when no deploys exist for the version under review' do
+      before do
+        [
+          build(:deploy_event, defaults.merge(server: 'a', environment: 'uat', version: 'def')),
+          build(:deploy_event, defaults.merge(server: 'b', environment: 'uat', version: 'ghi')),
+          build(:deploy_event, defaults.merge(server: 'c', environment: 'production', version: 'xyz')),
+        ].each do |deploy|
+          repository.apply(deploy)
+        end
+      end
+
+      it 'returns nil' do
+        expect(repository.last_staging_deploy_for_version(version)).to be nil
+      end
+    end
+
+    context 'when a deploy exists for the version under review' do
+      before do
+        [
+          build(:deploy_event, defaults.merge(server: 'a', environment: 'uat', version: version)),
+          build(:deploy_event, defaults.merge(server: 'b', environment: 'uat', version: version)),
+          build(:deploy_event, defaults.merge(server: 'b', environment: 'uat', version: 'def')),
+          build(:deploy_event, defaults.merge(server: 'c', environment: 'production', version: version)),
+        ].each do |deploy|
+          repository.apply(deploy)
+        end
+      end
+
+      it 'returns the latest non-production deploy for the version under review' do
+        expect(repository.last_staging_deploy_for_version(version)).to eq(
+          Deploy.new(defaults.merge(server: 'b', version: version)),
+        )
+      end
+
+      it 'looks for any non-production environments' do
+        repository.apply(
+          build(:deploy_event, defaults.merge(server: 'c', environment: 'staging', version: version)),
+        )
+
+        expect(repository.last_staging_deploy_for_version(version)).to eq(
+          Deploy.new(defaults.merge(server: 'c', version: version)),
+        )
+      end
+    end
+  end
 end

@@ -1,48 +1,52 @@
-require 'octokit'
 require 'active_support/json'
+require 'octokit'
+
+require 'factories/feature_review_factory'
 require 'feature_review_with_statuses'
 require 'repositories/ticket_repository'
-require 'factories/feature_review_factory'
+require 'repositories/deploy_repository'
 
 class PullRequestStatus
   def initialize(token: Rails.application.config.github_access_token)
     @token = token
     @routes = Rails.application.routes.url_helpers
-    @ticket_repository = Repositories::TicketRepository.new
-    @feature_review_factory = Factories::FeatureReviewFactory.new
   end
 
   def update(repo_url:, sha:)
-    repo_url = repo_url.sub(/\.git$/, '')
     feature_reviews = decorated_feature_reviews(sha)
-    status, description = *status_for(feature_reviews).values_at(:status, :description)
+    status, description = status_for(feature_reviews).values_at(:status, :description)
+
     target_url = target_url_for(
       repo_url: repo_url,
       sha: sha,
-      feature_reviews: feature_reviews)
+      feature_reviews: feature_reviews,
+    )
+
     publish_status(
       repo_url: repo_url,
       sha: sha,
       status: status,
       description: description,
-      target_url: target_url)
+      target_url: target_url,
+    )
   end
 
   def reset(repo_url:, sha:)
     publish_status(
       repo_url: repo_url,
       sha: sha,
-      status: reset_status[:status],
-      description: reset_status[:description])
+      status: searching_status[:status],
+      description: searching_status[:description],
+    )
   end
 
   private
 
-  attr_reader :token, :routes, :ticket_repository, :feature_review_factory
+  attr_reader :token, :routes
 
   def decorated_feature_reviews(sha)
-    tickets = ticket_repository.tickets_for_versions([sha])
-    feature_reviews = feature_review_factory
+    tickets = Repositories::TicketRepository.new.tickets_for_versions([sha])
+    feature_reviews = Factories::FeatureReviewFactory.new
                       .create_from_tickets(tickets)
                       .select { |fr| fr.versions.include?(sha) }
     feature_reviews.map do |feature_review|
@@ -65,26 +69,41 @@ class PullRequestStatus
   def target_url_for(repo_url:, sha:, feature_reviews:)
     url_opts = { protocol: 'https' }
     repo_name = repo_url.split('/').last
+
     if feature_reviews.empty?
-      routes.feature_reviews_url(url_opts.merge(apps: { repo_name => sha }))
+      url_to_autoprepared_feature_review(url_opts.merge(apps: { repo_name => sha }), sha)
     elsif feature_reviews.length == 1
-      routes.root_url(url_opts).chomp('/') + feature_reviews.first.path
+      url_to_feature_review(url_opts, feature_reviews.first.path)
     else
-      routes.search_feature_reviews_url(url_opts.merge(application: repo_name, version: sha))
+      url_to_search_feature_reviews(url_opts.merge(application: repo_name, version: sha))
     end
+  end
+
+  def url_to_autoprepared_feature_review(url_opts, sha)
+    last_staging_deploy = Repositories::DeployRepository.new.last_staging_deploy_for_version(sha)
+    url_opts.merge!(uat_url: last_staging_deploy.server) if last_staging_deploy
+    routes.feature_reviews_url(url_opts)
+  end
+
+  def url_to_feature_review(url_opts, feature_review_path)
+    routes.root_url(url_opts).chomp('/') + feature_review_path
+  end
+
+  def url_to_search_feature_reviews(url_opts)
+    routes.search_feature_reviews_url(url_opts)
   end
 
   def status_for(feature_reviews)
     if feature_reviews.empty?
-      not_reviewed_status
+      not_found_status
     elsif feature_reviews.any?(&:approved?)
       approved_status
     else
-      unapproved_status
+      not_approved_status
     end
   end
 
-  def not_reviewed_status
+  def not_found_status
     {
       status: 'failure',
       description: "No Feature Review found. Click 'Details' to create one.",
@@ -98,14 +117,14 @@ class PullRequestStatus
     }
   end
 
-  def unapproved_status
+  def not_approved_status
     {
       status: 'pending',
       description: 'Awaiting approval for Feature Review',
     }
   end
 
-  def reset_status
+  def searching_status
     {
       status: 'pending',
       description: 'Searching for Feature Review',

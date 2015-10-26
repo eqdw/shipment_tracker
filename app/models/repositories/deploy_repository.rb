@@ -22,6 +22,11 @@ module Repositories
       }
     end
 
+    def last_staging_deploy_for_version(version)
+      last_matching_non_prod_deploy = store.where.not(environment: 'production').where(version: version).last
+      Deploy.new(last_matching_non_prod_deploy.attributes) if last_matching_non_prod_deploy
+    end
+
     def apply(event)
       return unless event.is_a?(Events::DeployEvent)
 
