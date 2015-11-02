@@ -130,10 +130,11 @@ class GitRepository
     begin
       walker.first.oid == commit_oid
     rescue NoMethodError => error
-      Rails.logger.info("Rugged::Walker didn't return a range of commits for" \
-                        " head: #{main_branch.target_id} and parent: #{parent_commit.oid}" \
-                        " with target commit #{commit_oid}")
+      Honeybadger.context(target_commit: commit_oid,
+                          master_head: main_branch.target_id,
+                          parent_commit: parent_commit.oid)
       Honeybadger.notify(error)
+      Honeybadger.context.clear!
       false
     end
   end
