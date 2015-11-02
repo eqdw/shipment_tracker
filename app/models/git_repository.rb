@@ -1,5 +1,5 @@
 require 'git_commit'
-
+require 'honeybadger'
 require 'rugged'
 
 class GitRepository
@@ -126,7 +126,17 @@ class GitRepository
     return true unless parent_commit
 
     walker = get_walker(main_branch.target_id, parent_commit.oid, true)
-    walker.first.oid == commit_oid
+
+    begin
+      walker.first.oid == commit_oid
+    rescue NoMethodError => error
+      Honeybadger.context(target_commit: commit_oid,
+                          master_head: main_branch.target_id,
+                          parent_commit: parent_commit.oid)
+      Honeybadger.notify(error)
+      Honeybadger.context.clear!
+      false
+    end
   end
 
   def merge_commit_for?(merge_commit_candidate, commit_oid)
