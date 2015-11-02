@@ -126,7 +126,15 @@ class GitRepository
     return true unless parent_commit
 
     walker = get_walker(main_branch.target_id, parent_commit.oid, true)
-    walker.first.oid == commit_oid
+
+    first = walker.first
+    if first.nil?
+      Rails.logger.info("Rugged::Walker didn't return a range of commits for" \
+                        " head: #{main_branch.target_id} and parent: #{parent_commit.oid}" \
+                        " with target commit #{commit_oid}")
+      return false
+    end
+    first.oid == commit_oid
   end
 
   def merge_commit_for?(merge_commit_candidate, commit_oid)
