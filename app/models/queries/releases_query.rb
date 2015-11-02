@@ -2,7 +2,7 @@ require 'release'
 
 module Queries
   class ReleasesQuery
-    attr_reader :pending_releases, :deployed_releases
+    attr_reader :pending_releases, :deployed_releases, :production_deploys
 
     def initialize(per_page:, git_repo:, app_name:)
       @per_page = per_page
