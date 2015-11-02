@@ -34,7 +34,7 @@ class FeatureReviewsController < ApplicationController
     tickets = Repositories::TicketRepository.new.tickets_for_versions(versions)
 
     @links = factory.create_from_tickets(tickets).map(&:path)
-    flash[:error] = 'No Feature Reviews found.' if @links.empty?
+    flash.now[:error] = 'No Feature Reviews found.' if @links.empty?
   end
 
   private
