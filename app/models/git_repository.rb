@@ -1,5 +1,5 @@
 require 'git_commit'
-
+require 'honeybadger'
 require 'rugged'
 
 class GitRepository
@@ -127,14 +127,15 @@ class GitRepository
 
     walker = get_walker(main_branch.target_id, parent_commit.oid, true)
 
-    first = walker.first
-    if first.nil?
+    begin
+      walker.first.oid == commit_oid
+    rescue NoMethodError => error
       Rails.logger.info("Rugged::Walker didn't return a range of commits for" \
                         " head: #{main_branch.target_id} and parent: #{parent_commit.oid}" \
                         " with target commit #{commit_oid}")
-      return false
+      Honeybadger.notify(error)
+      false
     end
-    first.oid == commit_oid
   end
 
   def merge_commit_for?(merge_commit_candidate, commit_oid)
