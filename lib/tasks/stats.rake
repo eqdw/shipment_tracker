@@ -2,8 +2,8 @@ namespace :stats do
   desc 'Counts releases'
   task :approved_releases, [:from_date, :to_date, :per_page] => :environment do |_, args|
     args.with_defaults(date_from: nil, date_to: nil, per_page: 50)
-    from_date = args.from_date ? Time.parse(args.from_date) : Time.current.beginning_of_day - 7.days
-    to_date = args.to_date ? Time.parse(args.to_date) : from_date - 7.days
+    to_date = args.to_date ? Time.parse(args.to_date) : Time.current.beginning_of_day
+    from_date = args.from_date ? Time.parse(args.from_date) : to_date - 7.days
     per_page = args.per_page.to_i
 
     puts "STATS INFO: Evaluating releases from #{from_date.strftime('%F')} until #{to_date.strftime('%F')}"
