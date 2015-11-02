@@ -15,10 +15,20 @@ namespace :stats do
     GitRepositoryLocation.app_names.each do |app_name|
       puts "STATS INFO: Evaluating app: #{app_name}"
       git_repo = GitRepositoryLoader.from_rails_config.load(app_name)
+      query = Queries::ReleasesQuery.new(per_page: per_page, git_repo: git_repo, app_name: app_name)
+      releases = query.deployed_releases
 
-      releases = Queries::ReleasesQuery
-                 .new(per_page: per_page, git_repo: git_repo, app_name: app_name)
-                 .deployed_releases
+      versions = query.versions
+
+      store = Snapshots::Deploy
+      query = store.select('DISTINCT ON (version) *')
+      query = query.where(store.arel_table['app_name'].eq(app_name))
+      query = query.where(store.arel_table['version'].not_in(versions))
+      query = query.where(store.arel_table['event_created_at'].between(from_date..to_date))
+      query = query.where(environment: 'production')
+      deploys_on_non_master = query.order('version, id DESC').map { |deploy_record|
+        Deploy.new(deploy_record.attributes)
+      }
 
       releases_with_inherit = []
 
@@ -49,6 +59,11 @@ namespace :stats do
       unapproved_releases.each do |release|
         puts "STATS INFO: #{release.version} released by #{release.deployed_by}" if release.deployed_by
       end
+
+      deploys_on_non_master.each do |deploy|
+        puts "STATS INFO: ON MASTER ??? #{deploy.version} released by #{deploy.deployed_by}"
+      end
+
       puts 'STATS INFO: *****************'
 
       total_count_all_apps += total_count

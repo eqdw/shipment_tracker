@@ -2,7 +2,7 @@ require 'release'
 
 module Queries
   class ReleasesQuery
-    attr_reader :pending_releases, :deployed_releases, :production_deploys
+    attr_reader :pending_releases, :deployed_releases
 
     def initialize(per_page:, git_repo:, app_name:)
       @per_page = per_page
@@ -17,6 +17,10 @@ module Queries
       @deployed_releases = []
 
       build_and_categorize_releases
+    end
+
+    def versions
+      commits.map(&:id)
     end
 
     private
@@ -37,10 +41,6 @@ module Queries
 
     def tickets
       @tickets ||= ticket_repository.tickets_for_versions(associated_versions)
-    end
-
-    def versions
-      commits.map(&:id)
     end
 
     def associated_versions
