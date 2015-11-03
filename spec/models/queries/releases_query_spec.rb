@@ -61,6 +61,13 @@ RSpec.describe Queries::ReleasesQuery do
       .and_return(tickets)
   end
 
+  describe '#versions' do
+    subject(:query_versions) { releases_query.versions }
+    it 'returns all versions' do
+      expect(query_versions).to eq(%w(abc def ghi))
+    end
+  end
+
   describe '#pending_releases' do
     subject(:pending_releases) { releases_query.pending_releases }
     it 'returns list of releases not yet deployed to production' do
