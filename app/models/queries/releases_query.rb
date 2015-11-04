@@ -19,6 +19,10 @@ module Queries
       build_and_categorize_releases
     end
 
+    def versions
+      commits.map(&:id)
+    end
+
     private
 
     attr_reader :app_name, :deploy_repository, :feature_review_factory, :git_repository, :ticket_repository
@@ -37,10 +41,6 @@ module Queries
 
     def tickets
       @tickets ||= ticket_repository.tickets_for_versions(associated_versions)
-    end
-
-    def versions
-      commits.map(&:id)
     end
 
     def associated_versions
