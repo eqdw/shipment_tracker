@@ -55,14 +55,16 @@ namespace :stats do
       unapproved_count = unapproved_releases.count
 
       puts "STATS INFO: Total releases: #{total_count}"
-      puts "STATS INFO: Unapproved releases: #{unapproved_count}"
+      puts "STATS INFO: Unapproved releases: #{unapproved_count}" if unapproved_releases.present?
       unapproved_releases.each do |release|
-        puts "STATS INFO: #{release.version} released by #{release.deployed_by}" if release.deployed_by
+        puts "STATS INFO: #{release.version} released by #{release.deployed_by}"
       end
-
+      # rubocop:disable LineLength
+      puts "STATS INFO: Releases of commits not on master: #{deploys_on_non_master.count}" if deploys_on_non_master.present?
       deploys_on_non_master.each do |deploy|
-        puts "STATS INFO: ON MASTER ??? #{deploy.version} released by #{deploy.deployed_by}"
+        puts "STATS INFO: #{deploy.version} released by #{deploy.deployed_by}"
       end
+      # rubocop:enable LineLength
 
       puts 'STATS INFO: *****************'
 
