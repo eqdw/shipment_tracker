@@ -1,4 +1,12 @@
+require 'benchmark'
+require 'csv'
+
 namespace :stats do
+  desc 'Exports all production deploys to CSV'
+  task prod_deploys: :environment do
+    export_to_csv_with_benchmark('/tmp/production_deploys.csv', Snapshots::Deploy, environment: 'production')
+  end
+
   desc 'Counts releases'
   task :approved_releases, [:from_date, :to_date, :per_page] => :environment do |_, args|
     args.with_defaults(date_from: nil, date_to: nil, per_page: 50)
@@ -76,4 +84,28 @@ namespace :stats do
     puts "STATS INFO: Total releases: #{total_count_all_apps}"
     puts "STATS INFO: Unapproved releases: #{unapproved_count_all_apps}"
   end
+end
+
+def export_to_csv_with_benchmark(filename, store, where_conditions = {})
+  time = Benchmark.realtime do
+    export_to_csv(filename, store, where_conditions)
+  end
+  puts "\nReport generated in #{time.to_i} seconds and written to '#{File.expand_path(filename)}'"
+end
+
+def export_to_csv(filename, store, where_conditions = {})
+  total = store.where(where_conditions).count
+  puts "Exporting #{total} records..."
+
+  CSV.open(filename, 'w') do |csv|
+    csv << store.attribute_names
+    store.where(where_conditions).find_each.with_index do |record, index|
+      csv << record.attributes.values
+      print "\r#{percentage(index + 1, total)}% complete"
+    end
+  end
+end
+
+def percentage(index, total)
+  ((index / total.to_f) * 100).to_i
 end
