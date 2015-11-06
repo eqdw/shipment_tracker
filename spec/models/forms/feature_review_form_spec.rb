@@ -56,9 +56,16 @@ RSpec.describe Forms::FeatureReviewForm do
   end
 
   describe '#uat_url' do
-    let(:uat_url) { double }
+    let(:uat_url) { 'http://foo.com/bar' }
     it 'returns the uat_url' do
-      expect(feature_review_form.uat_url).to eql(uat_url)
+      expect(feature_review_form.uat_url).to eql('foo.com')
+    end
+
+    context 'when uat not given' do
+      let(:uat_url) { nil }
+      it 'returns the uat_url' do
+        expect(feature_review_form.uat_url).to eql(nil)
+      end
     end
   end
 
@@ -165,7 +172,7 @@ RSpec.describe Forms::FeatureReviewForm do
         '/feature_reviews?'\
         'apps%5Bbackend%5D=def&'\
         'apps%5Bfrontend%5D=abc&'\
-        'uat_url=http%3A%2F%2Ffoobar.com%2Fblah%2Fblah',
+        'uat_url=foobar.com',
       )
     end
 
@@ -180,7 +187,7 @@ RSpec.describe Forms::FeatureReviewForm do
       let(:apps) { { frontend: 'abc', backend: '' } }
       let(:uat_url) { 'http://foobar.com' }
 
-      it { is_expected.to eq('/feature_reviews?apps%5Bfrontend%5D=abc&uat_url=http%3A%2F%2Ffoobar.com') }
+      it { is_expected.to eq('/feature_reviews?apps%5Bfrontend%5D=abc&uat_url=foobar.com') }
     end
 
     context 'with lots of apps' do

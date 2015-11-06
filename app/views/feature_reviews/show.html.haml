@@ -46,7 +46,7 @@
             %span.title User Acceptance Tests
 
   .col-lg-6
-    - panel(heading: 'Apps Under Review', klass: 'app-info', button_link: { text: 'Modify', url: edit_url(@feature_review_with_statuses.app_versions, @feature_review_with_statuses.uat_url)}) do
+    - panel(heading: 'Apps Under Review', klass: 'app-info', button_link: { text: 'Modify', url: edit_url(@feature_review_with_statuses.app_versions, @feature_review_with_statuses.uat_host)}) do
       %ul.list-group
         - @feature_review_with_statuses.app_versions.each do |app_name, version|
           %li.list-group-item.app
