@@ -30,3 +30,5 @@
 
 .env.development
 /config/database.yml
+
+.rspec
