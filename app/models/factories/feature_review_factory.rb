@@ -40,7 +40,7 @@ module Factories
     end
 
     def map_paths(tickets)
-      tickets.map(&:paths).flatten.uniq
+      tickets.flat_map(&:paths).uniq
     end
 
     def parse_uri(uri)

@@ -44,7 +44,7 @@ module Queries
     end
 
     def associated_versions
-      commits.map(&:associated_ids).flatten.uniq
+      commits.flat_map(&:associated_ids).uniq
     end
 
     def production_deploy_for_commit(commit)
