@@ -89,7 +89,7 @@ module Repositories
     end
 
     def feature_review_versions(feature_reviews)
-      feature_reviews.map(&:versions).flatten
+      feature_reviews.flat_map(&:versions)
     end
 
     def update_pull_requests_for(ticket_hash)
