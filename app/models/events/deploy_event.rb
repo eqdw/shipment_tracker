@@ -2,6 +2,8 @@ require 'events/base_event'
 
 module Events
   class DeployEvent < Events::BaseEvent
+    ENVIRONMENTS = %w(uat staging production)
+
     def app_name
       details.fetch('app_name', details.fetch('app', nil)).try(:downcase)
     end
@@ -19,10 +21,22 @@ module Events
     end
 
     def environment
-      details.fetch('environment', nil)
+      details.fetch('environment', heroku_environment)
     end
 
     private
+
+    def heroku_environment
+      if ENVIRONMENTS.include?(heroku_name)
+        heroku_name
+      else
+        nil
+      end
+    end
+
+    def heroku_name
+      app_name.try(:split, '-').try(:last)
+    end
 
     def servers
       details.fetch('servers', servers_fallback)
