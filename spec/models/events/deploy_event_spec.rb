@@ -4,6 +4,24 @@ RSpec.describe Events::DeployEvent do
   subject { Events::DeployEvent.new(details: payload) }
 
   context 'when given a valid payload' do
+    let(:payload) {
+      {
+        'app_name' => 'soMeApp',
+        'servers' => ['prod1.example.com', 'prod2.example.com'],
+        'version' => '123abc',
+        'deployed_by' => 'bob',
+        'environment' => 'staging',
+      }
+    }
+
+    it 'returns the correct values' do
+      expect(subject.app_name).to eq('someapp')
+      expect(subject.server).to eq('prod1.example.com')
+      expect(subject.version).to eq('123abc')
+      expect(subject.deployed_by).to eq('bob')
+      expect(subject.environment).to eq('staging')
+    end
+
     context 'when the payload comes from Heroku' do
       let(:payload) {
         {
@@ -29,24 +47,6 @@ RSpec.describe Events::DeployEvent do
           expect(subject.environment).to be nil
         end
       end
-    end
-
-    let(:payload) {
-      {
-        'app_name' => 'soMeApp',
-        'servers' => ['prod1.example.com', 'prod2.example.com'],
-        'version' => '123abc',
-        'deployed_by' => 'bob',
-        'environment' => 'staging'
-      }
-    }
-
-    it 'returns the correct values' do
-      expect(subject.app_name).to eq('someapp')
-      expect(subject.server).to eq('prod1.example.com')
-      expect(subject.version).to eq('123abc')
-      expect(subject.deployed_by).to eq('bob')
-      expect(subject.environment).to eq('staging')
     end
 
     context 'when the payload structure is deprecated' do
