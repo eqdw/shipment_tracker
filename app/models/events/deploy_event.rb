@@ -22,6 +22,10 @@ module Events
       details.fetch('environment', nil)
     end
 
+    def locale
+      details.fetch('locale', 'gb') # TODO: research or uk
+    end
+
     private
 
     def servers

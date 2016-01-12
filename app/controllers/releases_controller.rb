@@ -18,6 +18,7 @@ class ReleasesController < ApplicationController
   def build_projection
     Queries::ReleasesQuery.new(
       per_page: 50,
+      locale: params[:locale],
       git_repo: git_repository,
       app_name: app_name)
   end

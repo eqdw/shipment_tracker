@@ -43,6 +43,7 @@ RSpec.describe ReleasesController do
       allow(GitRepositoryLocation).to receive(:github_url_for_app).with(app_name).and_return(github_url)
       allow(Queries::ReleasesQuery).to receive(:new).with(
         per_page: 50,
+        locale: nil,
         git_repo: repository,
         app_name: app_name,
       ).and_return(releases_query)

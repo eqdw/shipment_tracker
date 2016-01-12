@@ -4,8 +4,9 @@ module Queries
   class ReleasesQuery
     attr_reader :pending_releases, :deployed_releases
 
-    def initialize(per_page:, git_repo:, app_name:)
+    def initialize(per_page:, locale: nil, git_repo:, app_name:)
       @per_page = per_page
+      @locale = locale
       @git_repository = git_repo
       @app_name = app_name
 
@@ -28,7 +29,8 @@ module Queries
     attr_reader :app_name, :deploy_repository, :feature_review_factory, :git_repository, :ticket_repository
 
     def production_deploys
-      @production_deploys ||= deploy_repository.deploys_for_versions(versions, environment: 'production')
+      @production_deploys ||= deploy_repository
+                              .deploys_for_versions(versions, environment: 'production', locale: @locale)
     end
 
     def commits
