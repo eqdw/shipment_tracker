@@ -43,7 +43,7 @@ RSpec.describe ReleasesController do
       allow(GitRepositoryLocation).to receive(:github_url_for_app).with(app_name).and_return(github_url)
       allow(Queries::ReleasesQuery).to receive(:new).with(
         per_page: 50,
-        locale: nil,
+        locale: 'uk',
         git_repo: repository,
         app_name: app_name,
       ).and_return(releases_query)
@@ -51,7 +51,7 @@ RSpec.describe ReleasesController do
     end
 
     it 'shows the list of commits for an app' do
-      get :show, id: app_name
+      get :show, id: app_name, locale: 'uk'
 
       expect(response).to have_http_status(:success)
       expect(assigns(:app_name)).to eq(app_name)
@@ -66,9 +66,16 @@ RSpec.describe ReleasesController do
       end
 
       it 'responds with a 404' do
-        get :show, id: 'hokus-pokus'
+        get :show, id: 'hokus-pokus', locale: 'us'
 
         expect(response).to be_not_found
+      end
+    end
+
+    context 'when no locale is passed in' do
+      it 'redirects to locale "uk"' do
+        get :show, id: app_name
+        expect(response).to have_http_status(:redirect)
       end
     end
   end
