@@ -5,7 +5,7 @@ module Events
     ENVIRONMENTS = %w(uat staging production)
 
     def app_name
-      details.fetch('app_name', details.fetch('app', nil)).try(:downcase)
+      (details['app_name'] || details['app']).try(:downcase)
     end
 
     def server
@@ -13,11 +13,11 @@ module Events
     end
 
     def version
-      details.fetch('version', details.fetch('head_long', nil))
+      details['version'] || details['head_long']
     end
 
     def deployed_by
-      details.fetch('deployed_by', details.fetch('user', nil))
+      details['deployed_by'] || details['user']
     end
 
     def environment
@@ -27,15 +27,12 @@ module Events
     private
 
     def heroku_environment
-      if ENVIRONMENTS.include?(heroku_name)
-        heroku_name
-      else
-        nil
-      end
+      app_name_extension if ENVIRONMENTS.include?(app_name_extension)
     end
 
-    def heroku_name
-      app_name.try(:split, '-').try(:last)
+    def app_name_extension
+      return nil unless app_name
+      app_name.split('-').last
     end
 
     def servers
@@ -43,7 +40,7 @@ module Events
     end
 
     def servers_fallback
-      [details.fetch('server', details.fetch('url', nil))].compact
+      [details['server'] || details['url']].compact
     end
   end
 end
