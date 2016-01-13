@@ -4,7 +4,7 @@ Rails.application.config.event_types = [
     endpoint: 'circleci',
     event_class: Events::CircleCiEvent),
   EventType.new(
-    name: 'CircleCI',
+    name: 'CircleCI (post test)',
     endpoint: 'circleci-manual',
     event_class: Events::CircleCiManualWebhookEvent),
   EventType.new(
