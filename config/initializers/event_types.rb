@@ -1,9 +1,8 @@
 Rails.application.config.event_types = [
-  # Waiting on CircleCI to support SNI on SSL webhooks
-  # EventType.new(
-  #   name: 'CircleCI (webhook)',
-  #   endpoint: 'circleci',
-  #   event_class: Events::CircleCiEvent),
+  EventType.new(
+    name: 'CircleCI (webhook)',
+    endpoint: 'circleci',
+    event_class: Events::CircleCiEvent),
   EventType.new(
     name: 'CircleCI',
     endpoint: 'circleci-manual',
